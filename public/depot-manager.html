@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Depot Manager Portal - Chilimba</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1E3A8A">
+  <!-- Tailwind CSS for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- HTML5 QR Code Scanner -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  
+  <style>
+    body { background-color: #f3f4f6; }
+    .glass {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body class="text-gray-800 antialiased font-sans">
+
+  <!-- Security Check Loader -->
+  <div id="auth-loader" class="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 text-white">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+      <p class="font-semibold">Verifying Manager Credentials...</p>
+    </div>
+  </div>
+
+  <!-- App Shell -->
+  <div id="app-content" class="hidden min-h-screen flex flex-col max-w-md mx-auto shadow-xl bg-white relative">
+    
+    <!-- Header -->
+    <header class="bg-blue-900 text-white p-4 flex justify-between items-center shadow-md">
+      <div>
+        <h1 class="text-xl font-bold">Chilimba Depot</h1>
+        <p class="text-xs text-blue-200" id="depot-location">Loading Location...</p>
+      </div>
+      <button onclick="logout()" class="text-sm font-medium hover:text-red-300">Logout</button>
+    </header>
+
+    <!-- Real-Time Summary Widget -->
+    <section class="p-4 bg-blue-50">
+      <div class="grid grid-cols-3 gap-3">
+        <div class="glass p-3 rounded-lg text-center shadow-sm">
+          <p class="text-xs text-gray-500 uppercase font-semibold">Total</p>
+          <p class="text-2xl font-bold text-blue-900" id="stat-total">--</p>
+        </div>
+        <div class="glass p-3 rounded-lg text-center shadow-sm border-l-4 border-yellow-400">
+          <p class="text-xs text-gray-500 uppercase font-semibold">Pending</p>
+          <p class="text-2xl font-bold text-yellow-600" id="stat-pending">--</p>
+        </div>
+        <div class="glass p-3 rounded-lg text-center shadow-sm border-l-4 border-green-500">
+          <p class="text-xs text-gray-500 uppercase font-semibold">Cleared</p>
+          <p class="text-2xl font-bold text-green-600" id="stat-cleared">--</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scanner / Input Section -->
+    <main class="flex-grow p-4 flex flex-col space-y-6">
+      
+      <div class="bg-gray-100 p-4 rounded-xl shadow-inner text-center">
+        <h2 class="font-bold text-gray-700 mb-2">Customer OTP Scanner</h2>
+        
+        <!-- QR Scanner UI -->
+        <div id="reader" class="w-full bg-black rounded-lg overflow-hidden mb-4 border-2 border-gray-300 aspect-square"></div>
+        
+        <p class="text-sm text-gray-500 mb-2">OR enter 6-digit OTP manually:</p>
+        <div class="flex space-x-2">
+          <input type="text" id="manual-otp" maxlength="6" class="flex-grow border-2 border-gray-300 p-3 rounded-lg text-center text-xl tracking-widest font-mono focus:border-blue-500 focus:outline-none" placeholder="123456">
+          <button onclick="verifyOTP(document.getElementById('manual-otp').value)" class="bg-blue-600 text-white px-6 font-bold rounded-lg hover:bg-blue-700 active:scale-95 transition-transform">Verify</button>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Verification Modal Overlay -->
+  <div id="verification-modal" class="fixed inset-0 z-50 bg-black/60 hidden flex-col items-center justify-end sm:justify-center px-4 pb-4 sm:p-0 backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-transform translate-y-full" id="modal-content">
+      
+      <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-blue-50">
+        <h3 class="font-bold text-lg text-blue-900">Verify Identity</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <!-- Customer Details -->
+        <div class="flex items-center space-x-4">
+          <div class="h-16 w-16 bg-gray-200 rounded-full flex-shrink-0 overflow-hidden" id="modal-avatar">
+            <img src="" alt="Avatar" class="h-full w-full object-cover">
+          </div>
+          <div>
+            <p class="font-bold text-gray-800 text-lg" id="modal-customer-name">John Doe</p>
+            <p class="text-green-600 font-semibold flex items-center text-sm">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.66-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51h-.57c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+              <span id="modal-whatsapp">+260 00 000 0000</span>
+            </p>
+          </div>
+        </div>
+        
+        <!-- Item Details -->
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center space-x-4">
+          <div class="h-16 w-16 bg-white rounded-md border shadow-sm flex-shrink-0 overflow-hidden">
+             <img src="" id="modal-item-image" class="h-full w-full object-contain p-1">
+          </div>
+          <div>
+             <p class="font-bold text-gray-700 text-sm" id="modal-item-title">Product Title</p>
+             <p class="text-xs text-gray-500 mt-1" id="modal-tracking-id">Tracking: CHL-XXXXX</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action -->
+      <div class="p-5 border-t border-gray-100 bg-gray-50">
+        <button id="btn-confirm-release" onclick="confirmRelease()" class="w-full bg-green-600 text-white text-lg font-bold py-4 rounded-xl shadow-lg hover:bg-green-700 active:scale-95 transition-transform flex justify-center items-center">
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          Confirm Collection & Release
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Success Notification -->
+  <div id="success-toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-full shadow-xl font-bold flex items-center space-x-2 transition-all duration-500 -translate-y-20 opacity-0 z-50">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span>Item Released!</span>
+  </div>
+
+  <!-- Antigravity State and App Logic -->
+  <script type="module">
+    // Mock Antigravity Store
+    class AntigravityStore {
+      constructor(config) { this.endpoint = config.endpoint; }
+      table(name) { return this; }
+      filter(conditions) { return this; }
+      onUpdate(callback) { /* Websocket mock listener */ }
+    }
+    const store = new AntigravityStore({ endpoint: 'wss://api.your-chilimba-pwa.app/sync' });
+
+    let currentManager = null;
+    let pendingReleaseTrackingId = null;
+
+    // 1. Authentication Check
+    async function initApp() {
+      // Mock fetching current user session
+      // In reality, this makes an API call to verify JWT and role
+      setTimeout(() => {
+        const mockUser = { role: 'DEPOT_MANAGER', default_depot: 'CHILILABOMBWE' };
+        
+        if (mockUser.role !== 'DEPOT_MANAGER') {
+          alert('Access Denied. Depot Managers only.');
+          window.location.href = '/login';
+          return;
+        }
+
+        currentManager = mockUser;
+        document.getElementById('depot-location').innerText = `Depot: ${mockUser.default_depot}`;
+        document.getElementById('auth-loader').style.display = 'none';
+        document.getElementById('app-content').classList.remove('hidden');
+        
+        initScanner();
+        listenToDepotStats();
+      }, 1000);
+    }
+
+    // 2. Real-Time Summary Widget Listener
+    function listenToDepotStats() {
+      // Store binds to Logistic_Tracking where depot_town = manager.depot
+      store.table('Logistics_Tracking').filter({ depot_town: currentManager.default_depot }).onUpdate((data) => {
+        // Mock updating DOM with fresh stats
+        document.getElementById('stat-total').innerText = '142';
+        document.getElementById('stat-pending').innerText = '18';
+        document.getElementById('stat-cleared').innerText = '124';
+      });
+      // Initial render mock
+      document.getElementById('stat-total').innerText = '142';
+      document.getElementById('stat-pending').innerText = '18';
+      document.getElementById('stat-cleared').innerText = '124';
+    }
+
+    // 3. QR Code Scanner Module
+    function initScanner() {
+      const html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      
+      // Start camera
+      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+        // Assuming decoded text is the OTP or tracking JSON
+        verifyOTP(decodedText);
+        html5QrCode.pause(); // Pause after successful scan
+        setTimeout(() => html5QrCode.resume(), 3000);
+      }).catch(err => {
+        console.warn("Camera init failed, falling back to manual entry.", err);
+        document.getElementById('reader').innerHTML = '<div class="h-full flex items-center justify-center text-gray-400 bg-gray-200">Camera Unavailable. Use Manual Entry.</div>';
+      });
+    }
+
+    // 4. Verify OTP against DB
+    window.verifyOTP = async function(otp) {
+      if (!otp || otp.length !== 6) return alert('Invalid OTP format.');
+      
+      // MOCK API CALL: Executing real-time lookup
+      // SELECT * FROM Logistics_Tracking t JOIN Orders o ... JOIN Users u ... JOIN Products p ... 
+      // WHERE t.depot_pickup_otp = $1 AND t.current_status = 'ARRIVED_AT_DEPOT'
+      console.log(`Verifying OTP: ${otp} at ${currentManager.default_depot}`);
+      
+      // Mock Payload Return
+      const mockResult = {
+        tracking_id: '123e4567-e89b-12d3-a456-426614174000',
+        customer_name: 'Mutale Banda',
+        customer_whatsapp: '+260 97 123 4567',
+        customer_avatar: 'https://ui-avatars.com/api/?name=Mutale+Banda&background=random',
+        product_title: 'Samsung 500L Fridge (SA Import)',
+        product_image: 'https://via.placeholder.com/150'
+      };
+
+      if(mockResult) {
+        pendingReleaseTrackingId = mockResult.tracking_id;
+        
+        // Populate Modal
+        document.getElementById('modal-customer-name').innerText = mockResult.customer_name;
+        document.getElementById('modal-whatsapp').innerText = mockResult.customer_whatsapp;
+        document.getElementById('modal-avatar').querySelector('img').src = mockResult.customer_avatar;
+        document.getElementById('modal-item-title').innerText = mockResult.product_title;
+        document.getElementById('modal-item-image').src = mockResult.product_image;
+        document.getElementById('modal-tracking-id').innerText = `Tracking: ${mockResult.tracking_id.split('-')[0]}`;
+        
+        openModal();
+      } else {
+        alert('Invalid OTP or Package not found at this depot.');
+      }
+    };
+
+    // 5 & 6. Confirm Collection and Update State
+    window.confirmRelease = async function() {
+      const btn = document.getElementById('btn-confirm-release');
+      btn.innerHTML = '<div class="animate-spin h-5 w-5 border-2 border-white rounded-full mr-2 border-t-transparent"></div> Releasing...';
+      btn.disabled = true;
+
+      // Mock API call to update status
+      // UPDATE Logistics_Tracking SET current_status = 'CLOSED', depot_pickup_otp = NULL WHERE tracking_id = pendingReleaseTrackingId
+      
+      setTimeout(() => {
+        // Success flash
+        closeModal();
+        showSuccessToast();
+        document.getElementById('manual-otp').value = '';
+        
+        btn.innerHTML = '<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Confirm Collection & Release';
+        btn.disabled = false;
+        
+        // Antigravity stream will auto-trigger the client's phone update and refresh stats
+      }, 1000);
+    };
+
+    // UI Helpers
+    window.openModal = () => {
+      const modal = document.getElementById('verification-modal');
+      const content = document.getElementById('modal-content');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      // small delay to allow display block to apply before transition
+      setTimeout(() => {
+        content.classList.remove('translate-y-full');
+      }, 10);
+    };
+
+    window.closeModal = () => {
+      const modal = document.getElementById('verification-modal');
+      const content = document.getElementById('modal-content');
+      content.classList.add('translate-y-full');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }, 300);
+    };
+
+    window.showSuccessToast = () => {
+      const toast = document.getElementById('success-toast');
+      toast.classList.remove('-translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      
+      // Play sound
+      const audio = new Audio('/assets/sounds/payment-success.mp3');
+      audio.play().catch(e => console.log('Audio play blocked'));
+
+      setTimeout(() => {
+        toast.classList.add('-translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
+    };
+
+    window.logout = () => { window.location.href = '/login'; };
+
+    // Boot
+    initApp();
+  </script>
+</body>
+</html>

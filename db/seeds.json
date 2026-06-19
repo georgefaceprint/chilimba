@@ -1,0 +1,102 @@
+[
+  {
+    "product_id": "11111111-1111-1111-1111-111111111111",
+    "supplier_name": "Kariakoo Textiles & Wax",
+    "origin_country": "TANZANIA",
+    "title": "Premium Kitenge Wax Prints (Bale of 50 Pieces)",
+    "description": "High-quality, vibrant East African Kitenge wax fabric. Popular for tailoring chitenge outfits and dresses. 6 yards per piece.",
+    "price_zmw": 4500.00,
+    "weight_kg": 45.00,
+    "image_urls": ["https://images.unsplash.com/photo-1528313493806-538bc1dc3de4?w=500&q=80"]
+  },
+  {
+    "product_id": "22222222-2222-2222-2222-222222222222",
+    "supplier_name": "Dar Beauty Wholesale",
+    "origin_country": "TANZANIA",
+    "title": "Brazilian Hair Extensions (10 Bundle Pack)",
+    "description": "100% human hair bundles (18-24 inches). Fast-moving item for salons in Chingola and Chililabombwe.",
+    "price_zmw": 8500.00,
+    "weight_kg": 2.50,
+    "image_urls": ["https://images.unsplash.com/photo-1519725838575-cf07f8724d9c?w=500&q=80"]
+  },
+  {
+    "product_id": "33333333-3333-3333-3333-333333333333",
+    "supplier_name": "Msimbazi Ladies Fashion",
+    "origin_country": "TANZANIA",
+    "title": "Assorted Designer Handbags (Carton of 20)",
+    "description": "Mixed fashion handbags and purses for everyday use. High resale margin for cross-border traders.",
+    "price_zmw": 3200.00,
+    "weight_kg": 15.00,
+    "image_urls": ["https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=500&q=80"]
+  },
+  {
+    "product_id": "44444444-4444-4444-4444-444444444444",
+    "supplier_name": "Dar Bulk Traders Ltd",
+    "origin_country": "TANZANIA",
+    "title": "Non-Stick Kitchen Cookware Sets (10 Boxes)",
+    "description": "7-piece heavy duty non-stick pots and pans. A staple Chilimba item for household upgrades.",
+    "price_zmw": 6500.00,
+    "weight_kg": 35.00,
+    "image_urls": ["https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=500&q=80"]
+  },
+  {
+    "product_id": "55555555-5555-5555-5555-555555555555",
+    "supplier_name": "Kariakoo Footwear Hub",
+    "origin_country": "TANZANIA",
+    "title": "Women's Summer Sandals (Sack of 100 Pairs)",
+    "description": "Flat, comfortable casual sandals in assorted sizes and colors. Perfect for market stalls.",
+    "price_zmw": 4800.00,
+    "weight_kg": 25.00,
+    "image_urls": ["https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=500&q=80"]
+  },
+  {
+    "product_id": "66666666-6666-6666-6666-666666666666",
+    "supplier_name": "Tanzania Bedding Co.",
+    "origin_country": "TANZANIA",
+    "title": "Luxury Floral Duvet Sets (Bale of 15)",
+    "description": "Thick winter duvet blankets with matching pillowcases. High demand during the Zambian cold season.",
+    "price_zmw": 5200.00,
+    "weight_kg": 40.00,
+    "image_urls": ["https://images.unsplash.com/photo-1616627547584-bf28cee262db?w=500&q=80"]
+  },
+  {
+    "product_id": "77777777-7777-7777-7777-777777777777",
+    "supplier_name": "Dar Beauty Wholesale",
+    "origin_country": "TANZANIA",
+    "title": "Fragrance & Body Splash (Carton of 50)",
+    "description": "Popular vanilla and floral scented body splashes. Fast moving inventory for boutique owners.",
+    "price_zmw": 2500.00,
+    "weight_kg": 12.00,
+    "image_urls": ["https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500&q=80"]
+  },
+  {
+    "product_id": "88888888-8888-8888-8888-888888888888",
+    "supplier_name": "Msimbazi Ladies Fashion",
+    "origin_country": "TANZANIA",
+    "title": "Bridal Lace & Satin Fabrics (Wholesale Roll)",
+    "description": "Premium beaded lace and heavy satin rolls for wedding dresses and kitchen party outfits.",
+    "price_zmw": 7500.00,
+    "weight_kg": 18.00,
+    "image_urls": ["https://images.unsplash.com/photo-1605336155609-b7bce17805d2?w=500&q=80"]
+  },
+  {
+    "product_id": "99999999-9999-9999-9999-999999999999",
+    "supplier_name": "Kariakoo Baby Wares",
+    "origin_country": "TANZANIA",
+    "title": "Infant Clothing & Rompers (Bale of 150)",
+    "description": "Assorted baby clothes, onesies, and light jackets. High turnover item for female market traders.",
+    "price_zmw": 3800.00,
+    "weight_kg": 30.00,
+    "image_urls": ["https://images.unsplash.com/photo-1522771930-78848d92871d?w=500&q=80"]
+  },
+  {
+    "product_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "supplier_name": "Dar Bulk Traders Ltd",
+    "origin_country": "TANZANIA",
+    "title": "Electric Blenders & Kettles (Carton of 12)",
+    "description": "Affordable, durable kitchen electronics. Great margin for neighborhood reselling groups.",
+    "price_zmw": 3500.00,
+    "weight_kg": 20.00,
+    "image_urls": ["https://images.unsplash.com/photo-1585659722983-39cb8660a8b9?w=500&q=80"]
+  }
+]

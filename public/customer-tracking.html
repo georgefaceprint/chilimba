@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Tracking - Chilimba PWA</title>
+  <link rel="manifest" href="/manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-10">
+  
+  <div class="max-w-md mx-auto bg-white shadow-lg rounded-xl overflow-hidden p-6 font-sans">
+    <!-- Header Info -->
+    <div class="border-b pb-4 mb-6">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold text-gray-800" id="order-id">Order #CHIL-XXXXX</h2>
+        <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-semibold" id="origin-hub">Loading...</span>
+      </div>
+      <p class="text-sm text-gray-500 mt-1" id="product-title">Item: Loading...</p>
+    </div>
+
+    <!-- Vertical Progress Stepper -->
+    <div id="tracking-stepper" class="relative pl-8 space-y-8 before:absolute before:bottom-2 before:top-2 before:left-3 before:w-0.5 before:bg-gray-200">
+      
+      <!-- Stage 1 -->
+      <div class="relative" id="step-payment">
+        <div class="step-icon absolute -left-8 top-1 bg-gray-200 text-gray-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">1</div>
+        <div class="step-content opacity-50">
+          <h4 class="font-semibold text-sm text-gray-800">Payment Received</h4>
+          <p class="text-xs text-gray-500">Confirmed via Lenco Mobile Money</p>
+        </div>
+      </div>
+
+      <!-- Stage 2 -->
+      <div class="relative" id="step-dispatch">
+        <div class="step-icon absolute -left-8 top-1 bg-gray-200 text-gray-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">2</div>
+        <div class="step-content opacity-50">
+          <h4 class="font-semibold text-sm text-gray-800">Ready for Dispatch</h4>
+          <p class="text-xs text-gray-500">Packed and labeled by Supplier</p>
+        </div>
+      </div>
+
+      <!-- Stage 3 -->
+      <div class="relative" id="step-transit">
+        <div class="step-icon absolute -left-8 top-1 bg-gray-200 text-gray-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">3</div>
+        <div class="step-content opacity-50">
+          <h4 class="font-semibold text-sm text-gray-800">Loaded for Transit</h4>
+          <p class="text-xs text-gray-600 font-medium" id="transit-location">Location: En Route</p>
+          <span class="inline-block mt-1 text-[10px] bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Weekly Batch Truck</span>
+        </div>
+      </div>
+
+      <!-- Stage 4 -->
+      <div class="relative" id="step-depot">
+        <div class="step-icon absolute -left-8 top-1 bg-gray-200 text-gray-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">4</div>
+        <div class="step-content opacity-50">
+          <h4 class="font-semibold text-sm text-gray-800">Arrived at Depot</h4>
+          <p class="text-xs text-gray-500">Awaiting sorting at Depot</p>
+        </div>
+      </div>
+
+      <!-- Stage 5 -->
+      <div class="relative" id="step-closed">
+        <div class="step-icon absolute -left-8 top-1 bg-gray-200 text-gray-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">5</div>
+        <div class="step-content opacity-50">
+          <h4 class="font-semibold text-sm text-gray-800">Collected & Closed</h4>
+          <p class="text-xs text-gray-500">Handed over to verified owner</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Dynamic Conditional Pickup Card -->
+    <div id="pickup-card" class="hidden mt-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-5 text-white text-center shadow-md">
+      <p class="text-xs uppercase tracking-wider font-semibold opacity-90">Your package is ready for collection!</p>
+      <h3 class="text-xl font-black mt-1" id="depot-name">DEPOT</h3>
+      <div id="otp-box" class="bg-white text-gray-900 rounded-lg py-3 px-6 my-4 inline-block font-mono text-2xl font-bold tracking-widest shadow-inner">
+        ------
+      </div>
+      <p class="text-xs opacity-75">Show this unique OTP code to the depot runner to claim your goods.</p>
+    </div>
+  </div>
+
+  <script type="module">
+    // Mock Antigravity Store
+    class AntigravityStore {
+      constructor(config) { this.endpoint = config.endpoint; }
+      table(name) { return this; }
+      filter(conditions) { return this; }
+      onUpdate(callback) {
+        // Mock websocket firing an update after 2 seconds to show ARRIVED_AT_DEPOT
+        setTimeout(() => {
+          callback({
+            order_id: 'ord_123',
+            current_status: 'ARRIVED_AT_DEPOT',
+            current_location: 'Kasumbalesa Hub Sorting Center',
+            depot_town: 'KASUMBALESA',
+            depot_pickup_otp: '782914'
+          });
+        }, 2000);
+      }
+    }
+    const store = new AntigravityStore({ endpoint: 'wss://api.your-chilimba-pwa.app/sync' });
+
+    // Status map defining index of statuses
+    const statusMap = {
+      'PAYMENT_RECEIVED': 0,
+      'READY_FOR_DISPATCH': 1,
+      'COLLECTED_BY_RUNNER': 1,
+      'LOADED_FOR_TRANSIT': 2,
+      'ARRIVED_AT_DEPOT': 3,
+      'CLOSED': 4
+    };
+
+    const steps = [
+      document.getElementById('step-payment'),
+      document.getElementById('step-dispatch'),
+      document.getElementById('step-transit'),
+      document.getElementById('step-depot'),
+      document.getElementById('step-closed')
+    ];
+
+    function updateStepperUI(currentStatus, location) {
+      const activeIndex = statusMap[currentStatus];
+      if (activeIndex === undefined) return;
+
+      steps.forEach((step, index) => {
+        const icon = step.querySelector('.step-icon');
+        const content = step.querySelector('.step-content');
+        
+        // Reset classes
+        icon.className = "step-icon absolute -left-8 top-1 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10";
+        content.className = "step-content";
+
+        if (index < activeIndex) {
+          // Completed
+          icon.classList.add('bg-green-500', 'text-white');
+          icon.innerHTML = '✓';
+          content.classList.remove('opacity-50');
+        } else if (index === activeIndex) {
+          // Current active
+          icon.classList.add('bg-blue-600', 'text-white', 'animate-pulse');
+          icon.innerHTML = (index + 1).toString();
+          content.classList.remove('opacity-50');
+          
+          const title = content.querySelector('h4');
+          title.classList.remove('text-gray-800');
+          title.classList.add('text-blue-600');
+        } else {
+          // Pending
+          icon.classList.add('bg-gray-200', 'text-gray-400');
+          icon.innerHTML = (index + 1).toString();
+          content.classList.add('opacity-50');
+          
+          const title = content.querySelector('h4');
+          title.classList.remove('text-blue-600');
+          title.classList.add('text-gray-800');
+        }
+      });
+
+      if (currentStatus === 'LOADED_FOR_TRANSIT') {
+        document.getElementById('transit-location').innerText = `Location: ${location}`;
+      }
+    }
+
+    function subscribeToTracking(orderId) {
+      // Setup initial view
+      document.getElementById('order-id').innerText = `Order #CHIL-98217`;
+      document.getElementById('origin-hub').innerText = `Tanzania Hub`;
+      document.getElementById('product-title').innerText = `Item: 30-Piece Ceramic Dinnerware Set`;
+      updateStepperUI('LOADED_FOR_TRANSIT', 'Cleared Tunduma Border Post');
+
+      // Bind reactive store
+      store.table('Logistics_Tracking').filter({ order_id: orderId }).onUpdate((data) => {
+        updateStepperUI(data.current_status, data.current_location);
+        
+        if (data.current_status === 'ARRIVED_AT_DEPOT') {
+          const card = document.getElementById('pickup-card');
+          card.classList.remove('hidden');
+          document.getElementById('depot-name').innerText = `${data.depot_town} DEPOT`;
+          document.getElementById('otp-box').innerText = `${data.depot_pickup_otp.slice(0,3)}-${data.depot_pickup_otp.slice(3,6)}`;
+        }
+      });
+    }
+
+    // Initialize for dummy order
+    subscribeToTracking('ord_123');
+
+  </script>
+</body>
+</html>

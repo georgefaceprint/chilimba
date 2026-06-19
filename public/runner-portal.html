@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Freight Runner Portal - Chilimba</title>
+  <link rel="manifest" href="/manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- HTML5 QR Code Scanner -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 pb-20 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="bg-gray-900 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+    <div>
+      <h1 class="text-xl font-bold">Transit Runner</h1>
+      <p class="text-xs text-gray-400">Driver ID: DRV-8821</p>
+    </div>
+    <span class="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">Active Route</span>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow p-4 flex flex-col space-y-6">
+    
+    <div class="bg-white p-5 rounded-2xl shadow-sm text-center border border-gray-200">
+      <h2 class="font-bold text-gray-800 mb-2">Scan Freight Barcode</h2>
+      <p class="text-xs text-gray-500 mb-4">Scan the package label at the border post or transit hub.</p>
+      
+      <!-- QR Scanner UI -->
+      <div id="reader" class="w-full bg-black rounded-lg overflow-hidden mb-4 border border-gray-300 aspect-square mx-auto max-w-sm"></div>
+      
+      <div class="flex space-x-2 max-w-sm mx-auto">
+        <input type="text" id="manual-ref" class="flex-grow border-2 border-gray-300 p-3 rounded-lg text-center font-mono font-bold uppercase focus:border-yellow-500 focus:outline-none" placeholder="CHIL-XXXXX">
+        <button onclick="lookupPackage(document.getElementById('manual-ref').value)" class="bg-gray-800 text-white px-4 font-bold rounded-lg hover:bg-gray-700">Find</button>
+      </div>
+    </div>
+
+    <!-- Package Detail Modal/Card (Hidden initially) -->
+    <div id="package-card" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 p-5 overflow-hidden transform transition-all duration-300 translate-y-4 opacity-0">
+      <div class="flex justify-between items-start mb-4 border-b border-gray-100 pb-4">
+        <div>
+          <span class="text-xs font-mono font-bold text-gray-500" id="pkg-ref">CHIL-98217</span>
+          <h4 class="font-bold text-gray-900 text-lg mt-1" id="pkg-title">30-Piece Ceramic Set</h4>
+        </div>
+      </div>
+      
+      <div class="mb-5">
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Current Location Update:</label>
+        <select id="transit-location" class="w-full border-2 border-gray-300 p-3 rounded-lg font-bold text-gray-700 focus:border-yellow-500 focus:outline-none bg-gray-50">
+          <option value="Tunduma Border Post">Tunduma Border Post</option>
+          <option value="Nakonde Weighbridge">Nakonde Weighbridge</option>
+          <option value="Mpika Checkpoint">Mpika Checkpoint</option>
+          <option value="Ndola Central Hub">Ndola Central Hub</option>
+        </select>
+      </div>
+
+      <button id="btn-transit" onclick="markInTransit()" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black text-lg shadow-sm hover:bg-yellow-400 active:scale-95 transition-all flex justify-center items-center">
+        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+        Log Transit Update
+      </button>
+    </div>
+
+  </main>
+
+  <script>
+    let activeRef = null;
+
+    // QR Init
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, (decodedText) => {
+      lookupPackage(decodedText);
+      html5QrCode.pause();
+      setTimeout(() => html5QrCode.resume(), 3000);
+    }).catch(err => {
+      document.getElementById('reader').innerHTML = '<div class="h-full flex items-center justify-center text-gray-400 bg-gray-900 p-4 text-sm">Camera Unavailable. Use Manual Entry.</div>';
+    });
+
+    function lookupPackage(ref) {
+      if(!ref) return;
+      activeRef = ref;
+      document.getElementById('pkg-ref').innerText = ref.toUpperCase();
+      
+      const card = document.getElementById('package-card');
+      card.classList.remove('hidden');
+      // small delay for transition
+      setTimeout(() => {
+        card.classList.remove('translate-y-4', 'opacity-0');
+      }, 50);
+      
+      document.getElementById('manual-ref').value = '';
+    }
+
+    function markInTransit() {
+      const btn = document.getElementById('btn-transit');
+      const loc = document.getElementById('transit-location').value;
+      
+      btn.innerHTML = '<div class="animate-spin h-5 w-5 border-2 border-black rounded-full mr-2 border-t-transparent"></div> Updating...';
+      btn.disabled = true;
+
+      // Mock API call to /tracking/border
+      setTimeout(() => {
+        btn.innerHTML = '✅ Location Logged';
+        btn.classList.remove('bg-yellow-500');
+        btn.classList.add('bg-green-500', 'text-white');
+        
+        const audio = new Audio('/assets/sounds/payment-success.mp3');
+        audio.play().catch(e => {});
+
+        setTimeout(() => {
+           // Reset
+           const card = document.getElementById('package-card');
+           card.classList.add('translate-y-4', 'opacity-0');
+           setTimeout(() => {
+             card.classList.add('hidden');
+             btn.innerHTML = '<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg> Log Transit Update';
+             btn.classList.remove('bg-green-500', 'text-white');
+             btn.classList.add('bg-yellow-500', 'text-black');
+             btn.disabled = false;
+           }, 300);
+        }, 2000);
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
