@@ -14,3 +14,12 @@ async function requireAuth() {
     window.location.href = '/signup.html';
   }
 }
+
+window.logoutUser = async function() {
+  try {
+    await fetch('/api/v1/auth/logout', { method: 'POST' });
+    window.location.href = '/signup.html';
+  } catch (err) {
+    console.error('Logout failed', err);
+  }
+};
