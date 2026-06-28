@@ -126,9 +126,10 @@ async function handleGoogleAuthCallback(req, res) {
  */
 async function initiateWhatsAppVerification(req, res) {
   try {
-    const { userId, phoneNumber } = req.body;
+    let { userId, phoneNumber } = req.body;
+    phoneNumber = (phoneNumber || '').replace(/\s+/g, '');
     
-    if (!phoneNumber || !phoneNumber.startsWith('+260')) {
+    if (!phoneNumber || !phoneNumber.startsWith('+')) {
       // For testing, allowing any number. In prod, enforce +260
       // return res.status(400).json({ success: false, error: 'Valid Zambian WhatsApp number required (+260...).' });
     }
@@ -139,6 +140,23 @@ async function initiateWhatsAppVerification(req, res) {
     
     if (!snapshot.empty && snapshot.docs[0].id !== userId && !userId.startsWith('temp_')) {
       return res.status(409).json({ success: false, error: 'This phone number is already linked to another account.' });
+    }
+
+    // HARDCODED OVERRIDE: Test Accounts
+    if (phoneNumber === '+255719594633' || phoneNumber === '+260972879100') {
+      const otpCode = '097287';
+      const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      await db.collection('otps').doc(phoneNumber).set({
+        user_id: userId,
+        phone_number: phoneNumber,
+        code: otpCode,
+        expires: expiresAt
+      });
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Test account ready.',
+        test_otp: otpCode 
+      });
     }
 
     // Generate secure 6-digit code

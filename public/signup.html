@@ -164,9 +164,9 @@
       
       // Look at userObj.role if it exists, otherwise use phone rules for demo
       let role = userObj.role || 'BUYER';
-      if(!userObj.role) {
-         if(userObj.phone_number?.includes('255')) role = 'AGENT';
-         if(userObj.phone_number?.includes('8821')) role = 'COURIER';
+      if(!userObj.role || userObj.role === 'BUYER') { // Only override if they don't have a strict DB role yet
+         if(userObj.phone_number?.includes('255719594633')) role = 'AGENT';
+         if(userObj.phone_number?.includes('260972879100')) role = 'COURIER';
       }
       
       switch(role) {
