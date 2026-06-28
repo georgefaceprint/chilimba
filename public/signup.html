@@ -120,7 +120,8 @@
         // Fallback for testing if WhatsApp API is missing
         if(data.test_otp) {
           console.warn("Using Fallback OTP:", data.test_otp);
-          alert(`TEST MODE: WhatsApp API is missing.\nYour code is: ${data.test_otp}`);
+          document.getElementById('lbl-otp-msg').innerHTML = `<span class="text-red-500 font-bold">WhatsApp API Error (Token Expired?)</span><br>Test Code: <b>${data.test_otp}</b>`;
+          document.getElementById('wa-otp').value = data.test_otp;
         }
       } catch (err) {
         alert(err.message);
