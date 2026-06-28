@@ -116,6 +116,12 @@
         document.getElementById('auth-step-1').classList.add('hidden');
         document.getElementById('auth-step-2').classList.remove('hidden');
         document.getElementById('lbl-otp-msg').innerText = `We sent a code to ${phone}`;
+        
+        // Fallback for testing if WhatsApp API is missing
+        if(data.test_otp) {
+          console.warn("Using Fallback OTP:", data.test_otp);
+          alert(`TEST MODE: WhatsApp API is missing.\nYour code is: ${data.test_otp}`);
+        }
       } catch (err) {
         alert(err.message);
       } finally {
