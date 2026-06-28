@@ -193,11 +193,11 @@ async function verifyWhatsAppOTP(req, res) {
     }
 
     // OTP is valid. 
-    // If they used a temp ID (didn't do Google Auth), we need to create a Firestore user doc for them
+    // If they used a temp ID (didn't do Google Auth) or sent no ID, we need to create/fetch a Firestore user doc for them
     let finalUserId = userId;
     let updatedUser = {};
     
-    if (userId && userId.startsWith('temp_')) {
+    if (!userId || userId.startsWith('temp_')) {
       // Check if user already exists by phone
       const usersSnap = await db.collection('users').where('phone_number', '==', userProvidedPhone).limit(1).get();
       if (!usersSnap.empty) {
