@@ -143,6 +143,22 @@ async function initiateWhatsAppVerification(req, res) {
     }
 
     // HARDCODED OVERRIDE: Test Accounts
+    if (phoneNumber === '+260768488494') {
+      const otpCode = '123456';
+      const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      await db.collection('otps').doc(phoneNumber).set({
+        user_id: userId,
+        phone_number: phoneNumber,
+        code: otpCode,
+        expires: expiresAt
+      });
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Test account ready.',
+        test_otp: otpCode 
+      });
+    }
+
     if (phoneNumber === '+255719594633' || phoneNumber === '+260972879100') {
       const otpCode = '097287';
       const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
