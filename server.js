@@ -21,9 +21,43 @@ app.use(cookieParser());
 // --- ROUTES ---
 
 // 1. Authentication Routes
-app.post('/api/v1/auth/google/callback', authController.handleGoogleAuthCallback);
-app.post('/api/v1/auth/whatsapp/initiate', authController.initiateWhatsAppVerification);
-app.post('/api/v1/auth/whatsapp/verify', authController.verifyWhatsAppOTP);
+
+// MOCK: Temporary bypass for Vercel testing without Firestore credentials
+app.post('/api/v1/auth/google/callback', (req, res) => {
+  // Simulate Google sending user data
+  res.json({
+    success: true,
+    action: 'REQUIRE_WHATSAPP_LINK',
+    userId: 'mock_google_123',
+    message: 'Account created. Please link your WhatsApp number to complete registration.'
+  });
+});
+
+// MOCK: Temporary bypass for Vercel testing without Firestore credentials
+app.post('/api/v1/auth/whatsapp/initiate', (req, res) => {
+  const phone = req.body.phoneNumber || '';
+  const testOtp = '123456';
+  // Simulate network delay
+  setTimeout(() => {
+    res.json({ success: true, message: 'Mock verification sent', test_otp: testOtp });
+  }, 1000);
+});
+
+app.post('/api/v1/auth/whatsapp/verify', (req, res) => {
+  const { inputOtp, userProvidedPhone } = req.body;
+  if(inputOtp === '123456') {
+    // Generate a fake user payload based on phone rules
+    let mockRole = 'BUYER';
+    if(userProvidedPhone.includes('255')) mockRole = 'AGENT';
+    if(userProvidedPhone.includes('8821')) mockRole = 'COURIER';
+    
+    const mockUser = { user_id: 'mock_123', phone_number: userProvidedPhone, role: mockRole };
+    res.cookie('auth_token', 'mock_token', { httpOnly: true });
+    res.json({ success: true, user: mockUser, token: 'mock_token' });
+  } else {
+    res.status(400).json({ success: false, error: 'Invalid verification code.' });
+  }
+});
 
 app.get('/api/v1/auth/me', (req, res) => {
   const token = req.cookies.auth_token;
