@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin - Chilimba</title>
+  <meta name="theme-color" content="#111827">
+  <link href="/assets/css/tailwind.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+  </style>
+</head>
+<body class="text-gray-900 flex h-[100dvh] overflow-hidden">
+
+  <!-- Sidebar (Desktop) -->
+  <aside class="w-64 bg-gray-900 text-white flex-col hidden md:flex h-full shadow-2xl z-50">
+    <div class="p-6 border-b border-gray-800">
+      <h1 class="text-2xl font-black tracking-tighter text-white flex items-center gap-2">
+        <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+        Chilimba<span class="text-green-500">HQ</span>
+      </h1>
+      <p class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-1">Super Admin Console</p>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+      <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 bg-gray-800 text-white rounded-xl font-bold transition-colors text-left btn-press">
+        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+        Operations Overview
+      </button>
+      <button onclick="switchView('staff')" id="nav-staff" class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl font-bold transition-colors text-left btn-press">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        Staff & Roles
+      </button>
+    </nav>
+
+    <div class="p-4 border-t border-gray-800">
+      <div class="flex items-center gap-3 px-2 py-2 cursor-pointer" onclick="window.location.href='/signup.html'">
+        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center font-black text-white shadow-lg">AD</div>
+        <div>
+          <p class="text-sm font-bold text-white leading-tight">Master Admin</p>
+          <p class="text-xs text-red-400 font-bold hover:text-red-300">Sign Out</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile Header -->
+  <header class="md:hidden bg-gray-900 text-white p-4 shadow-lg flex justify-between items-center w-full absolute top-0 z-40">
+    <h1 class="text-xl font-black tracking-tighter text-white flex items-center gap-2">
+      Chilimba<span class="text-green-500">HQ</span>
+    </h1>
+    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="p-2 bg-gray-800 rounded-lg">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
+  </header>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden absolute top-[68px] left-0 w-full bg-gray-900 shadow-2xl z-40 border-t border-gray-800 p-4 space-y-2 md:hidden">
+    <button onclick="switchView('dashboard'); document.getElementById('mobile-menu').classList.add('hidden')" class="w-full text-left px-4 py-3 bg-gray-800 text-white rounded-xl font-bold">Operations Overview</button>
+    <button onclick="switchView('staff'); document.getElementById('mobile-menu').classList.add('hidden')" class="w-full text-left px-4 py-3 text-gray-300 font-bold hover:text-white">Staff & Roles</button>
+    <button onclick="window.location.href='/signup.html'" class="w-full text-left px-4 py-3 text-red-400 font-bold mt-4 border-t border-gray-800">Sign Out</button>
+  </div>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 h-full overflow-y-auto pt-[80px] pb-[80px] md:pt-0 md:pb-0 relative bg-gray-100">
+    
+    <!-- VIEW: DASHBOARD -->
+    <div id="view-dashboard" class="p-4 md:p-8 max-w-6xl mx-auto block">
+      <div class="flex justify-between items-end mb-8">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Platform Operations</h2>
+          <p class="text-xs md:text-sm text-gray-500 font-medium mt-1">Real-time overview of the Chilimba network.</p>
+        </div>
+        <button class="bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-lg font-bold text-xs shadow-sm flex items-center gap-1 btn-press">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          <span class="hidden md:inline">Refresh Data</span>
+        </button>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
+        <div class="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+          <p class="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Active Groups</p>
+          <p class="text-2xl md:text-3xl font-black text-gray-900">142</p>
+          <p class="text-[10px] md:text-xs font-bold text-green-500 mt-1 flex items-center gap-1"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg> +12 this week</p>
+        </div>
+        <div class="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+          <p class="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Total Users</p>
+          <p class="text-2xl md:text-3xl font-black text-gray-900">4,892</p>
+          <p class="text-[10px] md:text-xs font-bold text-green-500 mt-1 flex items-center gap-1"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg> +304 this week</p>
+        </div>
+        <div class="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+          <p class="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Pending Dispatches</p>
+          <p class="text-2xl md:text-3xl font-black text-orange-500">89</p>
+          <p class="text-[10px] md:text-xs font-bold text-orange-400 mt-1">Awaiting Dropoff</p>
+        </div>
+        <div class="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-green-500">
+          <p class="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Total Revenue</p>
+          <p class="text-2xl md:text-3xl font-black text-green-700">K412.5k</p>
+          <p class="text-[10px] md:text-xs font-bold text-gray-400 mt-1">ZMW Settled</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 md:p-6 mb-8">
+        <h3 class="text-lg font-black text-gray-900 mb-4">Live Logistics Map (Mock)</h3>
+        <div class="w-full h-48 md:h-64 bg-gray-50 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
+          <p class="font-bold text-gray-400 text-sm text-center px-4">[ Map Visualization of Dar -> Nakonde -> Inland ]</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: STAFF & ROLES -->
+    <div id="view-staff" class="p-4 md:p-8 max-w-6xl mx-auto hidden">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Staff & Roles</h2>
+          <p class="text-xs md:text-sm text-gray-500 font-medium mt-1">Manage credentials for Sourcing Agents and Couriers.</p>
+        </div>
+        <button onclick="document.getElementById('new-staff-modal').classList.remove('hidden')" class="bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 btn-press transition-colors w-full md:w-auto">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+          Add Staff Member
+        </button>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-left whitespace-nowrap">
+            <thead>
+              <tr class="text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 bg-gray-50">
+                <th class="p-4 pl-6">User</th>
+                <th class="p-4">Phone (WhatsApp)</th>
+                <th class="p-4">Role</th>
+                <th class="p-4">Territory</th>
+                <th class="p-4 text-right pr-6">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              <!-- Staff 1 -->
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="p-4 pl-6">
+                  <div class="flex items-center gap-3">
+                    <img src="https://ui-avatars.com/api/?name=Freda&background=16a34a&color=fff" class="w-9 h-9 rounded-full shadow-sm">
+                    <div>
+                      <p class="font-bold text-gray-900 text-sm">Freda M.</p>
+                      <p class="text-[10px] text-gray-500 font-bold uppercase">Joined: May 2026</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-4 text-sm font-bold text-gray-700">+255 788 123 456</td>
+                <td class="p-4">
+                  <span class="bg-purple-100 text-purple-800 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">Agent</span>
+                </td>
+                <td class="p-4 text-sm font-bold text-gray-600">Dar es Salaam</td>
+                <td class="p-4 pr-6 text-right">
+                  <button class="text-blue-600 hover:text-blue-800 text-sm font-bold btn-press mr-3">Edit</button>
+                  <button class="text-red-500 hover:text-red-700 text-sm font-bold btn-press">Revoke</button>
+                </td>
+              </tr>
+              <!-- Staff 2 -->
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="p-4 pl-6">
+                  <div class="flex items-center gap-3">
+                    <img src="https://ui-avatars.com/api/?name=Brian&background=ea580c&color=fff" class="w-9 h-9 rounded-full shadow-sm">
+                    <div>
+                      <p class="font-bold text-gray-900 text-sm">Brian K.</p>
+                      <p class="text-[10px] text-gray-500 font-bold uppercase">Joined: Jun 2026</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-4 text-sm font-bold text-gray-700">+260 977 111 222</td>
+                <td class="p-4">
+                  <span class="bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">Courier</span>
+                </td>
+                <td class="p-4 text-sm font-bold text-gray-600">Nakonde Route</td>
+                <td class="p-4 pr-6 text-right">
+                  <button class="text-blue-600 hover:text-blue-800 text-sm font-bold btn-press mr-3">Edit</button>
+                  <button class="text-red-500 hover:text-red-700 text-sm font-bold btn-press">Revoke</button>
+                </td>
+              </tr>
+              <!-- Buyer (Example of normal user) -->
+              <tr class="hover:bg-gray-50 transition-colors opacity-70">
+                <td class="p-4 pl-6">
+                  <div class="flex items-center gap-3">
+                    <img src="https://ui-avatars.com/api/?name=Cindy&background=e5e7eb&color=6b7280" class="w-9 h-9 rounded-full shadow-sm">
+                    <div>
+                      <p class="font-bold text-gray-900 text-sm">Cindy</p>
+                      <p class="text-[10px] text-gray-500 font-bold uppercase">Joined: Today</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-4 text-sm font-bold text-gray-700">+260 966 000 000</td>
+                <td class="p-4">
+                  <span class="bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">Buyer</span>
+                </td>
+                <td class="p-4 text-sm font-bold text-gray-400">N/A</td>
+                <td class="p-4 pr-6 text-right">
+                  <button class="bg-gray-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold btn-press">Upgrade Role</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- NEW STAFF MODAL -->
+  <div id="new-staff-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden" id="new-staff-content">
+      <div class="p-6">
+        <h3 class="font-black text-2xl text-gray-900 mb-1">Upgrade User to Staff</h3>
+        <p class="text-sm text-gray-500 font-medium mb-6">Assign a new role to an existing user. They will continue to log in via their WhatsApp number.</p>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-black uppercase text-gray-700 mb-1.5">Registered Phone Number</label>
+            <input type="tel" id="ns-phone" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="+260...">
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase text-gray-700 mb-1.5">Assign Role</label>
+            <select id="ns-role" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
+              <option value="AGENT">Sourcing Agent (Agent Portal)</option>
+              <option value="COURIER">Logistics Courier (Scanner App)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase text-gray-700 mb-1.5">Territory (Optional)</label>
+            <input type="text" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="e.g. Lusaka Inland">
+          </div>
+        </div>
+        
+        <button onclick="saveNewStaff()" class="w-full bg-gray-900 text-white py-4 mt-6 rounded-xl font-black text-lg shadow-md hover:bg-black transition-colors btn-press">Grant Permissions</button>
+      </div>
+      <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
+        <button onclick="document.getElementById('new-staff-modal').classList.add('hidden')" class="text-gray-500 text-sm font-bold hover:text-gray-800 btn-press">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchView(viewId) {
+      document.getElementById('view-dashboard').classList.remove('block');
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-staff').classList.remove('block');
+      document.getElementById('view-staff').classList.add('hidden');
+      
+      document.getElementById('nav-dashboard').classList.remove('bg-gray-800', 'text-white');
+      document.getElementById('nav-dashboard').classList.add('text-gray-400');
+      document.getElementById('nav-staff').classList.remove('bg-gray-800', 'text-white');
+      document.getElementById('nav-staff').classList.add('text-gray-400');
+
+      document.getElementById(`view-${viewId}`).classList.remove('hidden');
+      document.getElementById(`view-${viewId}`).classList.add('block');
+      document.getElementById(`nav-${viewId}`).classList.remove('text-gray-400');
+      document.getElementById(`nav-${viewId}`).classList.add('bg-gray-800', 'text-white');
+    }
+
+    function saveNewStaff() {
+      alert("Role upgraded successfully! Next time they log in via WhatsApp, they will be routed to their new portal.");
+      document.getElementById('new-staff-modal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

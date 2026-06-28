@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Personal Cart - Chilimba</title>
+  <meta name="theme-color" content="#15803d">
+  <link rel="manifest" href="/manifest.json">
+  <link href="/assets/css/tailwind.css" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { 
+      font-family: 'Inter', sans-serif; 
+      -webkit-tap-highlight-color: transparent;
+      background-color: #f8fafc;
+    }
+    .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+  </style>
+</head>
+<body class="text-gray-900 flex flex-col min-h-screen relative pb-[80px]">
+
+  <!-- TOP HEADER -->
+  <header class="bg-white text-gray-900 px-4 py-4 sticky top-0 z-50 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-b-2xl flex justify-between items-center border-b border-gray-100">
+    <div class="flex items-center gap-3">
+      <button onclick="window.history.back()" class="p-2 bg-gray-50 rounded-full btn-press border border-gray-100">
+        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+      </button>
+      <h1 class="text-xl font-black tracking-tight">My Cart</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="openAuthModal()" id="btn-login" class="bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm btn-press border border-orange-100">Sign In</button>
+      <div id="user-profile" class="hidden items-center">
+        <img src="https://ui-avatars.com/api/?name=User&background=15803d&color=fff" id="profile-img" class="w-9 h-9 rounded-full shadow-sm">
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 w-full max-w-md mx-auto px-4 pt-6 pb-6">
+    
+    <!-- Pickup Station -->
+    <div class="bg-white border border-gray-100 rounded-2xl p-4 mb-6 shadow-sm">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-black text-gray-900 text-sm uppercase tracking-wider">Delivery Destination</h3>
+        <button onclick="document.getElementById('cart-warehouse-select').classList.toggle('hidden')" class="text-xs text-green-600 font-bold hover:underline btn-press">Change</button>
+      </div>
+      <div class="bg-gray-50 p-3 rounded-xl flex items-start border border-gray-100">
+        <svg class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <div>
+          <p class="text-sm font-bold text-gray-900" id="cart-selected-warehouse">Lusaka Central Depot</p>
+          <p class="text-xs text-gray-500 font-medium">Standard Cross-Border Transit</p>
+        </div>
+      </div>
+      <select id="cart-warehouse-select" onchange="updateDestination(this)" class="hidden w-full mt-3 border-2 border-gray-200 bg-white p-3 rounded-lg text-sm font-bold focus:border-green-500 focus:outline-none">
+        <option value="Nakonde Border Post" data-rate="0">Nakonde Border (Pick-up) - K0/kg</option>
+        <option value="Lusaka Central Depot" data-rate="20" selected>Lusaka Central Depot - K20/kg</option>
+        <option value="Ndola Warehouse" data-rate="15">Ndola Warehouse - K15/kg</option>
+        <option value="Kitwe Hub" data-rate="18">Kitwe Hub - K18/kg</option>
+        <option value="Chingola Branch" data-rate="19">Chingola Branch - K19/kg</option>
+        <option value="Chililabombwe Station" data-rate="20">Chililabombwe Station - K20/kg</option>
+        <option value="Kasumbalesa Post" data-rate="25">Kasumbalesa Post - K25/kg</option>
+      </select>
+    </div>
+
+    <!-- Cart Items Container -->
+    <div id="cart-items" class="space-y-3 mb-6">
+      <!-- Injected via JS -->
+    </div>
+
+    <!-- Logistics Calculator -->
+    <div id="order-summary" class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-6 hidden">
+      <h3 class="font-black text-gray-900 mb-4 text-sm uppercase tracking-wider border-b border-gray-100 pb-2">Order Summary</h3>
+      
+      <div class="space-y-2 mb-4">
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600">
+          <span>Total Weight:</span>
+          <span id="total-weight" class="font-bold text-gray-900">0.0 kg</span>
+        </div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600">
+          <span>Intl Freight (TZ -> Nakonde):</span>
+          <span id="intl-freight" class="font-bold text-gray-900">K0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600">
+          <span>Local Transit:</span>
+          <span id="local-freight" class="font-bold text-gray-900">K0.00</span>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-100 pt-3 space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-600 font-bold text-sm">Total Goods</span>
+          <span id="goods-total" class="font-black text-gray-900">K0.00</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-600 font-bold text-sm">Total Logistics</span>
+          <span id="logistics-total" class="font-black text-gray-900">K0.00</span>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-green-50 p-4 rounded-xl border border-green-100 flex justify-between items-center">
+        <span class="text-green-900 font-black text-lg">Grand Total</span>
+        <span id="grand-total" class="font-black text-2xl text-green-700">K0.00</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div id="checkout-actions" class="mb-6 hidden">
+      <button onclick="checkoutCart()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-xl font-black text-lg shadow-lg btn-press transition-colors flex items-center justify-center gap-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        Secure Checkout
+      </button>
+    </div>
+  </main>
+
+  <!-- CHECKOUT MODAL -->
+  <div id="checkout-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform" id="checkout-content">
+      <div class="p-6 text-center">
+        <div class="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        </div>
+        <h3 class="font-black text-2xl text-gray-900 mb-2">Secure Checkout</h3>
+        <p class="text-sm text-gray-500 font-medium mb-6">Confirm your mobile money number for this personal order.</p>
+        
+        <div class="mb-5 text-left">
+          <label class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-2">Mobile Money Number</label>
+          <input type="tel" id="momo-number" placeholder="+260..." class="w-full bg-gray-50 border-2 border-gray-200 p-3.5 rounded-xl font-bold text-lg tracking-wide focus:border-green-500 focus:bg-white focus:outline-none transition-colors">
+        </div>
+        
+        <button id="btn-pay" onclick="processPayment()" class="w-full bg-green-700 text-white py-3.5 rounded-xl font-black text-lg shadow-md hover:bg-green-800 transition-colors btn-press">Pay Now</button>
+      </div>
+      <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
+        <button onclick="closeCheckoutModal()" class="text-gray-500 text-sm font-bold hover:text-gray-800 btn-press">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let activeUser = null;
+    let currentGrandTotal = 0;
+    
+    // Constants
+    const INTL_FREIGHT_RATE = 20; // 20 ZMW per KG
+    let localFreightRate = 20; // Default Lusaka rate
+
+    let personalCart = [];
+
+    async function loadCartData() {
+      // Check session
+      try {
+        const authRes = await fetch(`${API_BASE}/api/v1/auth/me`);
+        const authData = await authRes.json();
+        
+        if (authData.authenticated) {
+          activeUser = authData.user;
+          document.getElementById('btn-login').classList.add('hidden');
+          document.getElementById('user-profile').classList.remove('hidden');
+          document.getElementById('user-profile').classList.add('flex');
+          if(activeUser.avatar) document.getElementById('profile-img').src = activeUser.avatar;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      // Load from LocalStorage
+      personalCart = JSON.parse(localStorage.getItem('personalCart') || '[]');
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items');
+      container.innerHTML = '';
+      
+      if(personalCart.length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm"><div class="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div><h3 class="font-bold text-lg text-gray-900 mb-1">Your cart is empty</h3><p class="text-sm text-gray-500 mb-4">Looks like you haven't added anything to your personal cart yet.</p><button onclick="window.location.href='/'" class="bg-green-700 text-white font-bold py-2 px-6 rounded-lg btn-press">Start Shopping</button></div>`;
+        document.getElementById('order-summary').classList.add('hidden');
+        document.getElementById('checkout-actions').classList.add('hidden');
+        return;
+      }
+
+      document.getElementById('order-summary').classList.remove('hidden');
+      document.getElementById('checkout-actions').classList.remove('hidden');
+      
+      personalCart.forEach((item, index) => {
+        const weight = item.weight || 1;
+        const isLocal = item.title.toLowerCase().includes('local') || item.is_local_stock;
+        
+        const badge = isLocal
+          ? `<span class="text-[9px] font-black uppercase tracking-wider text-green-700 bg-green-100 px-2 py-0.5 rounded shadow-sm flex items-center gap-1 w-max"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Local</span>`
+          : `<span class="text-[9px] font-black uppercase tracking-wider text-orange-700 bg-orange-100 px-2 py-0.5 rounded shadow-sm flex items-center gap-1 w-max"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Imported</span>`;
+
+        container.innerHTML += `
+          <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex gap-3 relative">
+            <div class="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <img src="${item.image_url || 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?w=200&q=80'}" class="w-full h-full object-contain mix-blend-multiply">
+            </div>
+            <div class="flex-grow flex flex-col justify-between py-1">
+              <div>
+                <h4 class="font-bold text-sm text-gray-900 leading-tight line-clamp-2 mb-1">${item.title}</h4>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Qty: ${item.quantity}</span>
+                  ${badge}
+                </div>
+              </div>
+              <div class="flex justify-between items-end">
+                <div class="font-black text-green-700">K${(item.price_zmw * item.quantity).toFixed(2)}</div>
+                <button onclick="removeItem(${index})" class="w-6 h-6 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-100 btn-press">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      calculateTotals();
+    }
+
+    function removeItem(index) {
+      personalCart.splice(index, 1);
+      localStorage.setItem('personalCart', JSON.stringify(personalCart));
+      renderCart();
+    }
+
+    function updateDestination(selectElement) {
+      localFreightRate = parseFloat(selectElement.options[selectElement.selectedIndex].dataset.rate);
+      document.getElementById('cart-selected-warehouse').innerText = selectElement.options[selectElement.selectedIndex].text.split(' -')[0];
+      selectElement.classList.add('hidden');
+      calculateTotals();
+    }
+
+    function calculateTotals() {
+      let totalWeight = 0;
+      let intlWeight = 0;
+      let totalGoods = 0;
+
+      personalCart.forEach(item => {
+        const weight = item.weight || 1 * item.quantity;
+        const isLocal = item.title.toLowerCase().includes('local') || item.is_local_stock;
+        const lineTotal = item.price_zmw * item.quantity;
+        
+        totalWeight += weight;
+        totalGoods += lineTotal;
+        if (!isLocal) {
+          intlWeight += weight;
+        }
+      });
+
+      const intlFreight = intlWeight * INTL_FREIGHT_RATE;
+      const localFreight = totalWeight * localFreightRate;
+      const totalLogistics = intlFreight + localFreight;
+      currentGrandTotal = totalGoods + totalLogistics;
+
+      document.getElementById('total-weight').innerText = `${totalWeight.toFixed(2)} kg`;
+      document.getElementById('intl-freight').innerText = `K${intlFreight.toFixed(2)}`;
+      document.getElementById('local-freight').innerText = `K${localFreight.toFixed(2)}`;
+      document.getElementById('goods-total').innerText = `K${totalGoods.toFixed(2)}`;
+      document.getElementById('logistics-total').innerText = `K${totalLogistics.toFixed(2)}`;
+      document.getElementById('grand-total').innerText = `K${currentGrandTotal.toFixed(2)}`;
+    }
+
+    function checkoutCart() {
+      if (!activeUser) {
+        alert("Please sign in to checkout.");
+        window.location.href = '/signup.html';
+        return;
+      }
+      document.getElementById('checkout-modal').classList.remove('hidden');
+      document.getElementById('checkout-modal').classList.add('flex');
+      setTimeout(() => document.getElementById('checkout-content').classList.remove('scale-95'), 10);
+      document.getElementById('momo-number').value = activeUser?.phone || '';
+    }
+    
+    function closeCheckoutModal() {
+      document.getElementById('checkout-content').classList.add('scale-95');
+      setTimeout(() => {
+        document.getElementById('checkout-modal').classList.add('hidden');
+        document.getElementById('checkout-modal').classList.remove('flex');
+      }, 200);
+    }
+
+    async function processPayment() {
+      const phone = document.getElementById('momo-number').value.trim();
+      if (!phone) return alert("Please enter a valid mobile money number.");
+      
+      const btn = document.getElementById('btn-pay');
+      btn.innerText = 'Processing...';
+      btn.disabled = true;
+      
+      try {
+        const res = await fetch('/api/v1/payments/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: currentGrandTotal,
+            currency: 'ZMW',
+            phone_number: phone,
+            provider: 'MTN',
+            customer_name: activeUser?.name || 'Personal Buyer',
+            group_id: 'PERSONAL_ORDER' // Differentiates from group cart
+          })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+          alert('✅ Payment initiated! Please check your phone for the mobile money prompt.');
+          // Clear cart on success
+          localStorage.removeItem('personalCart');
+          window.location.href = '/customer-tracking.html?orderId=PERS_ORDER_' + Math.floor(Math.random()*10000);
+        } else {
+          alert('Payment failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Payment request failed. ' + err.message);
+      } finally {
+        btn.innerText = 'Pay Now';
+        btn.disabled = false;
+        closeCheckoutModal();
+      }
+    }
+
+    function openAuthModal() {
+      window.location.href = '/signup.html';
+    }
+
+    // Init
+    loadCartData();
+  </script>
+</body>
+</html>

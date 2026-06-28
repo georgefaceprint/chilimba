@@ -1,28 +1,21 @@
 {
-  "short_name": "ChilimbaApp",
-  "name": "Chilimba Cross-Border Group Buying PWA",
-  "description": "Pool funds safely, buy verified goods from SA & TZ, and track deliveries to the Copperbelt.",
+  "name": "Chilimba",
+  "short_name": "Chilimba",
+  "description": "Cross-Border Wholesale for Zambia and Tanzania",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#15803d",
   "icons": [
     {
-      "src": "/assets/icons/icon-192.png",
-      "type": "image/png",
+      "src": "https://ui-avatars.com/api/?name=Chilimba&background=15803d&color=fff&size=192",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "/assets/icons/icon-512.png",
-      "type": "image/png",
+      "src": "https://ui-avatars.com/api/?name=Chilimba&background=15803d&color=fff&size=512",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
-  ],
-  "start_url": "/dashboard/tracking",
-  "background_color": "#1E3A8A",
-  "theme_color": "#1E3A8A",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "categories": ["shopping", "finance"],
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  }
+  ]
 }

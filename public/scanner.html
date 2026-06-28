@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chilimba Logistics Scanner</title>
+  <meta name="theme-color" content="#1E3A8A">
+  <link href="/assets/css/tailwind.css" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center z-10 relative">
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center font-bold">L</div>
+      <h1 class="text-xl font-bold tracking-tight">Logistics Hub</h1>
+    </div>
+    <div id="user-profile" class="flex items-center space-x-2">
+      <img src="https://ui-avatars.com/api/?name=Staff&background=random" class="w-8 h-8 rounded-full border border-white">
+      <span class="text-sm font-semibold hidden sm:inline" id="profile-name">Nakonde Staff</span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow flex flex-col items-center justify-center p-4">
+    
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      
+      <div class="p-6 text-center border-b border-gray-100">
+        <h2 class="text-2xl font-black text-gray-900 mb-1">Scan Package</h2>
+        <p class="text-sm text-gray-500">Center the QR code receipt in the camera</p>
+      </div>
+
+      <!-- QR Reader Container -->
+      <div id="reader" class="w-full bg-black aspect-square"></div>
+
+      <!-- Result Panel -->
+      <div class="p-6 bg-gray-50" id="result-panel">
+        <div class="flex flex-col items-center justify-center text-center">
+          <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-3" id="status-icon">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          </div>
+          <h3 class="font-bold text-gray-800" id="status-title">Awaiting Scan...</h3>
+          <p class="text-sm text-gray-500 mt-1" id="status-desc">System ready. Point camera at a QR code.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let html5QrcodeScanner;
+    let isProcessing = false;
+
+    // Initialize Scanner on load
+    document.addEventListener("DOMContentLoaded", () => {
+      html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: {width: 250, height: 250} },
+        /* verbose= */ false);
+      html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    });
+
+    async function onScanSuccess(decodedText, decodedResult) {
+      if(isProcessing) return; // Prevent double scans
+      isProcessing = true;
+      
+      // Update UI to Processing
+      document.getElementById('status-icon').className = 'w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-3 animate-pulse';
+      document.getElementById('status-icon').innerHTML = '<svg class="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+      document.getElementById('status-title').innerText = 'Processing...';
+      document.getElementById('status-desc').innerText = `ID: ${decodedText}`;
+
+      // Pause scanner while processing API call
+      html5QrcodeScanner.pause(true);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/tracking/scan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: decodedText,
+            location: 'Nakonde Border Warehouse',
+            scanned_by: 'Staff-Nakonde-01'
+          })
+        });
+        
+        const data = await res.json();
+        
+        if(!res.ok || !data.success) throw new Error(data.error || 'Failed to update tracking');
+
+        // Success UI
+        document.getElementById('status-icon').className = 'w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-3';
+        document.getElementById('status-icon').innerHTML = '<svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+        document.getElementById('status-title').innerText = `Status: ${data.new_status}`;
+        document.getElementById('status-desc').innerText = 'Database updated successfully.';
+        
+      } catch (err) {
+        // Error UI
+        document.getElementById('status-icon').className = 'w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-3';
+        document.getElementById('status-icon').innerHTML = '<svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+        document.getElementById('status-title').innerText = 'Scan Failed';
+        document.getElementById('status-desc').innerText = err.message;
+      } finally {
+        // Resume scanner after 3 seconds
+        setTimeout(() => {
+          isProcessing = false;
+          html5QrcodeScanner.resume();
+          
+          // Reset UI
+          document.getElementById('status-icon').className = 'w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-3';
+          document.getElementById('status-icon').innerHTML = '<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>';
+          document.getElementById('status-title').innerText = 'Awaiting Next Scan...';
+          document.getElementById('status-desc').innerText = 'System ready.';
+        }, 3000);
+      }
+    }
+
+    function onScanFailure(error) {
+      // ignore frame errors from library
+    }
+  </script>
+</body>
+</html>

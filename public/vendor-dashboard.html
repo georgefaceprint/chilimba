@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Dashboard - Chilimba</title>
+  <meta name="theme-color" content="#15803d">
+  <link href="/assets/css/tailwind.css" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 flex flex-col h-[100dvh] overflow-hidden relative">
+
+  <!-- Header -->
+  <header class="flex-none bg-green-900 text-white p-4 shadow-md flex justify-between items-center z-40">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center font-black text-white shadow-sm border border-white">
+        A
+      </div>
+      <div>
+        <h1 class="text-lg font-black tracking-tight leading-none">Agent Portal</h1>
+        <p class="text-[10px] font-bold text-green-300 uppercase tracking-widest mt-0.5">Sourcing & Dispatch</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button onclick="openAuthModal()" id="btn-login" class="bg-white text-green-900 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors btn-press">Sign In</button>
+      
+      <div id="user-profile" class="hidden items-center space-x-2">
+        <div class="text-right hidden sm:block">
+          <p class="text-sm font-bold leading-none" id="profile-name">Freda</p>
+          <p class="text-[10px] text-green-300 font-bold uppercase tracking-wide">Master Agent</p>
+        </div>
+        <img src="https://ui-avatars.com/api/?name=Freda&background=f97316&color=fff" id="profile-img" class="w-10 h-10 rounded-full border-2 border-white shadow-sm">
+      </div>
+    </div>
+  </header>
+
+  <!-- Agent Tools Strip (Shop Context) -->
+  <div id="agent-tools" class="hidden bg-white border-b border-gray-200 p-3 shadow-[0_4px_10px_rgba(0,0,0,0.02)] z-30 flex gap-2 items-center overflow-x-auto hide-scrollbar">
+    <div class="flex-shrink-0 flex items-center bg-gray-100 rounded-lg p-1.5 px-3 border border-gray-200">
+      <span class="text-xs font-bold text-gray-500 mr-2 uppercase tracking-wider">Managing:</span>
+      <select id="active-shop-select" onchange="switchActiveShop()" class="bg-transparent text-sm font-black text-green-800 focus:outline-none cursor-pointer">
+        <option value="shop_1">Kariakoo Electronics</option>
+        <option value="shop_2">Tanzania Coffee Co.</option>
+      </select>
+    </div>
+    
+    <button onclick="openNewShopModal()" class="flex-shrink-0 bg-orange-50 text-orange-600 border border-orange-200 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 btn-press hover:bg-orange-100">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+      Add New Shop
+    </button>
+  </div>
+
+  <!-- Top Tabs -->
+  <div id="vendor-tabs" class="hidden bg-white border-b border-gray-200 flex justify-around shadow-sm z-20">
+    <button onclick="switchTab('listings')" id="tab-listings" class="flex-1 py-3 text-sm font-bold text-green-800 border-b-4 border-green-800 transition-colors">Listings</button>
+    <button onclick="switchTab('orders')" id="tab-orders" class="flex-1 py-3 text-sm font-bold text-gray-500 border-b-4 border-transparent hover:text-green-800 transition-colors flex items-center justify-center gap-2">
+      Manage Orders
+      <span class="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">3</span>
+    </button>
+  </div>
+
+  <!-- Main Dashboard Content -->
+  <main class="flex-1 overflow-y-auto w-full p-4 pb-28 hide-scrollbar">
+    
+    <div class="max-w-4xl mx-auto hidden" id="dashboard-content">
+      
+      <!-- LISTINGS TAB -->
+      <div id="view-listings">
+        <div class="bg-white rounded-3xl shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-gray-100 p-6 mb-6">
+          <div class="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
+            <div>
+              <h2 id="form-title" class="text-xl font-black text-gray-900 mb-1">List a Product</h2>
+              <p class="text-xs text-gray-500 font-medium">Listing on behalf of: <span id="lbl-active-shop" class="font-bold text-green-700">Kariakoo Electronics</span></p>
+            </div>
+          </div>
+
+          <form id="product-form" class="space-y-4">
+            <div>
+              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Product Title</label>
+              <input type="text" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="e.g. Tanzanian Arabica Coffee">
+            </div>
+            
+            <div>
+              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Description</label>
+              <textarea rows="2" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-medium focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Brief details about the item..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Origin Country</label>
+                <select class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
+                  <option value="Tanzania">Tanzania</option>
+                  <option value="Zambia">Zambia</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Dispatch Hub</label>
+                <select class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
+                  <option value="Dar es Salaam">Dar es Salaam</option>
+                  <option value="Tunduma/Nakonde">Tunduma/Nakonde</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Price (TZS)</label>
+                <input type="number" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="50000">
+              </div>
+              <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Weight (KG)</label>
+                <input type="number" step="0.1" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="1.5">
+              </div>
+            </div>
+
+            <button type="submit" id="btn-submit" class="w-full bg-green-800 text-white py-4 mt-4 rounded-xl font-black text-lg shadow-lg hover:bg-green-900 transition-colors btn-press">
+              Publish Listing
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ORDERS TAB -->
+      <div id="view-orders" class="hidden">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h3 class="text-xl font-black text-gray-900">Orders to Dispatch</h3>
+            <p class="text-xs text-gray-500 font-medium">Filtering: <span class="font-bold text-gray-800">All My Shops</span></p>
+          </div>
+          <button class="bg-gray-100 text-gray-700 p-2 rounded-lg font-bold text-xs btn-press">Filter</button>
+        </div>
+        
+        <div id="orders-list" class="space-y-4">
+          <!-- Order 1 -->
+          <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
+            <div class="flex justify-between items-start mb-3 border-b border-gray-100 pb-3">
+              <div>
+                <span class="bg-green-100 text-green-800 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md">Paid</span>
+                <span class="text-xs text-gray-500 font-bold ml-2">#ORD-7721</span>
+              </div>
+              <span class="text-xs font-bold text-gray-900">Dest: Kitwe Hub</span>
+            </div>
+            
+            <p class="text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-2">From: Kariakoo Electronics</p>
+            
+            <div class="flex gap-3 mb-4">
+              <div class="w-16 h-16 bg-gray-50 rounded-xl flex-shrink-0 border border-gray-100 p-1">
+                <img src="https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=200&q=80" class="w-full h-full object-cover rounded-lg">
+              </div>
+              <div>
+                <h4 class="font-bold text-sm text-gray-900 leading-tight">Gentleman Children Outfits (M, Blue)</h4>
+                <p class="text-xs text-gray-500 font-medium mt-1">Qty: 2 | Buyer: Cindy</p>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-xl mb-4 border border-gray-100 flex gap-2 items-center">
+              <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <div class="flex-1">
+                <label class="block text-[10px] font-black uppercase text-gray-500 mb-0.5">Dropoff Hub</label>
+                <select class="w-full bg-transparent text-sm font-bold text-gray-900 focus:outline-none">
+                  <option value="Dar">Dar es Salaam Origin Center</option>
+                  <option value="Tunduma">Tunduma Border Post</option>
+                </select>
+              </div>
+            </div>
+
+            <button onclick="dispatchOrder(this)" class="w-full bg-orange-500 text-white font-black py-3.5 rounded-xl shadow-md hover:bg-orange-600 transition-colors btn-press">
+              Mark as Dispatched to Hub
+            </button>
+          </div>
+          
+          <!-- Order 2 -->
+          <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
+            <div class="flex justify-between items-start mb-3 border-b border-gray-100 pb-3">
+              <div>
+                <span class="bg-green-100 text-green-800 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md">Paid</span>
+                <span class="text-xs text-gray-500 font-bold ml-2">#ORD-8992</span>
+              </div>
+              <span class="text-xs font-bold text-gray-900">Dest: Ndola</span>
+            </div>
+            
+            <p class="text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-2">From: Tanzania Coffee Co.</p>
+            
+            <div class="flex gap-3 mb-4">
+              <div class="w-16 h-16 bg-gray-50 rounded-xl flex-shrink-0 border border-gray-100 p-1">
+                 <img src="https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=200&q=80" class="w-full h-full object-cover rounded-lg">
+              </div>
+              <div>
+                <h4 class="font-bold text-sm text-gray-900 leading-tight">Premium Arabica Beans</h4>
+                <p class="text-xs text-gray-500 font-medium mt-1">Qty: 5 | Buyer: Copperbelt Chilimba</p>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-xl mb-4 border border-gray-100 flex gap-2 items-center">
+              <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <div class="flex-1">
+                <label class="block text-[10px] font-black uppercase text-gray-500 mb-0.5">Dropoff Hub</label>
+                <select class="w-full bg-transparent text-sm font-bold text-gray-900 focus:outline-none">
+                  <option value="Tunduma">Tunduma Border Post</option>
+                  <option value="Dar">Dar es Salaam Origin Center</option>
+                </select>
+              </div>
+            </div>
+
+            <button onclick="dispatchOrder(this)" class="w-full bg-orange-500 text-white font-black py-3.5 rounded-xl shadow-md hover:bg-orange-600 transition-colors btn-press">
+              Mark as Dispatched to Hub
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Prompt -->
+    <div id="login-prompt" class="max-w-md mx-auto mt-20 text-center px-4">
+      <div class="w-24 h-24 bg-green-100 text-green-800 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+      </div>
+      <h2 class="text-2xl font-black text-gray-900 mb-2">Agent Access</h2>
+      <p class="text-gray-500 font-medium mb-8 text-sm">Sign in to manage multiple shops and handle origin dispatches for your zone.</p>
+      <button onclick="openAuthModal()" class="w-full bg-green-800 text-white py-4 rounded-xl font-black text-lg hover:bg-green-900 transition-colors shadow-lg btn-press">Sign In</button>
+    </div>
+  </main>
+
+  <!-- NEW SHOP MODAL -->
+  <div id="new-shop-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform" id="new-shop-content">
+      <div class="p-6">
+        <h3 class="font-black text-xl text-gray-900 mb-1">Register New Shop</h3>
+        <p class="text-xs text-gray-500 font-medium mb-5">Create a shop profile to list products under.</p>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-black uppercase text-gray-700 mb-1.5">Shop Name</label>
+            <input type="text" id="ns-name" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="e.g. Kariakoo Electronics">
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase text-gray-700 mb-1.5">Owner Phone (Optional)</label>
+            <input type="tel" id="ns-phone" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="+255...">
+          </div>
+        </div>
+        
+        <button onclick="saveNewShop()" class="w-full bg-green-800 text-white py-3.5 mt-6 rounded-xl font-black text-lg shadow-md hover:bg-green-900 transition-colors btn-press">Register Shop</button>
+      </div>
+      <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
+        <button onclick="closeNewShopModal()" class="text-gray-500 text-sm font-bold hover:text-gray-800 btn-press">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTHENTICATION MODAL (Mocked for brevity) -->
+  <div id="auth-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="glass-modal w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center transform scale-95 transition-transform" id="auth-content">
+      <h3 class="font-black text-2xl text-green-900 mb-4">Agent Login</h3>
+      <button onclick="loginSuccess()" class="w-full bg-green-800 text-white py-3.5 rounded-xl font-black shadow-md btn-press">Simulate Agent Login</button>
+      <button onclick="closeAuthModal()" class="mt-4 text-gray-500 text-sm font-bold btn-press">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 flex justify-around items-center pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-8px_20px_rgba(0,0,0,0.04)] rounded-t-2xl">
+    <div class="max-w-md mx-auto flex justify-around items-center w-full h-[65px] px-2">
+      <a href="/" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-800 transition-colors btn-press w-16">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        <span class="text-[10px] font-bold">Browse</span>
+      </a>
+      <a href="/dashboard.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-800 transition-colors btn-press w-16">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <span class="text-[10px] font-bold">Groups</span>
+      </a>
+      <a href="/vendor-dashboard.html" class="flex flex-col items-center gap-1 text-green-800 w-16 relative">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+        <span class="text-[10px] font-black">Agent</span>
+        <div class="absolute -bottom-1 w-1 h-1 bg-orange-500 rounded-full"></div>
+      </a>
+      <a href="/runner-portal.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-800 transition-colors btn-press w-16">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+        <span class="text-[10px] font-bold">Courier</span>
+      </a>
+    </div>
+  </nav>
+
+  <script>
+    let activeUser = null;
+
+    function switchTab(tabId) {
+      document.getElementById('view-listings').classList.add('hidden');
+      document.getElementById('view-orders').classList.add('hidden');
+      document.getElementById('tab-listings').classList.remove('text-green-800', 'border-green-800');
+      document.getElementById('tab-listings').classList.add('text-gray-500', 'border-transparent');
+      document.getElementById('tab-orders').classList.remove('text-green-800', 'border-green-800');
+      document.getElementById('tab-orders').classList.add('text-gray-500', 'border-transparent');
+
+      if (tabId === 'listings') {
+        document.getElementById('view-listings').classList.remove('hidden');
+        document.getElementById('tab-listings').classList.remove('text-gray-500', 'border-transparent');
+        document.getElementById('tab-listings').classList.add('text-green-800', 'border-green-800');
+      } else {
+        document.getElementById('view-orders').classList.remove('hidden');
+        document.getElementById('tab-orders').classList.remove('text-gray-500', 'border-transparent');
+        document.getElementById('tab-orders').classList.add('text-green-800', 'border-green-800');
+      }
+    }
+
+    function switchActiveShop() {
+      const select = document.getElementById('active-shop-select');
+      const shopName = select.options[select.selectedIndex].text;
+      document.getElementById('lbl-active-shop').innerText = shopName;
+    }
+
+    function dispatchOrder(btnElement) {
+      btnElement.innerText = "Dispatching...";
+      btnElement.disabled = true;
+      btnElement.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+      btnElement.classList.add('bg-gray-400');
+      
+      setTimeout(() => {
+        btnElement.innerText = "✓ Dispatched to Hub";
+        btnElement.classList.remove('bg-gray-400');
+        btnElement.classList.add('bg-green-600');
+        const parentCard = btnElement.closest('.bg-white');
+        parentCard.style.opacity = '0.5';
+      }, 1000);
+    }
+
+    // Modal Logic
+    function openAuthModal() {
+      const m = document.getElementById('auth-modal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      setTimeout(() => document.getElementById('auth-content').classList.remove('scale-95'), 10);
+    }
+    function closeAuthModal() {
+      document.getElementById('auth-content').classList.add('scale-95');
+      setTimeout(() => {
+        const m = document.getElementById('auth-modal');
+        m.classList.add('hidden'); m.classList.remove('flex');
+      }, 200);
+    }
+
+    function openNewShopModal() {
+      const m = document.getElementById('new-shop-modal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      setTimeout(() => document.getElementById('new-shop-content').classList.remove('scale-95'), 10);
+    }
+    function closeNewShopModal() {
+      document.getElementById('new-shop-content').classList.add('scale-95');
+      setTimeout(() => {
+        const m = document.getElementById('new-shop-modal');
+        m.classList.add('hidden'); m.classList.remove('flex');
+      }, 200);
+    }
+
+    function saveNewShop() {
+      const name = document.getElementById('ns-name').value;
+      if(!name) return alert("Shop name required");
+      
+      const select = document.getElementById('active-shop-select');
+      const newOption = new Option(name, 'shop_' + Math.floor(Math.random()*1000));
+      select.add(newOption);
+      select.value = newOption.value;
+      switchActiveShop();
+      
+      closeNewShopModal();
+      document.getElementById('ns-name').value = '';
+    }
+
+    // Mock Login for Demo
+    function loginSuccess() {
+      closeAuthModal();
+      document.getElementById('login-prompt').classList.add('hidden');
+      document.getElementById('dashboard-content').classList.remove('hidden');
+      document.getElementById('vendor-tabs').classList.remove('hidden');
+      document.getElementById('agent-tools').classList.remove('hidden');
+      document.getElementById('agent-tools').classList.add('flex');
+      
+      document.getElementById('btn-login').classList.add('hidden');
+      document.getElementById('user-profile').classList.remove('hidden');
+      document.getElementById('user-profile').classList.add('flex');
+    }
+
+  </script>
+</body>
+</html>

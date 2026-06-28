@@ -70,14 +70,14 @@
 
     </div>
 
-    <!-- Dynamic Conditional Pickup Card -->
-    <div id="pickup-card" class="hidden mt-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-5 text-white text-center shadow-md">
-      <p class="text-xs uppercase tracking-wider font-semibold opacity-90">Your package is ready for collection!</p>
-      <h3 class="text-xl font-black mt-1" id="depot-name">DEPOT</h3>
-      <div id="otp-box" class="bg-white text-gray-900 rounded-lg py-3 px-6 my-4 inline-block font-mono text-2xl font-bold tracking-widest shadow-inner">
-        ------
+    <!-- Digital Receipt & QR Code -->
+    <div id="pickup-card" class="mt-8 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-5 text-white text-center shadow-md">
+      <p class="text-xs uppercase tracking-wider font-semibold opacity-90">Digital Receipt</p>
+      <h3 class="text-xl font-black mt-1" id="depot-name">Scannable QR Code</h3>
+      <div class="bg-white rounded-xl p-3 my-4 inline-block shadow-inner">
+        <img id="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ord_123" class="w-32 h-32 mx-auto" alt="Order QR Code">
       </div>
-      <p class="text-xs opacity-75">Show this unique OTP code to the depot runner to claim your goods.</p>
+      <p class="text-xs opacity-75">Show this QR code to the warehouse or depot runner to process your package.</p>
     </div>
   </div>
 

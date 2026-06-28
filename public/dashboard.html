@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Chilimbas - Dashboard</title>
+  <meta name="theme-color" content="#1E3A8A">
+  <link href="/assets/css/tailwind.css" rel="stylesheet">
+  <style>
+    .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .btn-active:active { transform: translateY(0px); }
+  </style>
+  <script src="/assets/js/auth_guard.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center z-10 relative">
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-bold">C</div>
+      <h1 class="text-xl font-bold tracking-tight">Chilimba</h1>
+    </div>
+    <div id="user-profile" class="flex items-center space-x-2">
+      <img src="https://ui-avatars.com/api/?name=Guest&background=random" class="w-8 h-8 rounded-full border border-white">
+      <span class="text-sm font-semibold hidden sm:inline" id="profile-name">Guest (Zambia)</span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow max-w-3xl w-full mx-auto p-4 flex flex-col space-y-6 mt-4">
+    
+    <!-- Welcome Header -->
+    <div>
+      <h2 class="text-3xl font-black text-gray-900">Which Chilimba are you shopping for today?</h2>
+      <p class="text-gray-500 mt-2">Select a group to enter its shared cart, or create a new one.</p>
+    </div>
+
+    <!-- Group List -->
+    <div id="my-groups-container" class="space-y-4">
+      <!-- Loading skeleton -->
+      <div class="animate-pulse bg-gray-200 h-24 rounded-2xl"></div>
+      <div class="animate-pulse bg-gray-200 h-24 rounded-2xl"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="grid grid-cols-2 gap-4 mt-8">
+      <button onclick="openCreateModal()" class="bg-blue-600 text-white p-4 rounded-2xl font-bold hover:bg-blue-700 transition-colors btn-hover flex flex-col items-center justify-center text-center">
+        <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Create New Chilimba
+      </button>
+      <button onclick="openJoinModal()" class="bg-green-600 text-white p-4 rounded-2xl font-bold hover:bg-green-700 transition-colors btn-hover flex flex-col items-center justify-center text-center">
+        <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        Join via Invite Code
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Create Modal -->
+  <div id="create-modal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="glass-card w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden p-6 relative">
+      <button onclick="closeModals()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      
+      <div id="create-step-1">
+        <h3 class="font-black text-2xl text-gray-900 mb-2">Create Chilimba</h3>
+        <p class="text-sm text-gray-500 mb-6">Choose a unique name for your group.</p>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-bold text-gray-700 mb-1">Group Name</label>
+          <input type="text" id="group-name-input" oninput="checkNameAvailability()" class="w-full border-2 border-gray-300 p-3 rounded-xl focus:border-blue-500 focus:outline-none" placeholder="e.g. Lusaka Queens">
+          <p id="name-status" class="text-xs font-bold mt-2 text-gray-500">Start typing to check availability...</p>
+        </div>
+        
+        <button id="btn-create" onclick="submitCreate()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Create Group</button>
+      </div>
+
+      <div id="create-step-2" class="hidden text-center">
+        <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h3 class="font-black text-2xl text-gray-900 mb-2">Success!</h3>
+        <p class="text-sm text-gray-500 mb-4">Your group is ready. Invite up to 19 friends.</p>
+        
+        <div class="bg-gray-100 p-4 rounded-xl mb-6">
+          <p class="text-xs text-gray-500 font-bold uppercase mb-1">Invite Code</p>
+          <div class="font-mono text-3xl font-black tracking-widest text-blue-900" id="display-invite-code">------</div>
+        </div>
+
+        <button onclick="shareToWhatsApp()" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-600 transition-colors flex justify-center items-center mb-3">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Broadcast to WhatsApp
+        </button>
+        <button onclick="window.location.reload()" class="w-full text-blue-600 font-bold py-2 hover:underline">Go to Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join Modal -->
+  <div id="join-modal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="glass-card w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden p-6 relative">
+      <button onclick="closeModals()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      
+      <h3 class="font-black text-2xl text-gray-900 mb-2">Join a Chilimba</h3>
+      <p class="text-sm text-gray-500 mb-6">Enter the 6-character code from your group Admin.</p>
+      
+      <div class="mb-6">
+        <input type="text" id="invite-code-input" class="w-full border-2 border-gray-300 p-4 rounded-xl focus:border-green-500 focus:outline-none font-mono text-center text-2xl tracking-widest uppercase" placeholder="XXXXXX" maxlength="6">
+      </div>
+      
+      <button onclick="submitJoin()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors">Join Group</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    // Hardcoded user ID for Demo purposes
+    let DEMO_USER_ID; 
+    let currentInviteCode = '';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await requireAuth();
+      DEMO_USER_ID = user.user_id;
+      document.getElementById('profile-name').innerText = user.name || 'User';
+      if (user.avatar) {
+        document.querySelector('#user-profile img').src = user.avatar;
+      }
+      fetchMyGroups();
+    });
+
+    async function fetchMyGroups() {
+      const container = document.getElementById('my-groups-container');
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/groups/my-groups?user_id=${DEMO_USER_ID}`);
+        if (!res.ok) throw new Error('Failed to load');
+        const data = await res.json();
+        
+        container.innerHTML = '';
+        if(data.groups.length === 0) {
+          container.innerHTML = `
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center">
+              <h4 class="font-bold text-blue-900 mb-1">No groups yet!</h4>
+              <p class="text-sm text-blue-700">Create a new Chilimba or join a friend's group below.</p>
+            </div>
+          `;
+          return;
+        }
+
+        data.groups.forEach(g => {
+          container.innerHTML += `
+            <div onclick="selectGroup('${g.id}', '${g.name}', '${g.my_role}')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex justify-between items-center cursor-pointer hover:border-blue-500 hover:shadow-md transition-all">
+              <div>
+                <div class="flex items-center space-x-2 mb-1">
+                  <h3 class="font-black text-lg text-gray-900">${g.name}</h3>
+                  ${g.my_role === 'ADMIN' ? `<span class="bg-orange-100 text-orange-800 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Admin</span>` : ''}
+                </div>
+                <p class="text-xs text-gray-500">${g.member_count} / ${g.max_members} Members • Status: ${g.status.replace(/_/g, ' ')}</p>
+              </div>
+              <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          `;
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="text-red-500">Error loading groups. Please ensure the backend is running.</p>`;
+      }
+    }
+
+    function selectGroup(id, name, my_role) {
+      localStorage.setItem('activeGroupId', id);
+      localStorage.setItem('activeGroupName', name);
+      localStorage.setItem('activeGroupRole', my_role);
+      window.location.href = '/group-cart.html';
+    }`);
+      window.location.href = '/group-cart.html';
+    }
+
+    // Modal Logic
+    function openCreateModal() { document.getElementById('create-modal').classList.remove('hidden'); document.getElementById('create-modal').classList.add('flex'); }
+    function openJoinModal() { document.getElementById('join-modal').classList.remove('hidden'); document.getElementById('join-modal').classList.add('flex'); }
+    function closeModals() {
+      document.getElementById('create-modal').classList.add('hidden');
+      document.getElementById('join-modal').classList.add('hidden');
+      document.getElementById('create-modal').classList.remove('flex');
+      document.getElementById('join-modal').classList.remove('flex');
+      // reset step
+      document.getElementById('create-step-1').classList.remove('hidden');
+      document.getElementById('create-step-2').classList.add('hidden');
+      document.getElementById('group-name-input').value = '';
+      document.getElementById('name-status').innerText = 'Start typing to check availability...';
+      document.getElementById('name-status').className = 'text-xs font-bold mt-2 text-gray-500';
+      document.getElementById('btn-create').disabled = true;
+    }
+
+    // Name Checker
+    let typingTimer;
+    async function checkNameAvailability() {
+      clearTimeout(typingTimer);
+      const name = document.getElementById('group-name-input').value.trim();
+      const statusLabel = document.getElementById('name-status');
+      const btn = document.getElementById('btn-create');
+      
+      if(name.length < 3) {
+        statusLabel.innerText = 'Name must be at least 3 characters.';
+        statusLabel.className = 'text-xs font-bold mt-2 text-gray-500';
+        btn.disabled = true;
+        return;
+      }
+
+      statusLabel.innerText = 'Checking...';
+      statusLabel.className = 'text-xs font-bold mt-2 text-blue-500';
+
+      typingTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/groups/check-name?name=${encodeURIComponent(name)}`);
+          const data = await res.json();
+          if(data.available) {
+            statusLabel.innerText = '✓ Name is available!';
+            statusLabel.className = 'text-xs font-bold mt-2 text-green-600';
+            btn.disabled = false;
+          } else {
+            statusLabel.innerText = '✗ Name is already taken.';
+            statusLabel.className = 'text-xs font-bold mt-2 text-red-600';
+            btn.disabled = true;
+          }
+        } catch (err) {
+          statusLabel.innerText = 'Error checking name.';
+        }
+      }, 500); // debounce 500ms
+    }
+
+    async function submitCreate() {
+      const name = document.getElementById('group-name-input').value.trim();
+      const btn = document.getElementById('btn-create');
+      btn.innerText = 'Creating...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/groups/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, admin_id: DEMO_USER_ID })
+        });
+        const data = await res.json();
+        
+        if(!res.ok) throw new Error(data.error);
+
+        // Success! Go to step 2
+        currentInviteCode = data.invite_code;
+        document.getElementById('create-step-1').classList.add('hidden');
+        document.getElementById('create-step-2').classList.remove('hidden');
+        document.getElementById('display-invite-code').innerText = data.invite_code;
+        
+      } catch (err) {
+        alert(err.message);
+        btn.innerText = 'Create Group';
+        btn.disabled = false;
+      }
+    }
+
+    async function submitJoin() {
+      const code = document.getElementById('invite-code-input').value.trim().toUpperCase();
+      if(code.length !== 6) return alert('Code must be exactly 6 characters.');
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/groups/join`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: DEMO_USER_ID, invite_code: code })
+        });
+        const data = await res.json();
+        
+        if(!res.ok) throw new Error(data.error);
+
+        alert(`Successfully joined ${data.group_name}!`);
+        closeModals();
+        fetchMyGroups(); // reload
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function shareToWhatsApp() {
+      const text = `Hi! I just created a Chilimba called on the app. Join my group to share shipping costs! 
+
+Invite Code: *${currentInviteCode}*
+
+Or click here to join: https://chilimba-pwa.app/join?code=${currentInviteCode}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+  </script>
+  <!-- Bottom Navigation Bar (Mobile First) -->
+  <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-safe z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+    <a href="/" class="flex flex-col items-center p-3 text-gray-500 hover:text-blue-600 transition-colors">
+      <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+      <span class="text-[10px] font-bold uppercase tracking-wider">Browse</span>
+    </a>
+    <a href="/dashboard.html" class="flex flex-col items-center p-3 text-blue-600 hover:text-blue-800 transition-colors">
+      <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+      <span class="text-[10px] font-bold uppercase tracking-wider">My Groups</span>
+    </a>
+    <a href="/group-cart.html" class="flex flex-col items-center p-3 text-gray-500 hover:text-blue-600 transition-colors relative">
+      <div class="absolute top-2 right-2 bg-red-500 w-2 h-2 rounded-full"></div>
+      <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+      <span class="text-[10px] font-bold uppercase tracking-wider">Cart</span>
+    </a>
+    <a href="/vendor-dashboard.html" class="flex flex-col items-center p-3 text-gray-500 hover:text-blue-600 transition-colors">
+      <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+      <span class="text-[10px] font-bold uppercase tracking-wider">Vendor</span>
+    </a>
+  </nav>
+</body>
+</html>
