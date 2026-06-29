@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chilimba-v2';
+const CACHE_NAME = 'chilimba-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -25,7 +25,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName); // Delete old V1 cache
+            return caches.delete(cacheName); // Delete old caches
           }
         })
       );
@@ -34,8 +34,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Stale-While-Revalidate Strategy
-  // Returns cache instantly if available, but fetches from network in background to update cache for next load
+  const url = new URL(event.request.url);
+  
+  // NEVER cache API calls
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Stale-While-Revalidate Strategy for static assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {

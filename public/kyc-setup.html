@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Complete Profile - Chilimba</title>
+  <meta name="theme-color" content="#15803d">
+  <link href="/assets/css/tailwind.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+  </style>
+</head>
+<body class="text-gray-900 min-h-screen flex flex-col">
+
+  <main class="flex-1 flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-3xl shadow-xl p-6 relative overflow-hidden">
+      <!-- Decorative circle -->
+      <div class="absolute -top-16 -right-16 w-32 h-32 bg-green-500/10 rounded-full blur-2xl"></div>
+      
+      <div class="text-center mb-6 relative z-10">
+        <div class="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto mb-3">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+        </div>
+        <h1 class="font-black text-2xl text-gray-900">Complete Profile</h1>
+        <p class="text-sm text-gray-500 font-medium mt-1">Please provide your details for delivery.</p>
+      </div>
+
+      <form id="kyc-form" class="space-y-4 relative z-10" onsubmit="submitKyc(event)">
+        
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">First Name</label>
+            <input type="text" id="kyc-name" required class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none">
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">Surname</label>
+            <input type="text" id="kyc-surname" required class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">WhatsApp Number</label>
+          <input type="tel" id="kyc-whatsapp" required placeholder="+260..." class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">Province</label>
+          <select id="kyc-province" required onchange="updateTowns()" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none appearance-none">
+            <option value="">Select Province</option>
+            <option value="Lusaka">Lusaka</option>
+            <option value="Copperbelt">Copperbelt</option>
+            <option value="Central">Central</option>
+            <option value="Southern">Southern</option>
+            <option value="Northern">Northern</option>
+            <option value="Muchinga">Muchinga</option>
+            <option value="Luapula">Luapula</option>
+            <option value="North-Western">North-Western</option>
+            <option value="Eastern">Eastern</option>
+            <option value="Western">Western</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">Town / Suburb</label>
+          <select id="kyc-town" required class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none appearance-none disabled:opacity-50" disabled>
+            <option value="">Select Town</option>
+          </select>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="btn-submit" class="w-full bg-green-700 text-white py-3.5 rounded-xl font-black text-lg shadow-md hover:bg-green-800 transition-colors btn-press">Save Profile</button>
+          
+          <button type="button" onclick="skipKyc()" class="w-full mt-3 text-gray-500 font-bold py-2 text-sm hover:text-gray-800 btn-press">Skip for now</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const zambiaLocations = {
+      "Lusaka": ["Lusaka City", "Chongwe", "Kafue", "Chilanga", "Luangwa"],
+      "Copperbelt": ["Ndola", "Kitwe", "Chingola", "Mufulira", "Luanshya", "Kalulushi", "Chililabombwe"],
+      "Southern": ["Livingstone", "Choma", "Mazabuka", "Monze", "Kalomo"],
+      "Central": ["Kabwe", "Kapiri Mposhi", "Serenje", "Mkushi"],
+      "Northern": ["Kasama", "Mbala", "Mpika", "Luwingu"],
+      "Muchinga": ["Chinsali", "Isoka", "Nakonde"],
+      "Luapula": ["Mansa", "Nchelenge", "Kawambwa"],
+      "North-Western": ["Solwezi", "Mwinilunga", "Zambezi"],
+      "Eastern": ["Chipata", "Petauke", "Katete", "Lundazi"],
+      "Western": ["Mongu", "Kaoma", "Senanga"]
+    };
+
+    function updateTowns() {
+      const provSelect = document.getElementById('kyc-province');
+      const townSelect = document.getElementById('kyc-town');
+      const selected = provSelect.value;
+      
+      townSelect.innerHTML = '<option value="">Select Town</option>';
+      
+      if (selected && zambiaLocations[selected]) {
+        zambiaLocations[selected].forEach(t => {
+          townSelect.innerHTML += `<option value="${t}">${t}</option>`;
+        });
+        townSelect.disabled = false;
+      } else {
+        townSelect.disabled = true;
+      }
+    }
+
+    async function loadPrexistingData() {
+      try {
+        const res = await fetch('/api/v1/auth/me');
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+           const u = data.user;
+           if (u.first_name) document.getElementById('kyc-name').value = u.first_name;
+           if (u.last_name) document.getElementById('kyc-surname').value = u.last_name;
+           if (!u.first_name && u.display_name) {
+             const parts = u.display_name.split(' ');
+             document.getElementById('kyc-name').value = parts[0] || '';
+             document.getElementById('kyc-surname').value = parts.slice(1).join(' ') || '';
+           }
+           if (u.phone_number) {
+             document.getElementById('kyc-whatsapp').value = u.phone_number;
+           }
+           if (u.province) {
+             document.getElementById('kyc-province').value = u.province;
+             updateTowns();
+           }
+           if (u.town) {
+             document.getElementById('kyc-town').value = u.town;
+           }
+        }
+      } catch(e) {}
+    }
+
+    function formatPhoneNumber(phone) {
+      let cleaned = phone.replace(/[^\d+]/g, '');
+      if (cleaned.startsWith('0') && cleaned.length === 10) {
+        cleaned = '+260' + cleaned.substring(1);
+      }
+      if (!cleaned.startsWith('+') && cleaned.length >= 11) {
+        cleaned = '+' + cleaned;
+      }
+      return cleaned;
+    }
+
+    async function submitKyc(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit');
+      btn.innerText = 'Saving...';
+      btn.disabled = true;
+
+      const payload = {
+        name: document.getElementById('kyc-name').value.trim(),
+        surname: document.getElementById('kyc-surname').value.trim(),
+        whatsapp: formatPhoneNumber(document.getElementById('kyc-whatsapp').value.trim()),
+        province: document.getElementById('kyc-province').value,
+        town: document.getElementById('kyc-town').value
+      };
+
+      try {
+        const res = await fetch('/api/v1/user/update-kyc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+           // Clear skip flag just in case
+           sessionStorage.removeItem('skipped_kyc');
+           
+           // Redirect back to where they came from or dashboard
+           const params = new URLSearchParams(window.location.search);
+           const returnTo = params.get('returnTo') || '/dashboard.html';
+           window.location.href = returnTo;
+        } else {
+          alert('Failed to save profile details.');
+        }
+      } catch (err) {
+        alert('Error saving details.');
+      } finally {
+        btn.innerText = 'Save Profile';
+        btn.disabled = false;
+      }
+    }
+
+    function skipKyc() {
+      sessionStorage.setItem('skipped_kyc', 'true');
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get('returnTo') || '/dashboard.html';
+      window.location.href = returnTo;
+    }
+
+    loadPrexistingData();
+  </script>
+</body>
+</html>

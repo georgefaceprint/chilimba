@@ -7,11 +7,23 @@ async function requireAuth() {
     if (!data.authenticated) {
       throw new Error('Not authenticated');
     }
+    
+    // Check KYC
+    if (!data.user.kyc_complete) {
+      const skipped = sessionStorage.getItem('skipped_kyc');
+      if (!skipped && !window.location.pathname.includes('kyc-setup.html')) {
+        window.location.href = '/kyc-setup.html?returnTo=' + encodeURIComponent(window.location.href);
+        return new Promise(() => {}); // Stop execution
+      }
+    }
+    
     // Auth is valid. Return the user payload.
     return data.user;
   } catch (err) {
     // Redirect to signup if not authenticated
-    window.location.href = '/signup.html';
+    if (!window.location.pathname.includes('kyc-setup.html')) {
+      window.location.href = '/signup.html';
+    }
   }
 }
 

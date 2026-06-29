@@ -77,12 +77,19 @@
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-lg font-black text-gray-900">Categories</h3>
     </div>
-    <div class="flex overflow-x-auto gap-3 pb-4 mb-2 hide-scroll">
-      <button onclick="filterCategory('All', this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-green-700 text-white shadow-md btn-press transition-colors">All Items</button>
-      <button onclick="filterCategory('Fashion', this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-gray-600 border border-gray-200 btn-press transition-colors">Fashion</button>
-      <button onclick="filterCategory('Appliances', this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-gray-600 border border-gray-200 btn-press transition-colors">Appliances</button>
-      <button onclick="filterCategory('Computing', this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-gray-600 border border-gray-200 btn-press transition-colors">Computing</button>
-      <button onclick="filterCategory('Phones & Tablets', this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-gray-600 border border-gray-200 btn-press transition-colors">Phones</button>
+    <div class="flex overflow-x-auto gap-3 pb-2 mb-1 hide-scroll" id="category-filters">
+    </div>
+    <!-- Subcategory Filters -->
+    <div class="flex overflow-x-auto gap-3 pb-2 mb-1 hide-scroll" id="subcategory-filters">
+    </div>
+    <!-- Extra Attributes Filters (Age, Color) -->
+    <div id="extra-filters-container" class="hidden flex gap-2 overflow-x-auto hide-scroll pb-4 mb-2">
+      <select id="filter-age" onchange="applyFilters()" class="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-xl px-3 py-2 shadow-sm focus:outline-none flex-shrink-0">
+        <option value="">All Ages</option>
+      </select>
+      <select id="filter-color" onchange="applyFilters()" class="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-xl px-3 py-2 shadow-sm focus:outline-none flex-shrink-0">
+        <option value="">All Colors</option>
+      </select>
     </div>
 
     <!-- Product Grid -->
@@ -104,45 +111,117 @@
   </main>
 
   <!-- BOTTOM NAVIGATION BAR (Fixed height at bottom) -->
+  
+  <!-- BOTTOM NAVIGATION BAR (Unified) -->
+  
+  <!-- BOTTOM NAVIGATION BAR (Unified) -->
+  
+  <!-- BOTTOM NAVIGATION BAR (Unified) -->
+  
+  <!-- BOTTOM NAVIGATION BAR (Unified) -->
   <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 z-50 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_20px_rgba(0,0,0,0.04)] rounded-t-2xl">
     <div class="max-w-md mx-auto flex justify-around items-center h-[65px]">
       
-      <!-- Home (Active) -->
-      <a href="/" class="flex flex-col items-center gap-1 text-green-700 w-16 relative">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M11.47 3.84a.75.75 0 011.06 0l8.99 8.99a.75.75 0 11-1.06 1.06L12 5.44 3.53 13.89a.75.75 0 11-1.06-1.06l8.99-8.99z"></path><path d="M12 5.44l-8.47 8.45a.75.75 0 00-.22.53v6.83c0 .96.78 1.75 1.75 1.75h13.88c.97 0 1.75-.79 1.75-1.75v-6.83a.75.75 0 00-.22-.53L12 5.44z"></path></svg>
-        <span class="text-[10px] font-black">Home</span>
+      <!-- Home -->
+      <a href="/" class="flex flex-col items-center gap-1 text-green-700 w-14 relative transition-colors btn-press">
+        <svg class="w-6 h-6" fill="currentColor" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M11.47 3.84a.75.75 0 011.06 0l8.99 8.99a.75.75 0 11-1.06 1.06L12 5.44 3.53 13.89a.75.75 0 11-1.06-1.06l8.99-8.99z"></path><path d="M12 5.44l-8.47 8.45a.75.75 0 00-.22.53v6.83c0 .96.78 1.75 1.75 1.75h13.88c.97 0 1.75-.79 1.75-1.75v-6.83a.75.75 0 00-.22-.53L12 5.44z"></path></svg>
+        <span class="text-[9px] font-bold">Home</span>
         <div class="absolute -bottom-1 w-1 h-1 bg-orange-500 rounded-full"></div>
       </a>
       
-      <!-- Search -->
-      <a href="#" onclick="document.getElementById('search-input').focus(); return false;" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 transition-colors btn-press w-16">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <span class="text-[10px] font-bold">Search</span>
-      </a>
-      
-      <!-- Saved -->
-      <a href="#" onclick="alert('Saved items coming soon!'); return false;" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 transition-colors btn-press w-16">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-        <span class="text-[10px] font-bold">Saved</span>
+      <!-- Groups -->
+      <a href="/dashboard.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <span class="text-[9px] font-bold">Groups</span>
+        
       </a>
       
       <!-- Cart -->
-      <a href="/group-cart.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 transition-colors btn-press w-16">
+      <a href="/group-cart.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
         <div class="relative">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-          <span class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full border border-white shadow-sm">2</span>
+          <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full border border-white shadow-sm" id="nav-cart-badge"></span>
         </div>
-        <span class="text-[10px] font-bold">Cart</span>
+        <span class="text-[9px] font-bold">Cart</span>
+        
       </a>
       
-      <!-- Account -->
-      <a href="/dashboard.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 transition-colors btn-press w-16">
+      <!-- Agent -->
+      <a href="/vendor-dashboard.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+        <span class="text-[9px] font-bold">Agent</span>
+        
+      </a>
+
+      <!-- Profile -->
+      <a href="/kyc-setup.html?returnTo=/dashboard.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-        <span class="text-[10px] font-bold">Account</span>
+        <span class="text-[9px] font-bold">Profile</span>
+        
       </a>
       
     </div>
   </nav>
+  <script>
+    async function updateGlobalCartBadge() {
+      try {
+        const authRes = await fetch('/api/v1/auth/me');
+        if(!authRes.ok) return;
+        const authData = await authRes.json();
+        if(!authData.authenticated) return;
+        
+        let groupId = localStorage.getItem('activeGroupId');
+        if (!groupId) groupId = 'PERSONAL_' + authData.user.user_id;
+        
+        const cartRes = await fetch('/api/v1/cart/' + groupId + '?user_id=' + authData.user.user_id);
+        if(cartRes.ok) {
+          const cartData = await cartRes.json();
+          const badge = document.getElementById('nav-cart-badge');
+          if (badge) {
+            const count = (cartData.items || []).length;
+            badge.innerText = count > 0 ? count : '';
+            badge.style.display = count > 0 ? 'flex' : 'none';
+          }
+        }
+      } catch(e) {}
+    }
+    // Update badge on load
+    updateGlobalCartBadge();
+    // Also listen for custom event in case items are added on the same page
+    window.addEventListener('cart-updated', updateGlobalCartBadge);
+  </script>
+
+  <script>
+    async function updateGlobalCartBadge() {
+      try {
+        const authRes = await fetch('/api/v1/auth/me');
+        if(!authRes.ok) return;
+        const authData = await authRes.json();
+        if(!authData.authenticated) return;
+        
+        let groupId = localStorage.getItem('activeGroupId');
+        if (!groupId) groupId = 'PERSONAL_' + authData.user.user_id;
+        
+        const cartRes = await fetch('/api/v1/cart/' + groupId + '?user_id=' + authData.user.user_id);
+        if(cartRes.ok) {
+          const cartData = await cartRes.json();
+          const badge = document.getElementById('nav-cart-badge');
+          if (badge) {
+            const count = (cartData.items || []).length;
+            badge.innerText = count > 0 ? count : '';
+            badge.style.display = count > 0 ? 'flex' : 'none';
+          }
+        }
+      } catch(e) {}
+    }
+    // Update badge on load
+    updateGlobalCartBadge();
+    // Also listen for custom event in case items are added on the same page
+    window.addEventListener('cart-updated', updateGlobalCartBadge);
+  </script>
+
+
+
 
   <!-- AUTH MODAL -->
   <div id="auth-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm">
@@ -169,11 +248,14 @@
     const API_BASE = window.location.origin;
     let allProducts = [];
 
+    let currentCategory = 'All';
+
     async function fetchProducts() {
       try {
         const response = await fetch('/api/v1/products');
         const data = await response.json();
         allProducts = data.products;
+        renderCategories();
         renderProducts(allProducts);
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -181,21 +263,46 @@
       }
     }
 
-    
-    async function addToCart(productId, title, price_zmw, image_url) {
-      const groupId = localStorage.getItem('activeGroupId');
-      if (!groupId) {
-        alert("Please select a Chilimba group from your Dashboard first!");
-        window.location.href = '/dashboard.html';
-        return;
-      }
+    function renderCategories() {
+      const categories = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
+      const catContainer = document.getElementById('category-filters');
+      catContainer.innerHTML = `<button onclick="filterCategory('All', this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-green-700 text-white shadow-md btn-press transition-colors">All Items</button>`;
+      categories.forEach(cat => {
+        catContainer.innerHTML += `<button onclick="filterCategory('${cat}', this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-gray-600 border border-gray-200 btn-press transition-colors">${cat}</button>`;
+      });
+    }
+
+    function renderSubcategories(category) {
+      const subContainer = document.getElementById('subcategory-filters');
+      subContainer.innerHTML = '';
+      if (category === 'All') return;
       
+      const subcats = [...new Set(allProducts.filter(p => p.category === category).map(p => p.sub_category))].filter(Boolean);
+      if (subcats.length === 0) return;
+      
+      subContainer.innerHTML = `<button onclick="filterSubcategory('All', this)" class="subcat-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold bg-green-100 text-green-800 shadow-sm btn-press transition-colors">All ${category}</button>`;
+      
+      subcats.forEach(sub => {
+        subContainer.innerHTML += `<button onclick="filterSubcategory('${sub}', this)" class="subcat-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-500 border border-gray-200 btn-press transition-colors">${sub}</button>`;
+      });
+    }
+
+    async function addToCart(productId, title, price_zmw, image_url) {
       try {
         const authRes = await fetch('/api/v1/auth/me');
         const authData = await authRes.json();
+        
         if (!authData.authenticated) {
+          alert("Please login to start shopping!");
           window.location.href = '/signup.html';
           return;
+        }
+        
+        let groupId = localStorage.getItem('activeGroupId');
+        if (!groupId) {
+          // Default to personal shopping cart
+          groupId = 'PERSONAL_' + authData.user.user_id;
+          localStorage.setItem('activeGroupId', groupId);
         }
         
         const res = await fetch('/api/v1/cart/add', {
@@ -213,8 +320,8 @@
         });
         
         if (res.ok) {
-          alert('Added to your shared Chilimba cart!');
-          // Optionally update cart badge here
+          window.dispatchEvent(new Event('cart-updated'));
+          alert(groupId.startsWith('PERSONAL_') ? 'Added to your personal cart!' : 'Added to your shared Chilimba cart!');
         } else {
           alert('Failed to add to cart.');
         }
@@ -263,7 +370,19 @@
       grid.innerHTML = htmlString;
     }
 
+    let currentSubcategory = 'All';
+    let currentAge = '';
+    let currentColor = '';
+
     function filterCategory(cat, btnElement) {
+      currentCategory = cat;
+      currentSubcategory = 'All';
+      currentAge = '';
+      currentColor = '';
+      
+      document.getElementById('filter-age').value = '';
+      document.getElementById('filter-color').value = '';
+
       document.querySelectorAll('.category-btn').forEach(b => {
         b.classList.remove('bg-green-700', 'text-white', 'shadow-md');
         b.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-200');
@@ -271,13 +390,74 @@
       btnElement.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200');
       btnElement.classList.add('bg-green-700', 'text-white', 'shadow-md');
       
-      if (cat === 'All') {
-        renderProducts(allProducts);
-        return;
+      renderSubcategories(cat);
+      updateExtraFiltersVisibility(cat);
+      applyFilters();
+    }
+    
+    function filterSubcategory(subcat, btnElement) {
+      currentSubcategory = subcat;
+      document.querySelectorAll('.subcat-btn').forEach(b => {
+        b.classList.remove('bg-green-100', 'text-green-800', 'shadow-sm');
+        b.classList.add('bg-white', 'text-gray-500', 'border', 'border-gray-200');
+      });
+      btnElement.classList.remove('bg-white', 'text-gray-500', 'border', 'border-gray-200');
+      btnElement.classList.add('bg-green-100', 'text-green-800', 'shadow-sm');
+      
+      applyFilters();
+    }
+
+    function updateExtraFiltersVisibility(cat) {
+      const container = document.getElementById('extra-filters-container');
+      if (cat === 'Kids & Babies') {
+        container.classList.remove('hidden');
+        populateExtraFilters(cat);
+      } else {
+        container.classList.add('hidden');
+      }
+    }
+
+    function populateExtraFilters(cat) {
+      const catProducts = allProducts.filter(p => p.category === cat);
+      
+      const ages = [...new Set(catProducts.map(p => p.attributes?.age).filter(Boolean))].sort();
+      const colors = [...new Set(catProducts.map(p => p.attributes?.color).filter(Boolean))].sort();
+      
+      const ageSelect = document.getElementById('filter-age');
+      ageSelect.innerHTML = '<option value="">All Ages</option>';
+      ages.forEach(age => {
+        ageSelect.innerHTML += `<option value="${age}">${age}</option>`;
+      });
+
+      const colorSelect = document.getElementById('filter-color');
+      colorSelect.innerHTML = '<option value="">All Colors</option>';
+      colors.forEach(color => {
+        colorSelect.innerHTML += `<option value="${color}">${color}</option>`;
+      });
+    }
+
+    function applyFilters() {
+      currentAge = document.getElementById('filter-age')?.value || '';
+      currentColor = document.getElementById('filter-color')?.value || '';
+
+      let filtered = allProducts;
+      
+      if (currentCategory !== 'All') {
+        filtered = filtered.filter(p => p.category === currentCategory);
       }
       
-      const filtered = allProducts.filter(p => p.category === cat || (cat === 'Phones & Tablets' && p.category === 'Phones'));
-
+      if (currentSubcategory !== 'All') {
+        filtered = filtered.filter(p => p.sub_category === currentSubcategory || p.subcategory === currentSubcategory);
+      }
+      
+      if (currentAge) {
+        filtered = filtered.filter(p => p.attributes && p.attributes.age === currentAge);
+      }
+      
+      if (currentColor) {
+        filtered = filtered.filter(p => p.attributes && p.attributes.color === currentColor);
+      }
+      
       renderProducts(filtered);
     }
     

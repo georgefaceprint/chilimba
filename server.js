@@ -25,14 +25,48 @@ app.post('/api/v1/auth/google/callback', authController.handleGoogleAuthCallback
 app.post('/api/v1/auth/whatsapp/initiate', authController.initiateWhatsAppVerification);
 app.post('/api/v1/auth/whatsapp/verify', authController.verifyWhatsAppOTP);
 
-app.get('/api/v1/auth/me', (req, res) => {
+app.get('/api/v1/auth/me', async (req, res) => {
   const token = req.cookies.auth_token;
   if (!token) return res.status(401).json({ authenticated: false });
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-    res.json({ authenticated: true, user: decoded });
+    
+    // Fetch latest user data for KYC status
+    const db = require('./backend/firestore').db;
+    const userDoc = await db.collection('users').doc(decoded.user_id).get();
+    let latestUser = decoded;
+    if (userDoc.exists) {
+      latestUser = { ...decoded, ...userDoc.data() };
+    }
+    
+    res.json({ authenticated: true, user: latestUser });
   } catch (err) {
     res.status(401).json({ authenticated: false });
+  }
+});
+
+app.post('/api/v1/user/update-kyc', async (req, res) => {
+  const token = req.cookies.auth_token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    const { name, surname, whatsapp, province, town } = req.body;
+    
+    const db = require('./backend/firestore').db;
+    await db.collection('users').doc(decoded.user_id).update({
+       display_name: `${name} ${surname}`,
+       first_name: name,
+       last_name: surname,
+       phone_number: whatsapp,
+       province: province,
+       town: town,
+       kyc_complete: true
+    });
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[KYC Update Error]', err);
+    res.status(500).json({ success: false, error: 'Failed to update profile' });
   }
 });
 
@@ -264,17 +298,59 @@ app.get('/api/v1/groups/my-groups', async (req, res) => {
 });
 
 
-// 7. Cart / Micro-Savings Routes
+// 7. Wallet Routes
+app.get('/api/v1/wallet/balance', async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    if (!user_id) return res.status(400).json({ error: 'user_id required' });
+    const { db } = require('./backend/firestore');
+    const userDoc = await db.collection('users').doc(user_id).get();
+    res.json({ balance: userDoc.exists ? (userDoc.data().wallet_balance || 0) : 0 });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/v1/wallet/topup', async (req, res) => {
+  try {
+    const { user_id, amount, phone_number } = req.body;
+    const amountNum = parseFloat(amount);
+    if (!user_id || isNaN(amountNum)) return res.status(400).json({ error: 'Missing or invalid parameters' });
+    const { db } = require('./backend/firestore');
+    const userRef = db.collection('users').doc(user_id);
+    const userDoc = await userRef.get();
+
+    // MOCK: In production this would trigger Lenco STK Push. Here we just instantly top up.
+    const currentBalance = userDoc.exists ? (userDoc.data().wallet_balance || 0) : 0;
+
+    if (!userDoc.exists) {
+      await userRef.set({ wallet_balance: amountNum }, { merge: true });
+    } else {
+      await userRef.update({ wallet_balance: currentBalance + amountNum });
+    }
+
+    res.json({ success: true, new_balance: currentBalance + amountNum });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. Cart / Micro-Savings Routes
 app.post('/api/v1/cart/add', async (req, res) => {
   try {
     const { group_id, user_id, product_id, title, price_zmw, quantity, image_url } = req.body;
     const { db } = require('./backend/firestore');
     
-    // Check if group exists
-    const groupDoc = await db.collection('groups').doc(group_id).get();
-    if (!groupDoc.exists) return res.status(404).json({ error: 'Group not found' });
+    let cartRef;
     
-    const cartRef = db.collection('groups').doc(group_id).collection('cart');
+    if (group_id.startsWith('PERSONAL_')) {
+      cartRef = db.collection('users').doc(user_id).collection('cart');
+    } else {
+      const groupDoc = await db.collection('groups').doc(group_id).get();
+      if (!groupDoc.exists) return res.status(404).json({ error: 'Group not found' });
+      cartRef = db.collection('groups').doc(group_id).collection('cart');
+    }
+    
     const existingItem = await cartRef.where('product_id', '==', product_id).where('user_id', '==', user_id).limit(1).get();
     
     if (!existingItem.empty) {
@@ -305,9 +381,16 @@ app.post('/api/v1/cart/add', async (req, res) => {
 app.get('/api/v1/cart/:group_id', async (req, res) => {
   try {
     const { group_id } = req.params;
+    const { user_id } = req.query;
     const { db } = require('./backend/firestore');
     
-    const snapshot = await db.collection('groups').doc(group_id).collection('cart').get();
+    let snapshot;
+    if (group_id.startsWith('PERSONAL_') && user_id) {
+       snapshot = await db.collection('users').doc(user_id).collection('cart').get();
+    } else {
+       snapshot = await db.collection('groups').doc(group_id).collection('cart').get();
+    }
+    
     const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
     res.json({ items });
@@ -318,17 +401,39 @@ app.get('/api/v1/cart/:group_id', async (req, res) => {
 
 app.post('/api/v1/cart/checkout', async (req, res) => {
   try {
-    const { group_id, user_id } = req.body;
+    const { group_id, user_id, use_wallet, total_amount } = req.body;
     const { db } = require('./backend/firestore');
     
-    const groupDoc = await db.collection('groups').doc(group_id).get();
-    if (!groupDoc.exists) return res.status(404).json({ error: 'Group not found' });
-    
-    // In MVP, we just change the group status to 'PENDING_PAYMENT' or 'ORDER_PLACED'
-    await groupDoc.ref.update({
-      status: 'ORDER_PLACED',
-      updated_at: new Date().toISOString()
-    });
+    // Handle Wallet Payment
+    if (use_wallet && total_amount) {
+       const userRef = db.collection('users').doc(user_id);
+       const userDoc = await userRef.get();
+       if (userDoc.exists && (userDoc.data().wallet_balance || 0) >= total_amount) {
+           await userRef.update({
+               wallet_balance: userDoc.data().wallet_balance - total_amount
+           });
+       } else {
+           return res.status(400).json({ error: 'Insufficient wallet balance. Please top up.' });
+       }
+    }
+
+    if (group_id.startsWith('PERSONAL_')) {
+      // Clear personal cart after successful checkout
+      const cartRef = db.collection('users').doc(user_id).collection('cart');
+      const snapshot = await cartRef.get();
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    } else {
+      const groupDoc = await db.collection('groups').doc(group_id).get();
+      if (!groupDoc.exists) return res.status(404).json({ error: 'Group not found' });
+      
+      // Change the group status
+      await groupDoc.ref.update({
+        status: 'ORDER_PLACED',
+        updated_at: new Date().toISOString()
+      });
+    }
     
     // Could optionally trigger Lenco from here instead of frontend
     
