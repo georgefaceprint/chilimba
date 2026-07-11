@@ -8,7 +8,9 @@ const ASSETS_TO_CACHE = [
   '/signup.html',
   '/group-cart.html',
   '/manifest.json',
-  '/products.json'
+  '/assets/img/logo.png',
+  '/assets/img/potatoes_bucket.png',
+  '/assets/img/nakonde_rice.png'
 ];
 
 self.addEventListener('install', (event) => {

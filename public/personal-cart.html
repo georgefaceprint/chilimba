@@ -206,7 +206,7 @@
         container.innerHTML += `
           <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex gap-3 relative">
             <div class="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
-              <img src="${item.image_url || 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?w=200&q=80'}" class="w-full h-full object-contain mix-blend-multiply">
+              <img src="${item.image_url || '/assets/img/logo.png'}" class="w-full h-full object-contain mix-blend-multiply">
             </div>
             <div class="flex-grow flex flex-col justify-between py-1">
               <div>
@@ -373,5 +373,6 @@
     // Init
     loadCartData();
   </script>
+  <script src="/pwa-install.js"></script>
 </body>
 </html>

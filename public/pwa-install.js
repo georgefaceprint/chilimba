@@ -18,25 +18,91 @@
     });
   }
 
+  // ── 3-SECOND SPLASH SCREEN ─────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const splash = document.createElement('div');
+    splash.id = 'pwa-splash-screen';
+    splash.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      z-index: 100000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s ease-out;
+    `;
+    
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes splashPulse {
+        0% { transform: scale(0.85); opacity: 0.7; }
+        50% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      @keyframes splashSpinner {
+        to { transform: rotate(360deg); }
+      }
+      .splash-logo {
+        animation: splashPulse 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
+        width: 140px;
+        height: 140px;
+        object-fit: contain;
+      }
+      .splash-loader {
+        width: 22px;
+        height: 22px;
+        border: 2.5px solid #f3f3f3;
+        border-top: 2.5px solid #15803d;
+        border-radius: 50%;
+        animation: splashSpinner 0.8s linear infinite;
+        margin-top: 24px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const logo = document.createElement('img');
+    logo.src = '/assets/img/logo.png';
+    logo.className = 'splash-logo';
+    logo.onerror = () => {
+      logo.style.display = 'none';
+      const fallback = document.createElement('div');
+      fallback.style.cssText = 'font-size: 28px; font-weight: 900; color: #15803d; letter-spacing: -1px;';
+      fallback.innerText = 'CHILIMBA';
+      splash.insertBefore(fallback, loader);
+    };
+
+    const loader = document.createElement('div');
+    loader.className = 'splash-loader';
+
+    splash.appendChild(logo);
+    splash.appendChild(loader);
+    document.body.appendChild(splash);
+
+    // Hide after 3 seconds
+    setTimeout(() => {
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 500);
+    }, 3000);
+  });
+
   let deferredPrompt = null;
 
-  // 3. Listen for Android/Chrome Install Prompt Event
+  // 3. Listen for Install Prompt Event (Android / Chrome Desktop)
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     console.log('📥 beforeinstallprompt event captured.');
     
-    // Auto-show banner on mobile
-    if (isMobileDevice()) {
-      showInstallBanner('native');
-    }
+    // Show banner on all compatible browsers (desktop or mobile)
+    showInstallBanner('native');
   });
 
   // 4. Handle iOS Safari Detection
   window.addEventListener('load', () => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS && !isStandalone && isMobileDevice()) {
-      // Delay slightly for smooth landing
+    if (isIOS && !isStandalone) {
       setTimeout(() => {
         showInstallBanner('ios');
       }, 2000);

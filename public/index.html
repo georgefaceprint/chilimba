@@ -360,7 +360,7 @@
 
       let htmlString = '';
       products.forEach((p, index) => {
-        let img = p.image_urls && p.image_urls.length > 0 ? p.image_urls[0] : 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?w=500&q=80';
+        let img = p.image_urls && p.image_urls.length > 0 ? p.image_urls[0] : '/assets/img/logo.png';
         let stockBadge = p.is_local_stock 
           ? `<span class="absolute top-2 left-2 bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">Local</span>` 
           : '';

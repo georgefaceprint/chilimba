@@ -180,6 +180,44 @@ app.get('/api/v1/products', async (req, res) => {
 });
 
 // 4. Tracking/Logistics Routes 
+app.post('/api/v1/upload', async (req, res) => {
+  try {
+    const { name, base64 } = req.body;
+    if (!base64) {
+      return res.status(400).json({ error: 'No file data provided' });
+    }
+    
+    // Clean base64 string
+    const base64Data = base64.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // Create uploads folder in public
+    const fs = require('fs');
+    const uploadsDir = path.join(__dirname, 'public', 'uploads');
+    
+    try {
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Create unique filename
+      const ext = path.extname(name) || '.jpg';
+      const filename = `img_${Date.now()}_${Math.floor(Math.random() * 10000)}${ext}`;
+      const filePath = path.join(uploadsDir, filename);
+      
+      fs.writeFileSync(filePath, buffer);
+      return res.json({ success: true, url: `/uploads/${filename}` });
+    } catch (fsErr) {
+      console.warn('Local filesystem write failed, using base64 fallback:', fsErr.message);
+      // Fallback: use the base64 data URL itself
+      return res.json({ success: true, url: base64 });
+    }
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/v1/products/upload', async (req, res) => {
   try {
     const { 

@@ -142,8 +142,23 @@
             </div>
 
             <div>
-              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Image URL</label>
-              <input type="url" id="p-image-url" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="https://example.com/image.jpg (Optional)">
+              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Product Image</label>
+              <div id="image-upload-trigger" onclick="openUploadModal()" class="border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl p-6 text-center cursor-pointer hover:bg-green-50/50 hover:border-green-500 transition-all flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden group">
+                <div id="upload-placeholder-state" class="flex flex-col items-center justify-center space-y-2">
+                  <div class="w-12 h-12 bg-green-100 text-green-700 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                  </div>
+                  <p class="text-xs font-black text-gray-700">Add Product Image</p>
+                  <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tap to upload / Drag & Drop</p>
+                </div>
+                <div id="upload-preview-state" class="hidden absolute inset-0 w-full h-full bg-white flex items-center justify-center">
+                  <img id="img-preview-display" class="w-full h-full object-contain p-2" src="" alt="Preview">
+                  <div class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span class="bg-white/95 text-gray-900 px-4 py-2 rounded-xl text-xs font-bold shadow-md">Change Image</span>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" id="p-image-url">
             </div>
 
             <button type="submit" id="btn-submit" class="w-full bg-green-800 text-white py-4 mt-4 rounded-xl font-black text-lg shadow-lg hover:bg-green-900 transition-colors btn-press">
@@ -277,6 +292,95 @@
       </div>
       <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
         <button onclick="closeNewShopModal()" class="text-gray-500 text-sm font-bold hover:text-gray-800 btn-press">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMAGE UPLOAD MODAL -->
+  <div id="image-upload-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform" id="image-upload-content">
+      <div class="p-6">
+        <h3 class="font-black text-xl text-gray-900 mb-1">Upload Product Image</h3>
+        <p class="text-xs text-gray-500 font-medium mb-5">Select a file from your device or choose a preset.</p>
+        
+        <!-- Drag & Drop / Tap Zone -->
+        <div id="modal-drop-zone" onclick="triggerFileInput()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl p-6 text-center cursor-pointer hover:bg-green-50/50 hover:border-green-500 transition-all flex flex-col items-center justify-center space-y-2 mb-4 group min-h-[140px]">
+          <svg class="w-8 h-8 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <span id="drop-zone-text" class="text-xs font-bold text-gray-700">Choose File or Drop Here</span>
+          <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">PNG, JPG up to 5MB</span>
+          <input type="file" id="modal-file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+        </div>
+
+        <!-- Presets -->
+        <div class="mb-4">
+          <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-wider">Or Use Preset Image</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="usePresetImage('/assets/img/potatoes_bucket.png')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
+              <img src="/assets/img/potatoes_bucket.png" class="w-full h-full object-contain" onerror="this.src='https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=100&q=80'">
+            </button>
+            <button type="button" onclick="usePresetImage('/assets/img/nakonde_rice.png')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
+              <img src="/assets/img/nakonde_rice.png" class="w-full h-full object-contain" onerror="this.src='https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&q=80'">
+            </button>
+            <button type="button" onclick="usePresetImage('https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=200&q=80')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
+              <img src="https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=100&q=80" class="w-full h-full object-cover">
+            </button>
+          </div>
+        </div>
+
+        <!-- Uploading Indicator -->
+        <div id="uploading-spinner" class="hidden flex items-center justify-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl mb-4">
+          <div class="animate-spin h-5 w-5 border-2 border-green-700 rounded-full border-t-transparent"></div>
+          <span class="text-xs font-bold text-green-800">Uploading to server...</span>
+        </div>
+      </div>
+      <div class="bg-gray-50 p-4 text-center border-t border-gray-100 flex justify-between px-6">
+        <button onclick="closeUploadModal()" class="text-gray-500 text-xs font-bold hover:text-gray-800 btn-press">Cancel</button>
+        <button id="btn-upload-submit" onclick="performUpload()" class="bg-green-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm hover:bg-green-900 transition-colors btn-press hidden">Upload Selected</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTING CONFIRMATION MODAL -->
+  <div id="confirm-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform" id="confirm-content">
+      <div class="p-6">
+        <h3 class="font-black text-xl text-gray-900 mb-1">Confirm Product Details</h3>
+        <p class="text-xs text-gray-500 font-medium mb-4">Please review these details before publishing.</p>
+        
+        <div class="space-y-3.5 border-t border-b border-gray-100 py-4 mb-4">
+          <!-- Image preview -->
+          <div class="w-full h-32 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center border border-gray-100">
+            <img id="conf-image" class="w-full h-full object-contain" src="/assets/img/logo.png">
+          </div>
+          
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-gray-400 uppercase">Title</span>
+            <span id="conf-title" class="text-sm font-black text-gray-900 text-right max-w-[200px] line-clamp-2"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase">Category</span>
+            <span id="conf-category" class="text-xs font-black text-gray-800"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase">Price</span>
+            <span id="conf-price" class="text-sm font-black text-green-700"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase">Weight</span>
+            <span id="conf-weight" class="text-xs font-black text-gray-800"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase">Origin</span>
+            <span id="conf-origin" class="text-xs font-black text-gray-800"></span>
+          </div>
+        </div>
+        
+        <button onclick="publishConfirmedListing()" class="w-full bg-green-800 text-white py-3.5 rounded-xl font-black text-lg shadow-md hover:bg-green-900 transition-colors btn-press">
+          Yes, Publish Now
+        </button>
+      </div>
+      <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
+        <button onclick="closeConfirmModal()" class="text-gray-500 text-sm font-bold hover:text-gray-800 btn-press">Cancel & Edit</button>
       </div>
     </div>
   </div>
@@ -478,11 +582,223 @@
       document.getElementById('ns-name').value = '';
     }
 
+    // Image Upload Modal Logic
+    let selectedFile = null;
+
+    function openUploadModal() {
+      const m = document.getElementById('image-upload-modal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      setTimeout(() => document.getElementById('image-upload-content').classList.remove('scale-95'), 10);
+    }
+
+    function closeUploadModal() {
+      document.getElementById('image-upload-content').classList.add('scale-95');
+      setTimeout(() => {
+        const m = document.getElementById('image-upload-modal');
+        m.classList.add('hidden'); m.classList.remove('flex');
+      }, 200);
+      selectedFile = null;
+      document.getElementById('drop-zone-text').innerText = 'Choose File or Drop Here';
+      document.getElementById('btn-upload-submit').classList.add('hidden');
+    }
+
+    function triggerFileInput() {
+      document.getElementById('modal-file-input').click();
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById('modal-drop-zone').classList.add('border-green-500', 'bg-green-50/50');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      document.getElementById('modal-drop-zone').classList.remove('border-green-500', 'bg-green-50/50');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('modal-drop-zone').classList.remove('border-green-500', 'bg-green-50/50');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        processFile(e.dataTransfer.files[0]);
+      }
+    }
+
+    function handleFileSelect(e) {
+      if (e.target.files && e.target.files[0]) {
+        processFile(e.target.files[0]);
+      }
+    }
+
+    function processFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+      }
+      selectedFile = file;
+      document.getElementById('drop-zone-text').innerText = `Selected: ${file.name}`;
+      document.getElementById('btn-upload-submit').classList.remove('hidden');
+    }
+
+    function usePresetImage(url) {
+      document.getElementById('p-image-url').value = url;
+      document.getElementById('img-preview-display').src = url;
+      document.getElementById('upload-placeholder-state').classList.add('hidden');
+      document.getElementById('upload-preview-state').classList.remove('hidden');
+      closeUploadModal();
+    }
+
+    function performUpload() {
+      if (!selectedFile) return;
+      
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64 = e.target.result;
+        
+        document.getElementById('uploading-spinner').classList.remove('hidden');
+        document.getElementById('btn-upload-submit').disabled = true;
+        
+        try {
+          const res = await fetch('/api/v1/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: selectedFile.name, base64: base64 })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            usePresetImage(data.url);
+          } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Upload request failed.');
+        } finally {
+          document.getElementById('uploading-spinner').classList.add('hidden');
+          document.getElementById('btn-upload-submit').disabled = false;
+        }
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+
+    // Confirmation Modal Logic
+    let pendingPayload = null;
+
+    function openConfirmModal() {
+      const m = document.getElementById('confirm-modal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      setTimeout(() => document.getElementById('confirm-content').classList.remove('scale-95'), 10);
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirm-content').classList.add('scale-95');
+      setTimeout(() => {
+        const m = document.getElementById('confirm-modal');
+        m.classList.add('hidden'); m.classList.remove('flex');
+      }, 200);
+    }
+
     function updatePriceLabel() {
       const originSelect = document.getElementById('p-origin-country');
       const priceLabel = document.getElementById('lbl-price');
       if (originSelect && priceLabel) {
         priceLabel.innerText = originSelect.value === 'Zambia' ? 'Price (ZMW)' : 'Price (TZS)';
+      }
+    }
+
+    const productForm = document.getElementById('product-form');
+    if (productForm) {
+      productForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const shopSelect = document.getElementById('active-shop-select');
+        const supplierId = shopSelect.value;
+        const supplierName = shopSelect.options[shopSelect.selectedIndex].text;
+        
+        const title = document.getElementById('p-title').value;
+        const description = document.getElementById('p-description').value;
+        const category = document.getElementById('p-category').value;
+        const subCategory = document.getElementById('p-sub-category').value;
+        const originCountry = document.getElementById('p-origin-country').value;
+        const originCity = document.getElementById('p-origin-city').value;
+        const priceValue = parseFloat(document.getElementById('p-price').value);
+        const weight = parseFloat(document.getElementById('p-weight').value);
+        const imageUrl = document.getElementById('p-image-url').value || '/assets/img/logo.png';
+        
+        const payload = {
+          title,
+          description,
+          category,
+          sub_category: subCategory,
+          origin_country: originCountry,
+          origin_city: originCity,
+          weight_kg: weight,
+          image_url: imageUrl,
+          supplier_id: supplierId,
+          supplier_name: supplierName
+        };
+        
+        if (originCountry === 'Zambia') {
+          payload.price_zmw_input = priceValue;
+          payload.price_tzs = 0;
+        } else {
+          payload.price_tzs = priceValue;
+          payload.price_zmw_input = 0;
+        }
+        
+        pendingPayload = payload;
+        
+        // Populate confirmation details
+        document.getElementById('conf-image').src = payload.image_url;
+        document.getElementById('conf-title').innerText = payload.title;
+        document.getElementById('conf-category').innerText = payload.category + (payload.sub_category ? ' > ' + payload.sub_category : '');
+        document.getElementById('conf-price').innerText = originCountry === 'Zambia' ? `K${priceValue}` : `TZS ${priceValue}`;
+        document.getElementById('conf-weight').innerText = `${payload.weight_kg} kg`;
+        document.getElementById('conf-origin').innerText = `${payload.origin_city}, ${payload.origin_country}`;
+        
+        openConfirmModal();
+      });
+    }
+
+    async function publishConfirmedListing() {
+      if (!pendingPayload) return;
+      
+      const btnSubmit = document.getElementById('btn-submit');
+      const originalText = btnSubmit.innerText;
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = 'Publishing...';
+      
+      closeConfirmModal();
+      
+      try {
+        const response = await fetch('/api/v1/products/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(pendingPayload)
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success) {
+          alert('Listing published successfully! Final price has been converted with agent margin & forex markup.');
+          productForm.reset();
+          
+          // Reset image preview state
+          document.getElementById('p-image-url').value = '';
+          document.getElementById('upload-preview-state').classList.add('hidden');
+          document.getElementById('upload-placeholder-state').classList.remove('hidden');
+          
+          updatePriceLabel();
+        } else {
+          throw new Error(data.error || 'Failed to upload listing');
+        }
+      } catch (error) {
+        alert('Error publishing listing: ' + error.message);
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = originalText;
+        pendingPayload = null;
       }
     }
 
@@ -550,77 +866,6 @@
           alert("Error submitting agent application.");
         }
       }
-    }
-
-    const productForm = document.getElementById('product-form');
-    if (productForm) {
-      productForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const btnSubmit = document.getElementById('btn-submit');
-        const originalText = btnSubmit.innerText;
-        btnSubmit.disabled = true;
-        btnSubmit.innerText = 'Publishing...';
-        
-        try {
-          const shopSelect = document.getElementById('active-shop-select');
-          const supplierId = shopSelect.value;
-          const supplierName = shopSelect.options[shopSelect.selectedIndex].text;
-          
-          const title = document.getElementById('p-title').value;
-          const description = document.getElementById('p-description').value;
-          const category = document.getElementById('p-category').value;
-          const subCategory = document.getElementById('p-sub-category').value;
-          const originCountry = document.getElementById('p-origin-country').value;
-          const originCity = document.getElementById('p-origin-city').value;
-          const priceValue = parseFloat(document.getElementById('p-price').value);
-          const weight = parseFloat(document.getElementById('p-weight').value);
-          const imageUrl = document.getElementById('p-image-url').value;
-          
-          const payload = {
-            title,
-            description,
-            category,
-            sub_category: subCategory,
-            origin_country: originCountry,
-            origin_city: originCity,
-            weight_kg: weight,
-            image_url: imageUrl || 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?w=500&q=80',
-            supplier_id: supplierId,
-            supplier_name: supplierName
-          };
-          
-          if (originCountry === 'Zambia') {
-            payload.price_zmw_input = priceValue;
-            payload.price_tzs = 0;
-          } else {
-            payload.price_tzs = priceValue;
-            payload.price_zmw_input = 0;
-          }
-          
-          const response = await fetch('/api/v1/products/upload', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-          });
-          
-          const data = await response.json();
-          if (response.ok && data.success) {
-            alert('Listing published successfully! Final price has been converted with agent margin & forex markup.');
-            productForm.reset();
-            updatePriceLabel();
-          } else {
-            throw new Error(data.error || 'Failed to upload listing');
-          }
-        } catch (error) {
-          alert('Error publishing listing: ' + error.message);
-        } finally {
-          btnSubmit.disabled = false;
-          btnSubmit.innerText = originalText;
-        }
-      });
     }
 
     // Mock Login for Demo -> Real Login
