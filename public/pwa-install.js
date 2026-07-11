@@ -40,9 +40,12 @@
       .splash-logo {
         -webkit-animation: splashPulse 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
         animation: splashPulse 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
-        width: 140px;
-        height: 140px;
+        width: 252px;
+        height: 252px;
         object-fit: contain;
+        mix-blend-mode: multiply;
+        -webkit-filter: none;
+        filter: none;
       }
       .splash-loader {
         width: 22px;
