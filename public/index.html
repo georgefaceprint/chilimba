@@ -266,14 +266,29 @@
   <script>
     const API_BASE = window.location.origin;
     let allProducts = [];
+    let userFavorites = [];
+    let showOnlyLoved = false;
 
     let currentCategory = 'All';
     let currentPage = 1;
     const itemsPerPage = 36;
     let filteredProducts = [];
 
+    async function fetchFavorites() {
+      try {
+        const res = await fetch('/api/v1/favorites');
+        if (res.ok) {
+          const data = await res.json();
+          userFavorites = data.favorites || [];
+        }
+      } catch (e) {
+        console.warn('Could not fetch favorites:', e);
+      }
+    }
+
     async function fetchProducts() {
       try {
+        await fetchFavorites();
         const response = await fetch('/api/v1/products');
         const data = await response.json();
         allProducts = data.products || [];
@@ -292,6 +307,7 @@
       categories.forEach(cat => {
         catContainer.innerHTML += `<button onclick="filterCategory('${cat}', this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-gray-600 border border-gray-200 btn-press transition-colors">${cat}</button>`;
       });
+      catContainer.innerHTML += `<button onclick="filterLoved(this)" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-gray-600 border border-gray-200 btn-press transition-colors flex items-center gap-1">❤️ Loved</button>`;
     }
 
     function renderSubcategories(category) {

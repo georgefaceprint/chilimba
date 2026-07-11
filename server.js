@@ -50,7 +50,7 @@ app.post('/api/v1/user/update-kyc', async (req, res) => {
   if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-    const { name, surname, whatsapp, province, town, role } = req.body;
+    const { name, surname, whatsapp, country, province, town, role } = req.body;
     
     const db = require('./backend/firestore').db;
     const updateData = { kyc_complete: true };
@@ -59,6 +59,7 @@ app.post('/api/v1/user/update-kyc', async (req, res) => {
     if (surname) updateData.last_name = surname;
     if (name && surname) updateData.display_name = `${name} ${surname}`;
     if (whatsapp) updateData.phone_number = whatsapp;
+    if (country) updateData.country = country;
     if (province) updateData.province = province;
     if (town) updateData.town = town;
     if (role) updateData.role = role;
@@ -286,6 +287,152 @@ app.post('/api/v1/products/upload', async (req, res) => {
   }
 });
 
+// Favorites Routes
+app.get('/api/v1/favorites', async (req, res) => {
+  const token = req.cookies.auth_token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    const { db } = require('./backend/firestore');
+    
+    const userDoc = await db.collection('users').doc(decoded.user_id).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    const userData = userDoc.data();
+    const favorites = userData.favorites || [];
+    res.json({ success: true, favorites });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/v1/favorites/toggle', async (req, res) => {
+  const token = req.cookies.auth_token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    const { product_id } = req.body;
+    if (!product_id) {
+      return res.status(400).json({ success: false, error: 'Product ID required' });
+    }
+    
+    const { db } = require('./backend/firestore');
+    const userRef = db.collection('users').doc(decoded.user_id);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    
+    const userData = userDoc.data();
+    let favorites = userData.favorites || [];
+    let favorited = false;
+    
+    if (favorites.includes(product_id)) {
+      favorites = favorites.filter(id => id !== product_id);
+    } else {
+      favorites.push(product_id);
+      favorited = true;
+    }
+    
+    await userRef.update({ favorites });
+    res.json({ success: true, favorited, favorites });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin Product Editing Route
+app.post('/api/v1/products/edit', async (req, res) => {
+  const token = req.cookies.auth_token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    
+    const { db } = require('./backend/firestore');
+    const userDoc = await db.collection('users').doc(decoded.user_id).get();
+    if (!userDoc.exists) return res.status(404).json({ success: false, error: 'User not found' });
+    
+    const userData = userDoc.data();
+    if (userData.role !== 'SUPER_ADMIN' && userData.role !== 'AGENT') {
+      return res.status(403).json({ success: false, error: 'Access forbidden. Admin role required.' });
+    }
+    
+    const { 
+      product_id,
+      title,
+      description,
+      price_tzs,
+      price_zmw_input,
+      weight_kg,
+      origin_city,
+      origin_country,
+      image_url,
+      category,
+      sub_category,
+      sub_sub_category,
+      attributes
+    } = req.body;
+    
+    if (!product_id) {
+      return res.status(400).json({ success: false, error: 'Product ID is required for editing' });
+    }
+    
+    const productRef = db.collection('products').doc(product_id);
+    const productDoc = await productRef.get();
+    if (!productDoc.exists) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+    
+    // Re-calculate margins and exchange rates
+    let finalPriceZmw = 0;
+    let agentMargin = 0;
+    
+    if (origin_country === 'Zambia') {
+      finalPriceZmw = parseFloat(price_zmw_input);
+    } else {
+      const tzsRate = parseFloat(process.env.TZS_TO_ZMW_RATE) || 0.0105;
+      const markup = parseFloat(process.env.FOREX_MARKUP_PERCENTAGE) || 0.05;
+      agentMargin = parseFloat(process.env.AGENT_MARGIN_PERCENTAGE) || 0.10;
+      
+      const priceTzsWithMargin = price_tzs * (1 + agentMargin);
+      const basePriceZmw = priceTzsWithMargin * tzsRate;
+      finalPriceZmw = basePriceZmw * (1 + markup);
+    }
+    
+    const updates = {
+      title,
+      description,
+      category: category || 'General',
+      sub_category: sub_category || 'All',
+      sub_sub_category: sub_sub_category || 'All',
+      price_tzs: origin_country === 'Zambia' ? 0 : parseFloat(price_tzs),
+      price_zmw: Math.ceil(finalPriceZmw),
+      agent_margin_percentage: origin_country === 'Zambia' ? 0 : agentMargin,
+      agent_margin_zmw: origin_country === 'Zambia' ? 0 : Math.ceil((price_tzs * agentMargin) * (parseFloat(process.env.TZS_TO_ZMW_RATE) || 0.0105) * (1 + (parseFloat(process.env.FOREX_MARKUP_PERCENTAGE) || 0.05))),
+      weight_kg: parseFloat(weight_kg) || 0,
+      origin_country: origin_country || 'Tanzania',
+      origin_city,
+      supplier_name: req.body.supplier_name || productDoc.data().supplier_name || 'Generic Supplier',
+      is_local_stock: origin_country === 'Zambia',
+      updated_at: new Date().toISOString()
+    };
+    
+    if (image_url) {
+      updates.image_urls = [image_url];
+    }
+    if (attributes) {
+      updates.attributes = attributes;
+    }
+    
+    await productRef.update(updates);
+    res.json({ success: true, message: 'Product updated successfully' });
+  } catch (error) {
+    console.error('[Products Edit API] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 // 5. Logistics Tracking & QR Scanner Routes
 app.post('/api/v1/tracking/scan', async (req, res) => {
@@ -481,6 +628,164 @@ app.get('/api/v1/groups/public-info', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// List all groups with optional search query
+app.get('/api/v1/groups/list', async (req, res) => {
+  try {
+    const { query } = req.query;
+    const { db } = require('./backend/firestore');
+    
+    let groupsRef = db.collection('groups');
+    let snapshot;
+    
+    if (query) {
+      snapshot = await groupsRef.where('name', '>=', query).where('name', '<=', query + '\uf8ff').get();
+    } else {
+      snapshot = await groupsRef.orderBy('created_at', 'desc').limit(20).get();
+    }
+    
+    const groups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json({ success: true, groups });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Request to join a group
+app.post('/api/v1/groups/request-join', async (req, res) => {
+  try {
+    const { user_id, user_name, user_phone, group_id } = req.body;
+    if (!user_id || !group_id) {
+      return res.status(400).json({ success: false, error: 'User ID and Group ID are required' });
+    }
+    
+    const { db } = require('./backend/firestore');
+    
+    const groupDoc = await db.collection('groups').doc(group_id).get();
+    if (!groupDoc.exists) return res.status(404).json({ success: false, error: 'Group not found' });
+    
+    const userGroupSnap = await db.collection('user_groups')
+      .where('user_id', '==', user_id)
+      .where('group_id', '==', group_id)
+      .get();
+    if (!userGroupSnap.empty) {
+      return res.status(400).json({ success: false, error: 'You are already a member of this group' });
+    }
+    
+    const pendingSnap = await db.collection('group_join_requests')
+      .where('user_id', '==', user_id)
+      .where('group_id', '==', group_id)
+      .where('status', '==', 'PENDING')
+      .get();
+    if (!pendingSnap.empty) {
+      return res.status(400).json({ success: false, error: 'You already have a pending request for this group' });
+    }
+    
+    const newRequest = {
+      group_id,
+      group_name: groupDoc.data().name,
+      user_id,
+      user_name: user_name || 'Guest User',
+      user_phone: user_phone || '',
+      status: 'PENDING',
+      requested_at: new Date().toISOString()
+    };
+    
+    const docRef = await db.collection('group_join_requests').add(newRequest);
+    res.json({ success: true, request_id: docRef.id });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get pending join requests for a group (For Admin)
+app.get('/api/v1/groups/join-requests/:group_id', async (req, res) => {
+  try {
+    const { group_id } = req.params;
+    const { user_id } = req.query;
+    const { db } = require('./backend/firestore');
+    
+    const userGroupSnap = await db.collection('user_groups')
+      .where('user_id', '==', user_id)
+      .where('group_id', '==', group_id)
+      .where('role', '==', 'ADMIN')
+      .get();
+      
+    if (userGroupSnap.empty) {
+      return res.status(403).json({ success: false, error: 'Access denied. Group Admin permission required.' });
+    }
+    
+    const requestsSnap = await db.collection('group_join_requests')
+      .where('group_id', '==', group_id)
+      .where('status', '==', 'PENDING')
+      .get();
+      
+    const requests = requestsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json({ success: true, requests });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Approve/Reject join request
+app.post('/api/v1/groups/approve-join', async (req, res) => {
+  try {
+    const { request_id, admin_id, action } = req.body;
+    if (!request_id || !admin_id || !action) {
+      return res.status(400).json({ success: false, error: 'Missing parameters' });
+    }
+    
+    const { db } = require('./backend/firestore');
+    
+    const requestRef = db.collection('group_join_requests').doc(request_id);
+    const requestDoc = await requestRef.get();
+    if (!requestDoc.exists) return res.status(404).json({ success: false, error: 'Join request not found' });
+    
+    const requestData = requestDoc.data();
+    if (requestData.status !== 'PENDING') {
+      return res.status(400).json({ success: false, error: 'Join request already processed' });
+    }
+    
+    const userGroupSnap = await db.collection('user_groups')
+      .where('user_id', '==', admin_id)
+      .where('group_id', '==', requestData.group_id)
+      .where('role', '==', 'ADMIN')
+      .get();
+    if (userGroupSnap.empty) {
+      return res.status(403).json({ success: false, error: 'Access denied. Admin role required.' });
+    }
+    
+    if (action === 'APPROVE') {
+      const groupRef = db.collection('groups').doc(requestData.group_id);
+      const groupDoc = await groupRef.get();
+      if (!groupDoc.exists) return res.status(404).json({ success: false, error: 'Group not found' });
+      
+      const groupData = groupDoc.data();
+      if (groupData.member_count >= groupData.max_members) {
+        return res.status(400).json({ success: false, error: 'Group is already full' });
+      }
+      
+      await db.collection('user_groups').add({
+        user_id: requestData.user_id,
+        group_id: requestData.group_id,
+        role: 'MEMBER',
+        joined_at: new Date().toISOString()
+      });
+      
+      await groupRef.update({
+        member_count: groupData.member_count + 1
+      });
+      
+      await requestRef.update({ status: 'APPROVED' });
+      res.json({ success: true, message: 'User approved to join group successfully!' });
+    } else {
+      await requestRef.update({ status: 'REJECTED' });
+      res.json({ success: true, message: 'User join request rejected' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

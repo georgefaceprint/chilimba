@@ -65,19 +65,17 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">Province</label>
+          <label class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">Country</label>
+          <select id="kyc-country" required onchange="handleCountryChange()" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none appearance-none">
+            <option value="Zambia">Zambia</option>
+            <option value="Tanzania">Tanzania</option>
+          </select>
+        </div>
+
+        <div>
+          <label id="lbl-province" class="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1">Province</label>
           <select id="kyc-province" required onchange="updateTowns()" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none appearance-none">
             <option value="">Select Province</option>
-            <option value="Lusaka">Lusaka</option>
-            <option value="Copperbelt">Copperbelt</option>
-            <option value="Central">Central</option>
-            <option value="Southern">Southern</option>
-            <option value="Northern">Northern</option>
-            <option value="Muchinga">Muchinga</option>
-            <option value="Luapula">Luapula</option>
-            <option value="North-Western">North-Western</option>
-            <option value="Eastern">Eastern</option>
-            <option value="Western">Western</option>
           </select>
         </div>
 
@@ -183,27 +181,60 @@
 
   <script>
     const zambiaLocations = {
-      "Lusaka": ["Lusaka City", "Chongwe", "Kafue", "Chilanga", "Luangwa"],
+      "Central": ["Kabwe", "Kapiri Mposhi", "Mkushi", "Serenje"],
       "Copperbelt": ["Ndola", "Kitwe", "Chingola", "Mufulira", "Luanshya", "Kalulushi", "Chililabombwe"],
-      "Southern": ["Livingstone", "Choma", "Mazabuka", "Monze", "Kalomo"],
-      "Central": ["Kabwe", "Kapiri Mposhi", "Serenje", "Mkushi"],
-      "Northern": ["Kasama", "Mbala", "Mpika", "Luwingu"],
-      "Muchinga": ["Chinsali", "Isoka", "Nakonde"],
-      "Luapula": ["Mansa", "Nchelenge", "Kawambwa"],
-      "North-Western": ["Solwezi", "Mwinilunga", "Zambezi"],
       "Eastern": ["Chipata", "Petauke", "Katete", "Lundazi"],
+      "Luapula": ["Mansa", "Nchelenge", "Kawambwa"],
+      "Lusaka": ["Lusaka City", "Chongwe", "Kafue", "Chilanga", "Luangwa"],
+      "Muchinga": ["Chinsali", "Isoka", "Nakonde"],
+      "Northern": ["Kasama", "Mbala", "Mpika", "Luwingu"],
+      "North-Western": ["Solwezi", "Mwinilunga", "Zambezi"],
+      "Southern": ["Livingstone", "Choma", "Mazabuka", "Monze", "Kalomo"],
       "Western": ["Mongu", "Kaoma", "Senanga"]
     };
 
+    const tanzaniaLocations = {
+      "Dar es Salaam": ["Kinondoni", "Ilala", "Temeke", "Kigamboni", "Ubungo"],
+      "Songwe (Tunduma)": ["Tunduma Town", "Mbozi", "Ileje", "Momba"],
+      "Dodoma": ["Dodoma City", "Kondoa", "Kongwa", "Mpwapwa"],
+      "Arusha": ["Arusha City", "Meru", "Karatu"]
+    };
+
+    function handleCountryChange() {
+      const country = document.getElementById('kyc-country').value;
+      const provLabel = document.getElementById('lbl-province');
+      const provSelect = document.getElementById('kyc-province');
+      const townSelect = document.getElementById('kyc-town');
+
+      provSelect.innerHTML = '<option value="">Select Option</option>';
+      townSelect.innerHTML = '<option value="">Select Option</option>';
+      townSelect.disabled = true;
+
+      if (country === 'Tanzania') {
+        provLabel.innerText = 'Region';
+        Object.keys(tanzaniaLocations).forEach(r => {
+          provSelect.innerHTML += `<option value="${r}">${r}</option>`;
+        });
+      } else {
+        provLabel.innerText = 'Province';
+        Object.keys(zambiaLocations).forEach(p => {
+          provSelect.innerHTML += `<option value="${p}">${p}</option>`;
+        });
+      }
+    }
+
     function updateTowns() {
+      const country = document.getElementById('kyc-country').value;
       const provSelect = document.getElementById('kyc-province');
       const townSelect = document.getElementById('kyc-town');
       const selected = provSelect.value;
       
-      townSelect.innerHTML = '<option value="">Select Town</option>';
+      townSelect.innerHTML = '<option value="">Select Option</option>';
       
-      if (selected && zambiaLocations[selected]) {
-        zambiaLocations[selected].forEach(t => {
+      const db = country === 'Tanzania' ? tanzaniaLocations : zambiaLocations;
+      
+      if (selected && db[selected]) {
+        db[selected].forEach(t => {
           townSelect.innerHTML += `<option value="${t}">${t}</option>`;
         });
         townSelect.disabled = false;
@@ -228,6 +259,10 @@
            if (u.phone_number) {
              document.getElementById('kyc-whatsapp').value = u.phone_number;
            }
+           if (u.country) {
+             document.getElementById('kyc-country').value = u.country;
+           }
+           handleCountryChange();
            if (u.province) {
              document.getElementById('kyc-province').value = u.province;
              updateTowns();
@@ -241,10 +276,17 @@
 
     function formatPhoneNumber(phone) {
       let cleaned = phone.replace(/[^\d+]/g, '');
-      if (cleaned.startsWith('0') && cleaned.length === 10) {
-        cleaned = '+260' + cleaned.substring(1);
+      const country = document.getElementById('kyc-country').value;
+      if (country === 'Tanzania') {
+        if (cleaned.startsWith('0') && cleaned.length === 10) {
+          cleaned = '+255' + cleaned.substring(1);
+        }
+      } else {
+        if (cleaned.startsWith('0') && cleaned.length === 10) {
+          cleaned = '+260' + cleaned.substring(1);
+        }
       }
-      if (!cleaned.startsWith('+') && cleaned.length >= 11) {
+      if (!cleaned.startsWith('+') && cleaned.length >= 9) {
         cleaned = '+' + cleaned;
       }
       return cleaned;
@@ -260,6 +302,7 @@
         name: document.getElementById('kyc-name').value.trim(),
         surname: document.getElementById('kyc-surname').value.trim(),
         whatsapp: formatPhoneNumber(document.getElementById('kyc-whatsapp').value.trim()),
+        country: document.getElementById('kyc-country').value,
         province: document.getElementById('kyc-province').value,
         town: document.getElementById('kyc-town').value
       };

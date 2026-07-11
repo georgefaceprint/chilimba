@@ -52,6 +52,16 @@
     </div>
 
     <div id="dashboard-content" class="hidden">
+      <!-- Cart View Selector Tab Bar -->
+      <div class="flex bg-gray-100 p-1.5 rounded-2xl mb-6 border border-gray-200">
+        <button onclick="switchCartView('PERSONAL')" id="tab-cart-personal" class="flex-1 py-3 text-center text-xs font-black rounded-xl transition-all shadow-sm bg-white text-gray-900 btn-press">
+          🛒 Personal Cart
+        </button>
+        <button onclick="switchCartView('GROUP')" id="tab-cart-group" class="flex-1 py-3 text-center text-xs font-black rounded-xl transition-all text-gray-500 hover:text-gray-900 btn-press">
+          👥 Shared Group Cart
+        </button>
+      </div>
+
       <!-- Pickup Station -->
       <div class="bg-white border border-gray-100 rounded-2xl p-4 mb-6 shadow-sm">
         <div class="flex justify-between items-center mb-3">
@@ -295,6 +305,33 @@
     let isAdmin = true; // For demo purposes, true to show checkout
     let currentGroupId = localStorage.getItem('activeGroupId');
     let currentGrandTotal = 0;
+
+    function switchCartView(viewType) {
+      if (!activeUser) return;
+      const personalTab = document.getElementById('tab-cart-personal');
+      const groupTab = document.getElementById('tab-cart-group');
+      
+      if (viewType === 'PERSONAL') {
+        currentGroupId = 'PERSONAL_' + activeUser.user_id;
+        localStorage.setItem('activeGroupId', currentGroupId);
+      } else {
+        const savedGroupId = localStorage.getItem('lastActiveGroupId');
+        if (savedGroupId && !savedGroupId.startsWith('PERSONAL_')) {
+          currentGroupId = savedGroupId;
+        } else {
+          alert("Please select a group from your dashboard to view its shared cart!");
+          window.location.href = '/dashboard.html';
+          return;
+        }
+        localStorage.setItem('activeGroupId', currentGroupId);
+      }
+      
+      // Clear status badges and show loaders if switching
+      const badge = document.getElementById('group-status-badge');
+      if (badge) badge.style.display = 'none';
+      
+      fetchCartData();
+    }
     
     // Constants
     const INTL_FREIGHT_RATE = 20; // 20 ZMW per KG from TZ to Nakonde
@@ -326,18 +363,34 @@
           localStorage.setItem('activeGroupId', currentGroupId);
         }
 
+        // Set active tab styles
+        const personalTab = document.getElementById('tab-cart-personal');
+        const groupTab = document.getElementById('tab-cart-group');
+        if (currentGroupId.startsWith('PERSONAL_')) {
+          if (personalTab && groupTab) {
+            personalTab.className = "flex-1 py-3 text-center text-xs font-black rounded-xl transition-all shadow-sm bg-white text-gray-900 btn-press";
+            groupTab.className = "flex-1 py-3 text-center text-xs font-black rounded-xl transition-all text-gray-500 hover:text-gray-900 btn-press";
+          }
+        } else {
+          if (personalTab && groupTab) {
+            groupTab.className = "flex-1 py-3 text-center text-xs font-black rounded-xl transition-all shadow-sm bg-white text-gray-900 btn-press";
+            personalTab.className = "flex-1 py-3 text-center text-xs font-black rounded-xl transition-all text-gray-500 hover:text-gray-900 btn-press";
+          }
+          localStorage.setItem('lastActiveGroupId', currentGroupId);
+        }
+
         let groupStatus = 'EDITING';
         let groupAdminId = '';
         let groupAdminPhone = '';
         let contributions = [];
 
         if (currentGroupId.startsWith('PERSONAL_')) {
-          const personalTitle = document.getElementById('group-title');
+          const personalTitle = document.getElementById('group-name'); // fix group title selector name
           if (personalTitle) personalTitle.innerText = "My Personal Cart";
           const statusBadge = document.getElementById('group-status-badge');
           if (statusBadge) statusBadge.style.display = 'none';
           const groupStats = document.querySelector('.bg-blue-50');
-          if (groupStats) groupStats.style.display = 'none'; // hide group stats
+          if (groupStats) groupStats.style.display = 'none';
           const chatBtn = document.getElementById('chat-toggle-btn');
           if (chatBtn) {
             chatBtn.classList.remove('scale-100');
