@@ -93,7 +93,16 @@
     </div>
 
     <!-- Product Grid -->
-    <h3 class="text-lg font-black text-gray-900 mb-3">Trending Products</h3>
+    <div class="flex items-center justify-between mb-3 mt-4">
+      <h3 class="text-lg font-black text-gray-900" id="grid-header-title">Trending Products</h3>
+      <select id="sort-select" onchange="applyFilters()" class="bg-white border border-gray-200 text-gray-700 text-[11px] font-black rounded-xl px-2 py-1.5 shadow-sm focus:outline-none transition-colors">
+        <option value="trending">🔥 Trending</option>
+        <option value="latest">✨ Latest</option>
+        <option value="price_asc">💰 Price: Low to High</option>
+        <option value="price_desc">📈 Price: High to Low</option>
+      </select>
+    </div>
+    
     <div class="grid grid-cols-2 gap-4" id="product-grid">
       <!-- Loading Skeleton -->
       <div class="bg-white rounded-2xl p-3 shadow-sm">
@@ -106,6 +115,13 @@
         <div class="h-4 bg-gray-200 w-3/4 rounded mb-2 animate-pulse"></div>
         <div class="h-4 bg-gray-200 w-1/2 rounded animate-pulse"></div>
       </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div id="pagination-controls" class="flex items-center justify-center gap-3 mt-6 mb-8 hidden">
+      <button onclick="changePage(-1)" id="btn-prev-page" class="bg-white border border-gray-200 text-gray-700 text-[11px] font-black px-3.5 py-2 rounded-xl shadow-sm hover:bg-gray-50 btn-press disabled:opacity-40 disabled:pointer-events-none">Prev</button>
+      <span id="page-indicator" class="text-xs font-bold text-gray-500">Page 1 of 1</span>
+      <button onclick="changePage(1)" id="btn-next-page" class="bg-white border border-gray-200 text-gray-700 text-[11px] font-black px-3.5 py-2 rounded-xl shadow-sm hover:bg-gray-50 btn-press disabled:opacity-40 disabled:pointer-events-none">Next</button>
     </div>
 
   </main>
@@ -249,14 +265,17 @@
     let allProducts = [];
 
     let currentCategory = 'All';
+    let currentPage = 1;
+    const itemsPerPage = 36;
+    let filteredProducts = [];
 
     async function fetchProducts() {
       try {
         const response = await fetch('/api/v1/products');
         const data = await response.json();
-        allProducts = data.products;
+        allProducts = data.products || [];
         renderCategories();
-        renderProducts(allProducts);
+        applyFilters();
       } catch (err) {
         console.error('Error fetching products:', err);
         renderProducts([]);
@@ -440,39 +459,95 @@
     function applyFilters() {
       currentAge = document.getElementById('filter-age')?.value || '';
       currentColor = document.getElementById('filter-color')?.value || '';
+      const sortVal = document.getElementById('sort-select')?.value || 'trending';
 
-      let filtered = allProducts;
+      let filtered = [...allProducts];
       
+      // Category filter
       if (currentCategory !== 'All') {
         filtered = filtered.filter(p => p.category === currentCategory);
       }
       
+      // Subcategory filter
       if (currentSubcategory !== 'All') {
         filtered = filtered.filter(p => p.sub_category === currentSubcategory || p.subcategory === currentSubcategory);
       }
       
+      // Age filter
       if (currentAge) {
         filtered = filtered.filter(p => p.attributes && p.attributes.age === currentAge);
       }
       
+      // Color filter
       if (currentColor) {
         filtered = filtered.filter(p => p.attributes && p.attributes.color === currentColor);
       }
+
+      // Search query filter
+      const searchVal = document.getElementById('search-input')?.value.toLowerCase() || '';
+      if (searchVal) {
+        filtered = filtered.filter(p => p.title.toLowerCase().includes(searchVal));
+      }
+
+      // Sorting
+      if (sortVal === 'latest') {
+        filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        document.getElementById('grid-header-title').innerText = 'Latest Products';
+      } else if (sortVal === 'trending') {
+        filtered.sort((a, b) => (b.trust_rating || 0) - (a.trust_rating || 0));
+        document.getElementById('grid-header-title').innerText = 'Trending Products';
+      } else if (sortVal === 'price_asc') {
+        filtered.sort((a, b) => parseFloat(a.price_zmw) - parseFloat(b.price_zmw));
+        document.getElementById('grid-header-title').innerText = 'Budget-Friendly';
+      } else if (sortVal === 'price_desc') {
+        filtered.sort((a, b) => parseFloat(b.price_zmw) - parseFloat(a.price_zmw));
+        document.getElementById('grid-header-title').innerText = 'Premium Selection';
+      }
+
+      filteredProducts = filtered;
+      currentPage = 1;
       
-      renderProducts(filtered);
+      renderPaginatedProducts();
+    }
+
+    function renderPaginatedProducts() {
+      const totalItems = filteredProducts.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+      
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const paginated = filteredProducts.slice(startIndex, endIndex);
+      
+      renderProducts(paginated);
+      
+      const controls = document.getElementById('pagination-controls');
+      const pageIndicator = document.getElementById('page-indicator');
+      const btnPrev = document.getElementById('btn-prev-page');
+      const btnNext = document.getElementById('btn-next-page');
+      
+      if (totalPages > 1) {
+        controls.classList.remove('hidden');
+        controls.classList.add('flex');
+        pageIndicator.innerText = `Page ${currentPage} of ${totalPages}`;
+        btnPrev.disabled = (currentPage === 1);
+        btnNext.disabled = (currentPage === totalPages);
+      } else {
+        controls.classList.add('hidden');
+        controls.classList.remove('flex');
+      }
+    }
+
+    function changePage(change) {
+      currentPage += change;
+      renderPaginatedProducts();
+      document.getElementById('grid-header-title')?.scrollIntoView({ behavior: 'smooth' });
     }
     
     // Wire up search bar
     document.getElementById('search-input').addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      if (!query) {
-        renderProducts(allProducts);
-        return;
-      }
-      
-      const filtered = allProducts.filter(p => p.title.toLowerCase().includes(query));
-      renderProducts(filtered);
-      
       // Reset category buttons when searching manually
       document.querySelectorAll('.category-btn').forEach(b => {
         b.classList.remove('bg-green-700', 'text-white', 'shadow-md');
@@ -480,6 +555,8 @@
       });
       document.querySelector('.category-btn').classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200');
       document.querySelector('.category-btn').classList.add('bg-green-700', 'text-white', 'shadow-md');
+      
+      applyFilters();
     });
     
     function openAuthModal() {
@@ -509,5 +586,6 @@
     fetchProducts();
     checkSession();
   </script>
+  <script src="/pwa-install.js"></script>
 </body>
 </html>
