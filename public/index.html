@@ -82,6 +82,9 @@
     <!-- Subcategory Filters -->
     <div class="flex overflow-x-auto gap-3 pb-2 mb-1 hide-scroll" id="subcategory-filters">
     </div>
+    <!-- Sub-subcategory Filters -->
+    <div class="flex overflow-x-auto gap-3 pb-2 mb-1 hide-scroll" id="subsubcategory-filters">
+    </div>
     <!-- Extra Attributes Filters (Age, Color) -->
     <div id="extra-filters-container" class="hidden flex gap-2 overflow-x-auto hide-scroll pb-4 mb-2">
       <select id="filter-age" onchange="applyFilters()" class="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-xl px-3 py-2 shadow-sm focus:outline-none flex-shrink-0">
@@ -390,17 +393,25 @@
     }
 
     let currentSubcategory = 'All';
+    let currentSubSubcategory = 'All';
     let currentAge = '';
     let currentColor = '';
+    let currentSize = '';
 
     function filterCategory(cat, btnElement) {
       currentCategory = cat;
       currentSubcategory = 'All';
+      currentSubSubcategory = 'All';
       currentAge = '';
       currentColor = '';
+      currentSize = '';
       
-      document.getElementById('filter-age').value = '';
-      document.getElementById('filter-color').value = '';
+      const ageEl = document.getElementById('filter-age');
+      if (ageEl) ageEl.value = '';
+      const colorEl = document.getElementById('filter-color');
+      if (colorEl) colorEl.value = '';
+      const sizeEl = document.getElementById('filter-size');
+      if (sizeEl) sizeEl.value = '';
 
       document.querySelectorAll('.category-btn').forEach(b => {
         b.classList.remove('bg-green-700', 'text-white', 'shadow-md');
@@ -414,8 +425,27 @@
       applyFilters();
     }
     
+    function renderSubcategories(category) {
+      const subContainer = document.getElementById('subcategory-filters');
+      const subsubContainer = document.getElementById('subsubcategory-filters');
+      subContainer.innerHTML = '';
+      subsubContainer.innerHTML = '';
+      if (category === 'All') return;
+      
+      const subcats = [...new Set(allProducts.filter(p => p.category === category).map(p => p.sub_category))].filter(Boolean);
+      if (subcats.length === 0) return;
+      
+      subContainer.innerHTML = `<button onclick="filterSubcategory('All', this)" class="subcat-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold bg-green-100 text-green-800 shadow-sm btn-press transition-colors">All ${category}</button>`;
+      
+      subcats.forEach(sub => {
+        subContainer.innerHTML += `<button onclick="filterSubcategory('${sub}', this)" class="subcat-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-500 border border-gray-200 btn-press transition-colors">${sub}</button>`;
+      });
+    }
+
     function filterSubcategory(subcat, btnElement) {
       currentSubcategory = subcat;
+      currentSubSubcategory = 'All';
+      
       document.querySelectorAll('.subcat-btn').forEach(b => {
         b.classList.remove('bg-green-100', 'text-green-800', 'shadow-sm');
         b.classList.add('bg-white', 'text-gray-500', 'border', 'border-gray-200');
@@ -423,17 +453,109 @@
       btnElement.classList.remove('bg-white', 'text-gray-500', 'border', 'border-gray-200');
       btnElement.classList.add('bg-green-100', 'text-green-800', 'shadow-sm');
       
+      renderSubSubcategories(currentCategory, subcat);
+      applyFilters();
+    }
+
+    function renderSubSubcategories(category, subCategory) {
+      const subsubContainer = document.getElementById('subsubcategory-filters');
+      subsubContainer.innerHTML = '';
+      if (category === 'All' || subCategory === 'All') return;
+      
+      const subsubcats = [...new Set(allProducts.filter(p => p.category === category && p.sub_category === subCategory).map(p => p.sub_sub_category))].filter(Boolean);
+      if (subsubcats.length === 0) return;
+      
+      subsubContainer.innerHTML = `<button onclick="filterSubSubcategory('All', this)" class="subsubcat-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold bg-orange-100 text-orange-800 shadow-sm btn-press transition-colors">All ${subCategory}</button>`;
+      
+      subsubcats.forEach(subsub => {
+        subsubContainer.innerHTML += `<button onclick="filterSubSubcategory('${subsub}', this)" class="subsubcat-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-500 border border-gray-200 btn-press transition-colors">${subsub}</button>`;
+      });
+    }
+
+    function filterSubSubcategory(subsubcat, btnElement) {
+      currentSubSubcategory = subsubcat;
+      document.querySelectorAll('.subsubcat-btn').forEach(b => {
+        b.classList.remove('bg-orange-100', 'text-orange-800', 'shadow-sm');
+        b.classList.add('bg-white', 'text-gray-500', 'border', 'border-gray-200');
+      });
+      btnElement.classList.remove('bg-white', 'text-gray-500', 'border', 'border-gray-200');
+      btnElement.classList.add('bg-orange-100', 'text-orange-800', 'shadow-sm');
+      
       applyFilters();
     }
 
     function updateExtraFiltersVisibility(cat) {
       const container = document.getElementById('extra-filters-container');
-      const kidsCategories = ['Kids & Babies', 'Baby Boys Clothing', 'Baby Girls Clothing', 'Kids Boys (3-14 Yrs)'];
-      if (kidsCategories.includes(cat)) {
+      if (!container) return;
+      
+      if (cat === 'Fashion') {
         container.classList.remove('hidden');
-        populateExtraFilters(cat);
+        populateFashionFilters(cat);
+      } else if (cat === 'Kids & Babies') {
+        container.classList.remove('hidden');
+        populateKidsFilters(cat);
       } else {
         container.classList.add('hidden');
+      }
+    }
+
+    function populateFashionFilters(cat) {
+      const catProducts = allProducts.filter(p => p.category === cat);
+      let colors = [];
+      let sizes = [];
+      
+      catProducts.forEach(p => {
+        if (p.attributes) {
+          if (Array.isArray(p.attributes.colors)) {
+            colors.push(...p.attributes.colors);
+          } else if (p.attributes.color) {
+            colors.push(p.attributes.color);
+          }
+          
+          if (Array.isArray(p.attributes.sizes)) {
+            sizes.push(...p.attributes.sizes);
+          } else if (p.attributes.size) {
+            sizes.push(p.attributes.size);
+          }
+        }
+      });
+      
+      colors = [...new Set(colors.filter(Boolean))].sort();
+      sizes = [...new Set(sizes.filter(Boolean))].sort();
+
+      const extraContainer = document.getElementById('extra-filters-container');
+      if (extraContainer) {
+        extraContainer.innerHTML = `
+          <select id="filter-color" onchange="applyFilters()" class="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-xl px-3 py-2 shadow-sm focus:outline-none flex-shrink-0">
+            <option value="">All Colors</option>
+            ${colors.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+          <select id="filter-size" onchange="applyFilters()" class="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-xl px-3 py-2 shadow-sm focus:outline-none flex-shrink-0">
+            <option value="">All Sizes</option>
+            ${sizes.map(s => `<option value="${s}">${s}</option>`).join('')}
+          </select>
+          <input type="hidden" id="filter-age" value="">
+        `;
+      }
+    }
+
+    function populateKidsFilters(cat) {
+      const catProducts = allProducts.filter(p => p.category === cat);
+      const ages = [...new Set(catProducts.map(p => p.attributes?.age).filter(Boolean))].sort();
+      const colors = [...new Set(catProducts.map(p => p.attributes?.color).filter(Boolean))].sort();
+      
+      const extraContainer = document.getElementById('extra-filters-container');
+      if (extraContainer) {
+        extraContainer.innerHTML = `
+          <select id="filter-age" onchange="applyFilters()" class="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-xl px-3 py-2 shadow-sm focus:outline-none flex-shrink-0">
+            <option value="">All Ages</option>
+            ${ages.map(a => `<option value="${a}">${a}</option>`).join('')}
+          </select>
+          <select id="filter-color" onchange="applyFilters()" class="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-xl px-3 py-2 shadow-sm focus:outline-none flex-shrink-0">
+            <option value="">All Colors</option>
+            ${colors.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        `;
       }
     }
 
@@ -459,6 +581,7 @@
     function applyFilters() {
       currentAge = document.getElementById('filter-age')?.value || '';
       currentColor = document.getElementById('filter-color')?.value || '';
+      currentSize = document.getElementById('filter-size')?.value || '';
       const sortVal = document.getElementById('sort-select')?.value || 'trending';
 
       let filtered = [...allProducts];
@@ -472,6 +595,11 @@
       if (currentSubcategory !== 'All') {
         filtered = filtered.filter(p => p.sub_category === currentSubcategory || p.subcategory === currentSubcategory);
       }
+
+      // Sub-subcategory filter
+      if (currentSubSubcategory !== 'All') {
+        filtered = filtered.filter(p => p.sub_sub_category === currentSubSubcategory || p.sub_subcategory === currentSubSubcategory);
+      }
       
       // Age filter
       if (currentAge) {
@@ -480,7 +608,12 @@
       
       // Color filter
       if (currentColor) {
-        filtered = filtered.filter(p => p.attributes && p.attributes.color === currentColor);
+        filtered = filtered.filter(p => p.attributes && (p.attributes.color === currentColor || (Array.isArray(p.attributes.colors) && p.attributes.colors.includes(currentColor))));
+      }
+
+      // Size filter
+      if (currentSize) {
+        filtered = filtered.filter(p => p.attributes && (p.attributes.size === currentSize || (Array.isArray(p.attributes.sizes) && p.attributes.sizes.includes(currentSize))));
       }
 
       // Search query filter

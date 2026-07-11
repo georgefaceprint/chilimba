@@ -94,21 +94,46 @@
               <textarea id="p-description" rows="2" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-medium focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Brief details about the item..."></textarea>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Search Category Suggestion (Optional)</label>
+              <div class="relative">
+                <input type="text" id="p-category-search" oninput="suggestCategory()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Type to search, e.g. Sneakers, Laptops, Rice...">
+                <div id="category-search-suggestions" class="hidden absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto z-50 p-2 space-y-1"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
               <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Category</label>
-                <select id="p-category" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
-                  <option value="General">General</option>
-                  <option value="Electronics">Electronics</option>
-                  <option value="Home Appliances">Home Appliances</option>
-                  <option value="Fashion">Fashion</option>
-                  <option value="Beauty">Beauty</option>
-                  <option value="Kids & Babies">Kids & Babies</option>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Category (Parent)</label>
+                <select id="p-category" required onchange="handleCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
                 </select>
+                <input type="text" id="p-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="Enter Custom Category">
               </div>
               <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Sub-category</label>
-                <input type="text" id="p-sub-category" placeholder="e.g. Coffee Beans" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Sub-category (Child)</label>
+                <select id="p-sub-category" required onchange="handleSubCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
+                </select>
+                <input type="text" id="p-sub-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="Enter Custom Sub-cat">
+              </div>
+              <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Sub-sub (Grandchild)</label>
+                <select id="p-sub-sub-category" required onchange="handleSubSubCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
+                </select>
+                <input type="text" id="p-sub-sub-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="Enter Custom Sub-sub">
+              </div>
+            </div>
+
+            <div id="fashion-attributes-panel" class="hidden bg-green-50/50 border border-green-100 p-4 rounded-2xl space-y-3">
+              <p class="text-[10px] font-black uppercase text-green-800 tracking-wider">Fashion Specific Details</p>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1.5">Available Sizes (Comma-separated)</label>
+                  <input type="text" id="p-sizes" class="w-full border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="e.g. S, M, L or 38, 39, 40">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1.5">Available Colors (Comma-separated)</label>
+                  <input type="text" id="p-colors" class="w-full border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="e.g. Red, Blue, Black">
+                </div>
               </div>
             </div>
 
@@ -582,6 +607,219 @@
       document.getElementById('ns-name').value = '';
     }
 
+    // --- CATEGORY TAXONOMY DATABASE ---
+    const TAXONOMY = {
+      "Fashion": {
+        "Men's Clothing": ["Shirts", "Trousers", "Suits", "Jackets", "Activewear", "Other"],
+        "Women's Clothing": ["Dresses", "Tops & Blouses", "Skirts", "Trousers", "Activewear", "Other"],
+        "Men's Shoes": ["Sneakers", "Formal Shoes", "Boots", "Sandals", "Other"],
+        "Women's Shoes": ["Heels", "Flats", "Sneakers", "Boots", "Sandals", "Other"],
+        "Kids & Babies": ["Baby Outfits", "Boys Clothing", "Girls Clothing", "Kids Shoes", "Other"],
+        "Bags & Accessories": ["Handbags", "Backpacks", "Belts", "Watches", "Sunglasses", "Other"],
+        "Other": ["Other"]
+      },
+      "Electronics": {
+        "Mobile Phones": ["Smartphones", "Feature Phones", "Refurbished Phones", "Other"],
+        "Computers & Laptops": ["Laptops", "Desktops", "Monitors", "Computer Accessories", "Other"],
+        "Audio & Headphones": ["Earbuds", "Headphones", "Bluetooth Speakers", "Soundbars", "Other"],
+        "Cameras & Photography": ["DSLR Cameras", "Action Cameras", "Lenses", "Tripods", "Other"],
+        "Other": ["Other"]
+      },
+      "Home Appliances": {
+        "Kitchen Appliances": ["Microwaves", "Blenders & Juicers", "Refrigerators", "Kettles", "Other"],
+        "Smart Home": ["Smart Speakers", "Smart Bulbs", "Security Cameras", "Other"],
+        "Other": ["Other"]
+      },
+      "Groceries & Agriculture": {
+        "Grains & Cereals": ["Rice", "Maize & Corn", "Wheat & Flour", "Beans", "Other"],
+        "Vegetables": ["Potatoes", "Onions", "Tomatoes", "Cabbages", "Other"],
+        "Coffee & Tea": ["Coffee Beans", "Ground Coffee", "Black Tea", "Green Tea", "Other"],
+        "Other": ["Other"]
+      },
+      "Beauty & Personal Care": {
+        "Skincare": ["Moisturizers", "Cleansers", "Sunscreen", "Serums", "Other"],
+        "Haircare": ["Shampoos", "Conditioners", "Hair Oils", "Wigs & Extensions", "Other"],
+        "Other": ["Other"]
+      },
+      "Other (Custom)": {
+        "Other": ["Other"]
+      }
+    };
+
+    function initCategorySelects() {
+      const pCat = document.getElementById('p-category');
+      if (pCat) {
+        pCat.innerHTML = '<option value="">Select Category</option>';
+        Object.keys(TAXONOMY).forEach(cat => {
+          pCat.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+        pCat.innerHTML += `<option value="Other">Other (Custom)</option>`;
+        
+        handleCategoryChange();
+      }
+    }
+
+    function handleCategoryChange() {
+      const cat = document.getElementById('p-category').value;
+      const subCatSelect = document.getElementById('p-sub-category');
+      const subSubCatSelect = document.getElementById('p-sub-sub-category');
+      
+      const customCat = document.getElementById('p-category-custom');
+      const customSubCat = document.getElementById('p-sub-category-custom');
+      const customSubSubCat = document.getElementById('p-sub-sub-category-custom');
+
+      if (!subCatSelect || !subSubCatSelect) return;
+
+      // Reset
+      subCatSelect.innerHTML = '<option value="">Select Sub-category</option>';
+      subSubCatSelect.innerHTML = '<option value="">Select Sub-sub-category</option>';
+      
+      if (cat === 'Other') {
+        customCat.classList.remove('hidden');
+        customSubCat.classList.remove('hidden');
+        customSubSubCat.classList.remove('hidden');
+        
+        subCatSelect.classList.add('hidden');
+        subSubCatSelect.classList.add('hidden');
+      } else {
+        customCat.classList.add('hidden');
+        customSubCat.classList.add('hidden');
+        customSubSubCat.classList.add('hidden');
+        
+        subCatSelect.classList.remove('hidden');
+        subSubCatSelect.classList.remove('hidden');
+        
+        if (cat && TAXONOMY[cat]) {
+          Object.keys(TAXONOMY[cat]).forEach(sub => {
+            subCatSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+          });
+          subCatSelect.innerHTML += `<option value="Other">Other (Custom)</option>`;
+        }
+      }
+      
+      // Show fashion attributes dynamically if Category is Fashion
+      const fashionPanel = document.getElementById('fashion-attributes-panel');
+      if (fashionPanel) {
+        if (cat === 'Fashion') {
+          fashionPanel.classList.remove('hidden');
+        } else {
+          fashionPanel.classList.add('hidden');
+        }
+      }
+      
+      handleSubCategoryChange();
+    }
+
+    function handleSubCategoryChange() {
+      const cat = document.getElementById('p-category').value;
+      const sub = document.getElementById('p-sub-category').value;
+      const subSubCatSelect = document.getElementById('p-sub-sub-category');
+      const customSubCat = document.getElementById('p-sub-category-custom');
+      const customSubSubCat = document.getElementById('p-sub-sub-category-custom');
+
+      if (!subSubCatSelect) return;
+
+      subSubCatSelect.innerHTML = '<option value="">Select Sub-sub-category</option>';
+
+      if (sub === 'Other') {
+        customSubCat.classList.remove('hidden');
+        customSubSubCat.classList.remove('hidden');
+        subSubCatSelect.classList.add('hidden');
+      } else {
+        if (cat !== 'Other') {
+          customSubCat.classList.add('hidden');
+          customSubSubCat.classList.add('hidden');
+          subSubCatSelect.classList.remove('hidden');
+          
+          if (cat && sub && TAXONOMY[cat] && TAXONOMY[cat][sub]) {
+            TAXONOMY[cat][sub].forEach(subsub => {
+              subSubCatSelect.innerHTML += `<option value="${subsub}">${subsub}</option>`;
+            });
+            subSubCatSelect.innerHTML += `<option value="Other">Other (Custom)</option>`;
+          }
+        }
+      }
+      
+      handleSubSubCategoryChange();
+    }
+
+    function handleSubSubCategoryChange() {
+      const subsub = document.getElementById('p-sub-sub-category').value;
+      const customSubSubCat = document.getElementById('p-sub-sub-category-custom');
+      
+      if (!customSubSubCat) return;
+
+      if (subsub === 'Other') {
+        customSubSubCat.classList.remove('hidden');
+      } else {
+        const cat = document.getElementById('p-category').value;
+        const sub = document.getElementById('p-sub-category').value;
+        if (cat !== 'Other' && sub !== 'Other') {
+          customSubSubCat.classList.add('hidden');
+        }
+      }
+    }
+
+    // Auto-suggest Category logic
+    function suggestCategory() {
+      const input = document.getElementById('p-category-search').value.toLowerCase().trim();
+      const suggestionsDiv = document.getElementById('category-search-suggestions');
+      
+      if (!input) {
+        suggestionsDiv.innerHTML = '';
+        suggestionsDiv.classList.add('hidden');
+        return;
+      }
+      
+      let matches = [];
+      
+      Object.keys(TAXONOMY).forEach(cat => {
+        Object.keys(TAXONOMY[cat]).forEach(sub => {
+          TAXONOMY[cat][sub].forEach(subsub => {
+            if (subsub.toLowerCase().includes(input) || sub.toLowerCase().includes(input) || cat.toLowerCase().includes(input)) {
+              if (matches.length < 5) {
+                matches.push({ cat, sub, subsub });
+              }
+            }
+          });
+        });
+      });
+      
+      if (matches.length > 0) {
+        suggestionsDiv.classList.remove('hidden');
+        suggestionsDiv.innerHTML = '';
+        matches.forEach(m => {
+          const div = document.createElement('div');
+          div.className = 'p-2 text-xs font-bold text-gray-700 hover:bg-green-50 rounded-lg cursor-pointer transition-colors';
+          div.innerText = `${m.cat} > ${m.sub} > ${m.subsub}`;
+          div.onclick = () => {
+            selectSuggestedCategory(m.cat, m.sub, m.subsub);
+          };
+          suggestionsDiv.appendChild(div);
+        });
+      } else {
+        suggestionsDiv.innerHTML = '<div class="p-2 text-xs text-gray-400 font-bold">No match. Pick manually below.</div>';
+        suggestionsDiv.classList.remove('hidden');
+      }
+    }
+
+    function selectSuggestedCategory(cat, sub, subsub) {
+      document.getElementById('p-category').value = cat;
+      handleCategoryChange();
+      
+      document.getElementById('p-sub-category').value = sub;
+      handleSubCategoryChange();
+      
+      document.getElementById('p-sub-sub-category').value = subsub;
+      handleSubSubCategoryChange();
+      
+      // Clear suggestion box
+      document.getElementById('p-category-search').value = '';
+      const suggestionsDiv = document.getElementById('category-search-suggestions');
+      suggestionsDiv.innerHTML = '';
+      suggestionsDiv.classList.add('hidden');
+    }
+
     // Image Upload Modal Logic
     let selectedFile = null;
 
@@ -717,25 +955,51 @@
         
         const title = document.getElementById('p-title').value;
         const description = document.getElementById('p-description').value;
-        const category = document.getElementById('p-category').value;
-        const subCategory = document.getElementById('p-sub-category').value;
+        
+        let category = document.getElementById('p-category').value;
+        let subCategory = document.getElementById('p-sub-category').value;
+        let subSubCategory = document.getElementById('p-sub-sub-category').value;
+
+        if (category === 'Other') {
+          category = document.getElementById('p-category-custom').value.trim() || 'Other';
+          subCategory = document.getElementById('p-sub-category-custom').value.trim() || 'Other';
+          subSubCategory = document.getElementById('p-sub-sub-category-custom').value.trim() || 'Other';
+        } else {
+          if (subCategory === 'Other') {
+            subCategory = document.getElementById('p-sub-category-custom').value.trim() || 'Other';
+            subSubCategory = document.getElementById('p-sub-sub-category-custom').value.trim() || 'Other';
+          } else if (subSubCategory === 'Other') {
+            subSubCategory = document.getElementById('p-sub-sub-category-custom').value.trim() || 'Other';
+          }
+        }
+
         const originCountry = document.getElementById('p-origin-country').value;
         const originCity = document.getElementById('p-origin-city').value;
         const priceValue = parseFloat(document.getElementById('p-price').value);
         const weight = parseFloat(document.getElementById('p-weight').value);
         const imageUrl = document.getElementById('p-image-url').value || '/assets/img/logo.png';
         
+        const attributes = {};
+        if (category === 'Fashion') {
+          const sizes = document.getElementById('p-sizes').value.split(',').map(s => s.trim()).filter(Boolean);
+          const colors = document.getElementById('p-colors').value.split(',').map(c => c.trim()).filter(Boolean);
+          if (sizes.length > 0) attributes.sizes = sizes;
+          if (colors.length > 0) attributes.colors = colors;
+        }
+
         const payload = {
           title,
           description,
           category,
           sub_category: subCategory,
+          sub_sub_category: subSubCategory,
           origin_country: originCountry,
           origin_city: originCity,
           weight_kg: weight,
           image_url: imageUrl,
           supplier_id: supplierId,
-          supplier_name: supplierName
+          supplier_name: supplierName,
+          attributes: Object.keys(attributes).length > 0 ? attributes : null
         };
         
         if (originCountry === 'Zambia') {
@@ -751,7 +1015,7 @@
         // Populate confirmation details
         document.getElementById('conf-image').src = payload.image_url;
         document.getElementById('conf-title').innerText = payload.title;
-        document.getElementById('conf-category').innerText = payload.category + (payload.sub_category ? ' > ' + payload.sub_category : '');
+        document.getElementById('conf-category').innerText = `${payload.category} > ${payload.sub_category} > ${payload.sub_sub_category}`;
         document.getElementById('conf-price').innerText = originCountry === 'Zambia' ? `K${priceValue}` : `TZS ${priceValue}`;
         document.getElementById('conf-weight').innerText = `${payload.weight_kg} kg`;
         document.getElementById('conf-origin').innerText = `${payload.origin_city}, ${payload.origin_country}`;
@@ -803,6 +1067,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      initCategorySelects();
       try {
         const res = await fetch('/api/v1/auth/me');
         if (res.ok) {

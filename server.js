@@ -232,7 +232,9 @@ app.post('/api/v1/products/upload', async (req, res) => {
       supplier_name, 
       supplier_id,
       category,
-      sub_category
+      sub_category,
+      sub_sub_category,
+      attributes
     } = req.body;
     
     let finalPriceZmw = 0;
@@ -257,6 +259,7 @@ app.post('/api/v1/products/upload', async (req, res) => {
       description,
       category: category || 'General',
       sub_category: sub_category || 'All',
+      sub_sub_category: sub_sub_category || 'All',
       price_tzs: origin_country === 'Zambia' ? 0 : price_tzs,
       price_zmw: Math.ceil(finalPriceZmw),
       agent_margin_percentage: origin_country === 'Zambia' ? 0 : agentMargin,
@@ -267,6 +270,7 @@ app.post('/api/v1/products/upload', async (req, res) => {
       image_urls: image_url ? [image_url] : [],
       supplier_name,
       supplier_id,
+      attributes: attributes || null,
       trust_rating: 4.8 + (Math.random() * 0.2), // Random 4.8 - 5.0 for demo
       is_local_stock: origin_country === 'Zambia',
       created_at: new Date().toISOString()
