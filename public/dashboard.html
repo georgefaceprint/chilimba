@@ -389,11 +389,9 @@
     }
 
     function shareToWhatsApp() {
-      const text = `Hi! I just created a Chilimba called on the app. Join my group to share shipping costs! 
-
-Invite Code: *${currentInviteCode}*
-
-Or click here to join: https://chilimba-pwa.app/join?code=${currentInviteCode}`;
+      const activeGroupName = localStorage.getItem('activeGroupName') || 'our savings circle';
+      const deepLink = `${window.location.origin}/join?code=${currentInviteCode}`;
+      const text = `🛒 I just created a Chilimba group called "${activeGroupName}" on Chilimba Marketplace!\n\nJoin my group to shop wholesale items together and split cross-border shipping costs.\n\nInvite Code: *${currentInviteCode}*\n\n👉 Join here: ${deepLink}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     }
   </script>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Join Chilimba Group</title>
+  <meta name="theme-color" content="#15803d">
+  <link href="/assets/css/tailwind.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { 
+      font-family: 'Inter', sans-serif; 
+      -webkit-tap-highlight-color: transparent;
+      background-color: #f8fafc;
+    }
+    .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+    .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); }
+  </style>
+</head>
+<body class="text-gray-900 flex flex-col min-h-screen justify-center items-center p-4">
+
+  <!-- Main Card Container -->
+  <div id="join-card" class="bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden border border-gray-100 p-6 text-center flex flex-col">
+    
+    <!-- Header/Banner Area -->
+    <div class="mb-6">
+      <div class="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-black text-gray-900 tracking-tight" id="group-headline">Loading Chilimba Invite...</h2>
+      <p class="text-xs font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full w-max mx-auto mt-2 uppercase tracking-wider" id="member-badge">Checking members...</p>
+    </div>
+
+    <!-- Error/Notice State (Hidden by default) -->
+    <div id="error-container" class="hidden my-4 bg-red-50 border border-red-100 p-4 rounded-2xl text-red-700 text-sm font-semibold">
+      Invalid or expired invite code. Please check with your group admin.
+    </div>
+
+    <!-- Live Cart Preview (Hidden by default) -->
+    <div id="cart-preview-container" class="hidden text-left mb-6 flex-grow">
+      <h3 class="font-black text-gray-900 text-xs uppercase tracking-wider mb-3 px-1">Live Group Cart</h3>
+      <div id="cart-items" class="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+    <!-- Action Section -->
+    <div id="action-container" class="mt-auto space-y-3">
+      <button onclick="acceptInvite()" id="btn-accept" class="w-full bg-orange-500 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-orange-600 transition-colors btn-press flex items-center justify-center gap-2">
+        Join Group & Shop
+      </button>
+      <button onclick="window.location.href='/'" class="w-full text-gray-500 font-bold py-2 hover:text-gray-800 transition-colors">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let inviteCode = '';
+    let groupData = null;
+    let activeUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      inviteCode = (urlParams.get('code') || '').trim().toUpperCase();
+
+      if (!inviteCode) {
+        showError('No invite code specified in link.');
+        return;
+      }
+
+      await checkSession();
+      await fetchGroupInfo();
+    });
+
+    async function checkSession() {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/me`);
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          activeUser = data.user;
+        }
+      } catch (e) {
+        console.warn('No active session.');
+      }
+    }
+
+    async function fetchGroupInfo() {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/groups/public-info?invite_code=${inviteCode}`);
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Group not found');
+        }
+        
+        groupData = await res.json();
+        renderGroupInfo();
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    function renderGroupInfo() {
+      document.getElementById('group-headline').innerText = `Join "${groupData.name}"`;
+      document.getElementById('member-badge').innerText = `${groupData.member_count} / ${groupData.max_members} Members`;
+      
+      const cartItemsDiv = document.getElementById('cart-items');
+      cartItemsDiv.innerHTML = '';
+
+      if (groupData.items && groupData.items.length > 0) {
+        document.getElementById('cart-preview-container').classList.remove('hidden');
+        groupData.items.forEach(item => {
+          cartItemsDiv.innerHTML += `
+            <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex gap-3 items-center">
+              <div class="w-10 h-10 bg-white rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center border border-gray-100">
+                <img src="${item.image_url || 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?w=100&q=80'}" class="w-full h-full object-contain">
+              </div>
+              <div class="flex-grow min-w-0">
+                <p class="font-bold text-xs text-gray-900 truncate">${item.title}</p>
+                <p class="text-[10px] text-gray-500 font-medium">Qty: ${item.quantity} • K${parseFloat(item.price_zmw).toFixed(2)}</p>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        document.getElementById('cart-preview-container').classList.remove('hidden');
+        cartItemsDiv.innerHTML = `
+          <div class="text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <p class="text-xs text-gray-400 font-medium">Shared group cart is empty.</p>
+            <p class="text-[10px] text-gray-400">Be the first to add wholesale items!</p>
+          </div>
+        `;
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('group-headline').innerText = 'Invite Error';
+      document.getElementById('member-badge').style.display = 'none';
+      document.getElementById('cart-preview-container').style.display = 'none';
+      
+      const errorDiv = document.getElementById('error-container');
+      errorDiv.innerText = msg;
+      errorDiv.classList.remove('hidden');
+      
+      document.getElementById('btn-accept').disabled = true;
+      document.getElementById('btn-accept').className = 'w-full bg-gray-300 text-gray-500 py-4 rounded-xl font-black text-lg cursor-not-allowed';
+    }
+
+    async function acceptInvite() {
+      if (!inviteCode) return;
+
+      const btn = document.getElementById('btn-accept');
+      btn.innerText = 'Joining...';
+      btn.disabled = true;
+
+      if (activeUser) {
+        // Authenticated flow: Join immediately
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/groups/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: activeUser.user_id, invite_code: inviteCode })
+          });
+          const data = await res.json();
+          
+          if (!res.ok) throw new Error(data.error || 'Failed to join group');
+
+          localStorage.setItem('activeGroupId', data.group_id);
+          localStorage.setItem('activeGroupName', data.group_name);
+          localStorage.setItem('activeGroupRole', 'MEMBER');
+
+          alert(`Successfully joined ${data.group_name}! Redirecting to shared cart...`);
+          window.location.href = '/group-cart.html';
+        } catch (err) {
+          alert(err.message);
+          btn.innerText = 'Join Group & Shop';
+          btn.disabled = false;
+        }
+      } else {
+        // Non-authenticated flow: Save to pending and redirect to signup
+        localStorage.setItem('pending_invite_code', inviteCode);
+        window.location.href = `/signup.html`;
+      }
+    }
+  </script>
+</body>
+</html>

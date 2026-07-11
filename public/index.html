@@ -409,7 +409,8 @@
 
     function updateExtraFiltersVisibility(cat) {
       const container = document.getElementById('extra-filters-container');
-      if (cat === 'Kids & Babies') {
+      const kidsCategories = ['Kids & Babies', 'Baby Boys Clothing', 'Baby Girls Clothing', 'Kids Boys (3-14 Yrs)'];
+      if (kidsCategories.includes(cat)) {
         container.classList.remove('hidden');
         populateExtraFilters(cat);
       } else {

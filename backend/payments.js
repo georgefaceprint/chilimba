@@ -135,6 +135,59 @@ async function handleLencoCallback(req, res) {
       return res.status(400).json({ success: false, error: 'Invalid payload.' });
     }
 
+    // Intercept Firestore Group Contributions (Phase 3 Hybrid)
+    if (reference.startsWith('LENCO-CONTR-')) {
+      const { db: firestoreDb } = require('./firestore');
+      const snapshot = await firestoreDb.collection('group_contributions')
+        .where('transaction_reference', '==', reference)
+        .limit(1)
+        .get();
+        
+      if (!snapshot.empty) {
+        const contribDoc = snapshot.docs[0];
+        const contribData = contribDoc.data();
+        
+        if (status === 'SUCCESSFUL') {
+          await contribDoc.ref.update({
+            status: 'PAID',
+            updated_at: new Date().toISOString()
+          });
+          
+          const contribsSnap = await firestoreDb.collection('group_contributions')
+            .where('group_id', '==', contribData.group_id)
+            .get();
+          
+          let allPaid = true;
+          contribsSnap.docs.forEach(doc => {
+            if (doc.id === contribDoc.id) {
+              // This is the current doc which is updated to PAID
+            } else if (doc.data().status !== 'PAID') {
+              allPaid = false;
+            }
+          });
+          
+          if (allPaid) {
+            await firestoreDb.collection('groups').doc(contribData.group_id).update({
+              status: 'ORDER_PLACED',
+              updated_at: new Date().toISOString()
+            });
+            
+            const cartRef = firestoreDb.collection('groups').doc(contribData.group_id).collection('cart');
+            const cartSnap = await cartRef.get();
+            const batch = firestoreDb.batch();
+            cartSnap.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+          }
+        } else if (status === 'FAILED') {
+          await contribDoc.ref.update({
+            status: 'PENDING',
+            updated_at: new Date().toISOString()
+          });
+        }
+        return res.status(200).json({ success: true, message: 'Contribution webhook processed.' });
+      }
+    }
+
     // Begin transaction for safe state updates
     await db.query('BEGIN');
 

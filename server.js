@@ -84,7 +84,20 @@ app.post('/payments/lenco-callback', paymentsController.handleLencoCallback); //
 app.get('/api/v1/products', async (req, res) => {
   try {
     const products = await require('./backend/firestore').query('products');
-    res.json({ success: true, products });
+    
+    const productsWithTiers = products.map(p => {
+      if (!p.price_tiers || p.price_tiers.length === 0) {
+        const basePrice = parseFloat(p.price_zmw);
+        p.price_tiers = [
+          { min_qty: 1, price_zmw: basePrice },
+          { min_qty: 3, price_zmw: Math.round(basePrice * 0.9) },
+          { min_qty: 6, price_zmw: Math.round(basePrice * 0.8) }
+        ];
+      }
+      return p;
+    });
+    
+    res.json({ success: true, products: productsWithTiers });
   } catch (error) {
     console.error('[Products API] Firestore error:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -94,9 +107,23 @@ app.get('/api/v1/products', async (req, res) => {
 // 4. Tracking/Logistics Routes 
 app.post('/api/v1/products/upload', async (req, res) => {
   try {
-    const { title, description, price_tzs, price_zmw_input, weight_kg, origin_city, origin_country, image_url, supplier_name, supplier_id } = req.body;
+    const { 
+      title, 
+      description, 
+      price_tzs, 
+      price_zmw_input, 
+      weight_kg, 
+      origin_city, 
+      origin_country, 
+      image_url, 
+      supplier_name, 
+      supplier_id,
+      category,
+      sub_category
+    } = req.body;
     
     let finalPriceZmw = 0;
+    let agentMargin = 0;
     
     if (origin_country === 'Zambia') {
       // Local stock: No forex, no markup, direct ZMW input
@@ -105,20 +132,26 @@ app.post('/api/v1/products/upload', async (req, res) => {
       // International stock (Tanzania, SA): Forex calculation: TZS -> ZMW
       const tzsRate = parseFloat(process.env.TZS_TO_ZMW_RATE) || 0.0105;
       const markup = parseFloat(process.env.FOREX_MARKUP_PERCENTAGE) || 0.05; // 5%
+      agentMargin = parseFloat(process.env.AGENT_MARGIN_PERCENTAGE) || 0.10; // 10% agent margin
       
-      const basePriceZmw = price_tzs * tzsRate;
+      const priceTzsWithMargin = price_tzs * (1 + agentMargin);
+      const basePriceZmw = priceTzsWithMargin * tzsRate;
       finalPriceZmw = basePriceZmw * (1 + markup);
     }
     
     const newProduct = {
       title,
       description,
+      category: category || 'General',
+      sub_category: sub_category || 'All',
       price_tzs: origin_country === 'Zambia' ? 0 : price_tzs,
       price_zmw: Math.ceil(finalPriceZmw),
-      weight_kg,
+      agent_margin_percentage: origin_country === 'Zambia' ? 0 : agentMargin,
+      agent_margin_zmw: origin_country === 'Zambia' ? 0 : Math.ceil((price_tzs * agentMargin) * (parseFloat(process.env.TZS_TO_ZMW_RATE) || 0.0105) * (1 + (parseFloat(process.env.FOREX_MARKUP_PERCENTAGE) || 0.05))),
+      weight_kg: parseFloat(weight_kg) || 0,
       origin_country: origin_country || 'Tanzania',
       origin_city,
-      image_urls: [image_url],
+      image_urls: image_url ? [image_url] : [],
       supplier_name,
       supplier_id,
       trust_rating: 4.8 + (Math.random() * 0.2), // Random 4.8 - 5.0 for demo
@@ -297,6 +330,43 @@ app.get('/api/v1/groups/my-groups', async (req, res) => {
   }
 });
 
+app.get('/api/v1/groups/public-info', async (req, res) => {
+  try {
+    const { invite_code } = req.query;
+    if (!invite_code) return res.status(400).json({ error: 'Invite code required' });
+    
+    const { db } = require('./backend/firestore');
+    const snapshot = await db.collection('groups').where('invite_code', '==', invite_code).limit(1).get();
+    if (snapshot.empty) return res.status(404).json({ error: 'Group not found' });
+    
+    const groupDoc = snapshot.docs[0];
+    const groupData = groupDoc.data();
+    
+    // Get shared cart items for this group
+    const cartSnapshot = await db.collection('groups').doc(groupDoc.id).collection('cart').get();
+    const items = cartSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        title: data.title,
+        price_zmw: data.price_zmw,
+        quantity: data.quantity,
+        image_url: data.image_url
+      };
+    });
+    
+    res.json({
+      success: true,
+      group_id: groupDoc.id,
+      name: groupData.name,
+      member_count: groupData.member_count,
+      max_members: groupData.max_members,
+      items
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // 7. Wallet Routes
 app.get('/api/v1/wallet/balance', async (req, res) => {
@@ -393,6 +463,77 @@ app.get('/api/v1/cart/:group_id', async (req, res) => {
     
     const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
+    // Dynamic price recalculation for group carts (Loop A)
+    if (!group_id.startsWith('PERSONAL_')) {
+      // 1. Group items by product_id and count total quantities
+      const quantities = {};
+      items.forEach(item => {
+        quantities[item.product_id] = (quantities[item.product_id] || 0) + item.quantity;
+      });
+
+      // 2. Fetch products and apply pricing tiers
+      const productPromises = Object.keys(quantities).map(async (pid) => {
+        const doc = await db.collection('products').doc(pid).get();
+        if (doc.exists) {
+          const p = doc.data();
+          const basePrice = parseFloat(p.price_zmw);
+          // Fallback tiers
+          const tiers = p.price_tiers && p.price_tiers.length > 0 ? p.price_tiers : [
+            { min_qty: 1, price_zmw: basePrice },
+            { min_qty: 3, price_zmw: Math.round(basePrice * 0.9) },
+            { min_qty: 6, price_zmw: Math.round(basePrice * 0.8) }
+          ];
+          return { id: pid, tiers, basePrice };
+        }
+        return null;
+      });
+      
+      const productsData = await Promise.all(productPromises);
+      const productMap = {};
+      productsData.forEach(p => {
+        if (p) productMap[p.id] = { tiers: p.tiers, basePrice: p.basePrice };
+      });
+
+      // 3. Update price_zmw of each cart item dynamically based on total group quantity
+      items.forEach(item => {
+        const prodInfo = productMap[item.product_id];
+        if (prodInfo) {
+          const totalQty = quantities[item.product_id];
+          const basePrice = prodInfo.basePrice;
+          
+          let activePrice = basePrice;
+          let bestTier = null;
+          
+          prodInfo.tiers.forEach(tier => {
+            if (totalQty >= tier.min_qty) {
+              if (!bestTier || tier.min_qty > bestTier.min_qty) {
+                bestTier = tier;
+              }
+            }
+          });
+          
+          if (bestTier) {
+            activePrice = bestTier.price_zmw;
+          }
+          
+          item.original_price_zmw = basePrice;
+          item.price_zmw = activePrice;
+          item.discount_unlocked = activePrice < basePrice;
+          item.savings_per_unit_zmw = basePrice - activePrice;
+        } else {
+          item.original_price_zmw = item.price_zmw;
+          item.discount_unlocked = false;
+          item.savings_per_unit_zmw = 0;
+        }
+      });
+    } else {
+      items.forEach(item => {
+        item.original_price_zmw = item.price_zmw;
+        item.discount_unlocked = false;
+        item.savings_per_unit_zmw = 0;
+      });
+    }
+    
     res.json({ items });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -441,6 +582,364 @@ app.post('/api/v1/cart/checkout', async (req, res) => {
   } catch(err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Helper for completing group orders
+async function checkAndCompleteGroupOrder(group_id) {
+  const { db } = require('./backend/firestore');
+  const contribsSnap = await db.collection('group_contributions').where('group_id', '==', group_id).get();
+  
+  let allPaid = true;
+  contribsSnap.docs.forEach(doc => {
+    if (doc.data().status !== 'PAID') {
+      allPaid = false;
+    }
+  });
+
+  if (allPaid && !contribsSnap.empty) {
+    // 1. Update group status to ORDER_PLACED
+    const groupRef = db.collection('groups').doc(group_id);
+    await groupRef.update({
+      status: 'ORDER_PLACED',
+      updated_at: new Date().toISOString()
+    });
+
+    // 2. Clear the cart
+    const cartRef = db.collection('groups').doc(group_id).collection('cart');
+    const cartSnap = await cartRef.get();
+    const batch = db.batch();
+    cartSnap.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  }
+}
+
+app.post('/api/v1/cart/lock', async (req, res) => {
+  try {
+    const { group_id, user_id } = req.body;
+    const { db } = require('./backend/firestore');
+    
+    // Verify group exists
+    const groupDoc = await db.collection('groups').doc(group_id).get();
+    if (!groupDoc.exists) return res.status(404).json({ error: 'Group not found' });
+    const groupData = groupDoc.data();
+    
+    // Verify requester is admin
+    if (groupData.admin_id !== user_id) {
+      return res.status(403).json({ error: 'Only the group admin can lock the cart.' });
+    }
+
+    // Get all items in cart
+    const cartSnapshot = await db.collection('groups').doc(group_id).collection('cart').get();
+    const items = cartSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (items.length === 0) return res.status(400).json({ error: 'Cart is empty!' });
+
+    // Sum quantities by product_id
+    const quantities = {};
+    items.forEach(item => {
+      quantities[item.product_id] = (quantities[item.product_id] || 0) + item.quantity;
+    });
+
+    // Fetch products to retrieve price_tiers and base weight
+    const productPromises = Object.keys(quantities).map(async (pid) => {
+      const doc = await db.collection('products').doc(pid).get();
+      if (doc.exists) {
+        const p = doc.data();
+        const basePrice = parseFloat(p.price_zmw);
+        const tiers = p.price_tiers && p.price_tiers.length > 0 ? p.price_tiers : [
+          { min_qty: 1, price_zmw: basePrice },
+          { min_qty: 3, price_zmw: Math.round(basePrice * 0.9) },
+          { min_qty: 6, price_zmw: Math.round(basePrice * 0.8) }
+        ];
+        return { id: pid, tiers, basePrice, weight_kg: p.weight_kg || 0.5, is_local_stock: p.is_local_stock || false };
+      }
+      return null;
+    });
+    
+    const productsData = await Promise.all(productPromises);
+    const productMap = {};
+    productsData.forEach(p => {
+      if (p) productMap[p.id] = p;
+    });
+
+    // Calculate total weight and total goods cost
+    let totalWeight = 0;
+    let intlWeight = 0;
+    let totalGoods = 0;
+    
+    // Calculate final price and sum weight for each item
+    const itemPrices = {};
+    items.forEach(item => {
+      const prodInfo = productMap[item.product_id];
+      if (prodInfo) {
+        const totalQty = quantities[item.product_id];
+        const basePrice = prodInfo.basePrice;
+        let activePrice = basePrice;
+        let bestTier = null;
+        
+        prodInfo.tiers.forEach(tier => {
+          if (totalQty >= tier.min_qty) {
+            if (!bestTier || tier.min_qty > bestTier.min_qty) {
+              bestTier = tier;
+            }
+          }
+        });
+        
+        if (bestTier) {
+          activePrice = bestTier.price_zmw;
+        }
+        
+        itemPrices[item.id] = activePrice;
+        
+        const itemWeight = (prodInfo.weight_kg || 0.5) * item.quantity;
+        totalWeight += itemWeight;
+        if (!prodInfo.is_local_stock) {
+          intlWeight += itemWeight;
+        }
+        totalGoods += activePrice * item.quantity;
+      }
+    });
+
+    // Calculate logistics (standard rates)
+    const INTL_FREIGHT_RATE = 20; // ZMW per KG
+    const localFreightRate = 20;  // Standard Lusaka Central Depot rate
+    
+    const intlFreight = intlWeight * INTL_FREIGHT_RATE;
+    const localFreight = totalWeight * localFreightRate;
+    const totalLogistics = intlFreight + localFreight;
+
+    // Get all group members from user_groups mapping
+    const membersSnap = await db.collection('user_groups').where('group_id', '==', group_id).get();
+    const members = membersSnap.docs.map(doc => doc.data());
+
+    // Calculate logistics share divided equally
+    const logisticsShare = Number((totalLogistics / members.length).toFixed(2));
+
+    // Clear existing contributions if any
+    const existingContribs = await db.collection('group_contributions').where('group_id', '==', group_id).get();
+    const deleteBatch = db.batch();
+    existingContribs.docs.forEach(doc => deleteBatch.delete(doc.ref));
+    await deleteBatch.commit();
+
+    // Create contribution records
+    const contributionBatch = db.batch();
+    for (const member of members) {
+      let memberGoodsTotal = 0;
+      items.forEach(item => {
+        if (item.user_id === member.user_id) {
+          const activePrice = itemPrices[item.id] || item.price_zmw;
+          memberGoodsTotal += activePrice * item.quantity;
+        }
+      });
+
+      const memberShareTotal = Number((memberGoodsTotal + logisticsShare).toFixed(2));
+
+      // Fetch user profile name
+      const userDoc = await db.collection('users').doc(member.user_id).get();
+      const userName = userDoc.exists ? (userDoc.data().display_name || userDoc.data().name || member.user_id) : member.user_id;
+
+      const contribRef = db.collection('group_contributions').doc();
+      contributionBatch.set(contribRef, {
+        group_id,
+        user_id: member.user_id,
+        user_name: userName,
+        goods_amount_zmw: memberGoodsTotal,
+        logistics_amount_zmw: logisticsShare,
+        share_amount_zmw: memberShareTotal,
+        payment_method: '',
+        transaction_reference: '',
+        status: 'PENDING',
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    // Update group status to WAITING_FOR_CONTRIBUTIONS
+    contributionBatch.update(groupDoc.ref, {
+      status: 'WAITING_FOR_CONTRIBUTIONS',
+      updated_at: new Date().toISOString()
+    });
+
+    await contributionBatch.commit();
+    res.json({ success: true, message: 'Cart locked and split ledger initialized.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/v1/groups/contributions/:group_id', async (req, res) => {
+  try {
+    const { group_id } = req.params;
+    const { db } = require('./backend/firestore');
+    
+    // Get group info
+    const groupDoc = await db.collection('groups').doc(group_id).get();
+    if (!groupDoc.exists) return res.status(404).json({ error: 'Group not found' });
+    const groupData = groupDoc.data();
+
+    // Get admin phone number
+    const adminDoc = await db.collection('users').doc(groupData.admin_id).get();
+    const adminPhone = adminDoc.exists ? (adminDoc.data().phone_number || adminDoc.data().phone || '+260...') : '+260...';
+    
+    const snapshot = await db.collection('group_contributions').where('group_id', '==', group_id).get();
+    const contributions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    res.json({ 
+      success: true,
+      status: groupData.status,
+      admin_id: groupData.admin_id,
+      admin_phone: adminPhone,
+      contributions 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/v1/cart/contribute', async (req, res) => {
+  try {
+    const { group_id, user_id, payment_method, transaction_reference } = req.body;
+    const { db } = require('./backend/firestore');
+
+    const snapshot = await db.collection('group_contributions')
+      .where('group_id', '==', group_id)
+      .where('user_id', '==', user_id)
+      .limit(1)
+      .get();
+      
+    if (snapshot.empty) return res.status(404).json({ error: 'Contribution record not found.' });
+    const contribDoc = snapshot.docs[0];
+    const contribData = contribDoc.data();
+
+    if (contribData.status === 'PAID') {
+      return res.status(400).json({ error: 'You have already paid!' });
+    }
+
+    if (payment_method === 'WALLET') {
+      const userRef = db.collection('users').doc(user_id);
+      const userDoc = await userRef.get();
+      const currentBalance = userDoc.exists ? (userDoc.data().wallet_balance || 0) : 0;
+      
+      if (currentBalance < contribData.share_amount_zmw) {
+        return res.status(400).json({ error: 'Insufficient wallet balance. Please top up.' });
+      }
+
+      const batch = db.batch();
+      batch.update(userRef, { wallet_balance: currentBalance - contribData.share_amount_zmw });
+      batch.update(contribDoc.ref, { 
+        status: 'PAID',
+        payment_method: 'WALLET',
+        updated_at: new Date().toISOString()
+      });
+      await batch.commit();
+      
+      await checkAndCompleteGroupOrder(group_id);
+      
+      return res.json({ success: true, status: 'PAID' });
+    } else if (payment_method === 'MOBILE_MONEY_OFFLINE') {
+      if (!transaction_reference) return res.status(400).json({ error: 'Transaction reference is required.' });
+      
+      await contribDoc.ref.update({
+        status: 'SUBMITTED',
+        payment_method: 'MOBILE_MONEY_OFFLINE',
+        transaction_reference,
+        updated_at: new Date().toISOString()
+      });
+      
+      return res.json({ success: true, status: 'SUBMITTED' });
+    } else if (payment_method === 'LENCO_MOBILE_MONEY') {
+      const ref = transaction_reference || 'LENCO-CONTR-' + Math.floor(Math.random() * 100000);
+      
+      await contribDoc.ref.update({
+        status: 'PENDING',
+        payment_method: 'LENCO_MOBILE_MONEY',
+        transaction_reference: ref,
+        updated_at: new Date().toISOString()
+      });
+      
+      return res.json({ success: true, status: 'PENDING', reference: ref });
+    } else {
+      return res.status(400).json({ error: 'Invalid payment method.' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/v1/groups/approve-contribution', async (req, res) => {
+  try {
+    const { group_id, contribution_id, admin_id } = req.body;
+    const { db } = require('./backend/firestore');
+
+    const groupDoc = await db.collection('groups').doc(group_id).get();
+    if (!groupDoc.exists) return res.status(404).json({ error: 'Group not found' });
+    if (groupDoc.data().admin_id !== admin_id) {
+      return res.status(403).json({ error: 'Only the group admin can approve contributions.' });
+    }
+
+    const contribRef = db.collection('group_contributions').doc(contribution_id);
+    await contribRef.update({
+      status: 'PAID',
+      updated_at: new Date().toISOString()
+    });
+
+    await checkAndCompleteGroupOrder(group_id);
+
+    res.json({ success: true, message: 'Contribution approved.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/v1/groups/messages/:group_id', async (req, res) => {
+  try {
+    const { group_id } = req.params;
+    const { db } = require('./backend/firestore');
+    
+    const messagesSnap = await db.collection('group_messages')
+      .where('group_id', '==', group_id)
+      .get();
+      
+    const messages = messagesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Sort in memory to avoid composite index requirement
+    messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    
+    res.json({ success: true, messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/v1/groups/messages/:group_id', async (req, res) => {
+  try {
+    const { group_id } = req.params;
+    const { user_id, user_name, message_type, content } = req.body;
+    const { db } = require('./backend/firestore');
+
+    if (!user_id || !user_name || !content || !message_type) {
+      return res.status(400).json({ error: 'Missing required parameters.' });
+    }
+
+    const docRef = await db.collection('group_messages').add({
+      group_id,
+      user_id,
+      user_name,
+      message_type,
+      content,
+      created_at: new Date().toISOString()
+    });
+
+    res.json({ success: true, message_id: docRef.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/join', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'public', 'join.html'));
+});
+
+app.get('/flyer', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'public', 'flyer.html'));
 });
 
 // Catch-all for SPA

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chilimba Guide - Savel Together, Buy Together!</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap');
+    
+    :root {
+      --primary: #14532d;
+      --primary-light: #22c55e;
+      --secondary: #ea580c;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Banner / Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, #052e16 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+    }
+
+    .logo-badge {
+      display: inline-block;
+      background: var(--secondary);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #bbf7d0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    /* Content Body */
+    .content {
+      padding: 30px;
+    }
+
+    .intro-box {
+      background: #f0fdf4;
+      border-left: 5px solid var(--primary-light);
+      padding: 20px;
+      border-radius: 0 16px 16px 0;
+      margin-bottom: 30px;
+    }
+
+    .intro-box p {
+      font-size: 15px;
+      font-weight: 600;
+      color: #166534;
+    }
+
+    /* Workflows list */
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid #f1f5f9;
+      pb: 8px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    @media(min-width: 600px) {
+      .steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .step-card {
+      background: var(--card-bg);
+      border: 2px solid #f1f5f9;
+      border-radius: 24px;
+      padding: 20px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .step-card:hover {
+      border-color: #dcfce7;
+      background: #fafcfb;
+    }
+
+    .step-badge {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .step-card h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .step-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .step-illustration {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 4px;
+    }
+
+    .step-illustration svg {
+      width: 48px;
+      height: 48px;
+      color: var(--secondary);
+    }
+
+    /* Benefits Section */
+    .benefits-box {
+      background: linear-gradient(135deg, #fffcf9 0%, #fff7ed 100%);
+      border: 2px dashed #fed7aa;
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 30px;
+    }
+
+    .benefits-box h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--secondary);
+      margin-bottom: 15px;
+    }
+
+    .benefit-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      align-items: flex-start;
+    }
+
+    .benefit-icon {
+      color: var(--primary-light);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* Actions */
+    .print-btn-container {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(20, 83, 45, 0.2);
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: #15803d;
+    }
+
+    /* Print styling overrides */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        border: none;
+        max-width: 100%;
+      }
+      .print-btn-container {
+        display: none;
+      }
+      .step-card {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-badge">Chilimba Shopping</div>
+      <h1>Savel Together, Buy Together!</h1>
+      <p>Easy Guide for Our Women's Saving Groups</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      
+      <div class="intro-box">
+        <p>💡 Chilimba is here to make shopping cheaper! By uniting with your trusted group members, you can buy bulk products directly from suppliers and split shipping costs equally.</p>
+      </div>
+
+      <!-- WORKFLOW 1 -->
+      <h2 class="section-title">
+        🤝 How to Join & Savel
+      </h2>
+      
+      <div class="steps">
+        <!-- Step 1 -->
+        <div class="step-card">
+          <div class="step-illustration">
+            <!-- Share Icon SVG -->
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 10.742l5.26-2.63m0 7.776l-5.26-2.63m8 4.67a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0zM5.316 11a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0zM17.316 7a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z"></path></svg>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="step-badge">1</span>
+            <h3>Get WhatsApp Invite</h3>
+          </div>
+          <p>Your Group Admin sends you a secure invite link on WhatsApp. Click the link to preview the group's active shopping cart instantly.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+          <div class="step-illustration">
+            <!-- Cart Icon SVG -->
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="step-badge">2</span>
+            <h3>Add Your Items</h3>
+          </div>
+          <p>Tap "Join Group" and register. Add the products you want to buy into the shared cart. Your group cart quantity grows together.</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+          <div class="step-illustration">
+            <!-- Discount Icon SVG -->
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="step-badge">3</span>
+            <h3>Unlock Wholesale Price</h3>
+          </div>
+          <p>As more members add items, the group unlocks wholesale tiers (up to 20% off!). The shipping costs are automatically split equally.</p>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-card">
+          <div class="step-illustration">
+            <!-- Message Icon SVG -->
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="step-badge">4</span>
+            <h3>Chat & Coordinate</h3>
+          </div>
+          <p>Talk directly with group members inside the app. Send text messages or record quick voice notes to coordinate selections.</p>
+        </div>
+      </div>
+
+      <!-- WORKFLOW 2 -->
+      <h2 class="section-title">
+        💰 How to Pay & Collect
+      </h2>
+      
+      <div class="steps">
+        <!-- Step 1 -->
+        <div class="step-card">
+          <div class="step-illustration">
+            <!-- Lock Icon SVG -->
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="step-badge">1</span>
+            <h3>Admin Locks Cart</h3>
+          </div>
+          <p>Once shopping is done, the Admin locks the cart. This calculates each member's final share (Goods + Split shipping).</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+          <div class="step-illustration">
+            <!-- Phone/Momo Icon SVG -->
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="step-badge">2</span>
+            <h3>Choose Payment Option</h3>
+          </div>
+          <p>Pay with your App Wallet, trigger automated Mobile Money push, or send MoMo P2P directly to the Admin's phone number.</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+          <div class="step-illustration">
+            <!-- Approve Icon SVG -->
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="step-badge">3</span>
+            <h3>Admin Signs Off</h3>
+          </div>
+          <p>If you pay offline, enter your transaction reference. The Admin verifies the receipt on her phone and checks you off.</p>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-card">
+          <div class="step-illustration">
+            <!-- Gift Icon SVG -->
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="step-badge">4</span>
+            <h3>Get OTP & Collect</h3>
+          </div>
+          <p>Once all members are marked Paid, the order ships. When it arrives at your depot, you get an SMS code. Show it to collect!</p>
+        </div>
+      </div>
+
+      <!-- Key Benefits -->
+      <div class="benefits-box">
+        <h2>🌟 Key Benefits for Saving Groups:</h2>
+        <div class="benefit-item">
+          <span class="benefit-icon">✔</span>
+          <span>No Credit Required: Capital is aggregated socially, and rotations are managed transparently.</span>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">✔</span>
+          <span>Huge Cost Savings: Group shipping splits the freight bill. Wholesale pricing applies to all items.</span>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">✔</span>
+          <span>Trust & Transparency: Every payment is logged. Everyone in the group can see who has paid.</span>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="print-btn-container">
+        <button onclick="window.print()" class="btn">
+          <span>🖨</span>
+          <span>Save Guide as PDF / Print</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

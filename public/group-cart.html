@@ -78,7 +78,7 @@
           <h2 class="text-xl font-black text-gray-900">Shared Items</h2>
           <p class="text-xs text-gray-500 font-medium" id="cart-count">0 items in group cart</p>
         </div>
-        <div class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
+        <div id="group-status-badge" class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
           Status: Open
         </div>
       </div>
@@ -124,17 +124,50 @@
         </div>
       </div>
 
-      <!-- Admin Actions -->
-      <div id="admin-actions" class="mb-6">
-        <button onclick="checkoutGroupCart()" class="w-full bg-green-700 hover:bg-green-800 text-white py-4 rounded-xl font-black text-lg shadow-lg btn-press transition-colors flex items-center justify-center gap-2">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-          Checkout Group Cart
-        </button>
-        <p class="text-[11px] text-center text-gray-500 font-medium mt-3">Only the Group Admin can execute the final group payment.</p>
-      </div>
+      <!-- Dynamic Actions Container (Phase 3 Split Checkout) -->
+      <div id="dynamic-actions-container" class="mb-6"></div>
 
+  <!-- Floating Chat Button -->
+  <button id="chat-toggle-btn" onclick="toggleChatPanel()" class="fixed bottom-24 right-5 w-12 h-12 bg-green-700 text-white rounded-full shadow-lg flex items-center justify-center btn-press hover:bg-green-800 z-40 transition-all transform scale-0 duration-300">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+  </button>
+
+  <!-- Side Chat Panel Overlay -->
+  <div id="chat-panel" class="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl z-[60] transform translate-x-full transition-transform duration-300 ease-out flex flex-col">
+    <!-- Chat Header -->
+    <div class="bg-green-800 text-white p-4 flex justify-between items-center shadow-md">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-black text-xs text-white">C</div>
+        <div>
+          <h3 class="font-black text-sm leading-none" id="chat-group-name">Chilimba Chat</h3>
+          <p class="text-[9px] text-green-300 font-bold uppercase tracking-wider mt-0.5">Voice Notes & Discussion</p>
+        </div>
+      </div>
+      <button onclick="toggleChatPanel()" class="w-7 h-7 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white btn-press">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
     </div>
-  </main>
+    
+    <!-- Chat Log -->
+    <div id="chat-messages-log" class="flex-grow overflow-y-auto p-4 space-y-3 bg-gray-50 hide-scrollbar flex flex-col">
+      <!-- Injected via JS -->
+    </div>
+    
+    <!-- Chat Input Area -->
+    <div class="p-3 bg-white border-t border-gray-100 flex gap-2 items-center relative">
+      <input type="text" id="chat-text-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendTextMessage()" class="flex-grow border-2 border-gray-200 bg-gray-50 px-3.5 py-2.5 rounded-xl text-sm font-semibold focus:outline-none focus:border-green-700 focus:bg-white">
+      
+      <!-- Record Audio Button -->
+      <button id="voice-record-btn" onclick="toggleVoiceRecording()" class="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center btn-press hover:bg-orange-600 shadow-sm relative">
+        <svg id="mic-icon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+        <span id="recording-dot" class="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full animate-ping hidden"></span>
+      </button>
+      
+      <button onclick="sendTextMessage()" class="w-10 h-10 bg-green-700 text-white rounded-xl flex items-center justify-center btn-press hover:bg-green-800 shadow-sm">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+      </button>
+    </div>
+  </div>
 
   <!-- BOTTOM NAVIGATION BAR -->
   
@@ -320,11 +353,55 @@
           localStorage.setItem('activeGroupId', currentGroupId);
         }
 
+        let groupStatus = 'EDITING';
+        let groupAdminId = '';
+        let groupAdminPhone = '';
+        let contributions = [];
+
         if (currentGroupId.startsWith('PERSONAL_')) {
-          document.getElementById('group-title').innerText = "My Personal Cart";
-          document.getElementById('group-status-badge').style.display = 'none';
-          document.querySelector('.bg-blue-50').style.display = 'none'; // hide group stats
-          document.querySelector('.w-full.bg-green-700').innerHTML = 'Checkout Personal Cart';
+          const personalTitle = document.getElementById('group-title');
+          if (personalTitle) personalTitle.innerText = "My Personal Cart";
+          const statusBadge = document.getElementById('group-status-badge');
+          if (statusBadge) statusBadge.style.display = 'none';
+          const groupStats = document.querySelector('.bg-blue-50');
+          if (groupStats) groupStats.style.display = 'none'; // hide group stats
+          const chatBtn = document.getElementById('chat-toggle-btn');
+          if (chatBtn) {
+            chatBtn.classList.remove('scale-100');
+            chatBtn.classList.add('scale-0');
+          }
+        } else {
+          const groupName = localStorage.getItem('activeGroupName') || 'My Chilimba';
+          const nameHeader = document.getElementById('group-name');
+          if (nameHeader) nameHeader.innerText = groupName;
+          
+          const chatBtn = document.getElementById('chat-toggle-btn');
+          if (chatBtn) {
+            chatBtn.classList.remove('scale-0');
+            chatBtn.classList.add('scale-100');
+          }
+          
+          const contribRes = await fetch(`${API_BASE}/api/v1/groups/contributions/${currentGroupId}`);
+          if (contribRes.ok) {
+            const contribData = await contribRes.json();
+            groupStatus = contribData.status || 'EDITING';
+            groupAdminId = contribData.admin_id;
+            groupAdminPhone = contribData.admin_phone;
+            contributions = contribData.contributions || [];
+            
+            const statusBadge = document.getElementById('group-status-badge');
+            if (statusBadge) {
+              statusBadge.style.display = 'block';
+              statusBadge.innerText = `Status: ${groupStatus.replace(/_/g, ' ')}`;
+              if (groupStatus === 'EDITING') {
+                statusBadge.className = "bg-green-100 text-green-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider";
+              } else if (groupStatus === 'WAITING_FOR_CONTRIBUTIONS') {
+                statusBadge.className = "bg-orange-100 text-orange-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider";
+              } else {
+                statusBadge.className = "bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider";
+              }
+            }
+          }
         }
 
         // Fetch Cart from Backend
@@ -333,8 +410,7 @@
           const data = await res.json();
           groupCart = data.items || [];
           
-          if(groupCart.length === 0) {
-            // Fill with mock data if empty for demo purposes
+          if(groupCart.length === 0 && (currentGroupId.startsWith('PERSONAL_') || groupStatus === 'EDITING' || groupStatus === 'PENDING_FIRST_ORDER')) {
             groupCart = [
               { id: '1', title: 'Gentleman Children Outfits (Size: M, Color: Blue)', price_zmw: 157.5, quantity: 2, user_id: 'Leader', image_url: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=200&q=80' },
               { id: '2', title: 'Tanzanian Coffee Beans', price_zmw: 85.0, quantity: 5, user_id: 'Member1', image_url: 'https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=200&q=80' }
@@ -342,6 +418,8 @@
           }
           
           renderCart();
+          
+          renderActions(groupStatus, groupAdminId, groupAdminPhone, contributions);
         }
 
       } catch (e) {
@@ -370,6 +448,13 @@
           ? `<span class="text-[9px] font-black uppercase tracking-wider text-green-700 bg-green-100 px-2 py-0.5 rounded shadow-sm flex items-center gap-1 w-max"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Local</span>`
           : `<span class="text-[9px] font-black uppercase tracking-wider text-orange-700 bg-orange-100 px-2 py-0.5 rounded shadow-sm flex items-center gap-1 w-max"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Imported</span>`;
 
+        const discountBadge = item.discount_unlocked 
+          ? `<div class="text-[10px] text-orange-600 font-extrabold flex items-center gap-1 mt-1">
+               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+               Wholesale Unlocked (Save K${(item.savings_per_unit_zmw * item.quantity).toFixed(0)})
+             </div>` 
+          : '';
+
         container.innerHTML += `
           <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex gap-3 relative">
             <div class="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
@@ -382,9 +467,13 @@
                   <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Qty: ${item.quantity}</span>
                   ${badge}
                 </div>
+                ${discountBadge}
               </div>
               <div class="flex justify-between items-end">
-                <div class="font-black text-green-700">K${(item.price_zmw * item.quantity).toFixed(2)}</div>
+                <div>
+                  ${item.discount_unlocked ? `<div class="text-[10px] text-gray-400 line-through">K${(item.original_price_zmw * item.quantity).toFixed(2)}</div>` : ''}
+                  <div class="font-black text-green-700">K${(item.price_zmw * item.quantity).toFixed(2)}</div>
+                </div>
                 <button onclick="removeItem(${index})" class="w-6 h-6 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-100 btn-press">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -509,6 +598,551 @@
     function openAuthModal() {
       window.location.href = '/signup.html';
     }
+
+    function renderActions(groupStatus, groupAdminId, groupAdminPhone, contributions) {
+      const container = document.getElementById('dynamic-actions-container');
+      if (!container) return;
+      
+      if (currentGroupId.startsWith('PERSONAL_')) {
+        container.innerHTML = `
+          <button onclick="checkoutGroupCart()" class="w-full bg-green-700 hover:bg-green-800 text-white py-4 rounded-xl font-black text-lg shadow-lg btn-press transition-colors flex items-center justify-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            Checkout Personal Cart
+          </button>
+        `;
+        return;
+      }
+
+      if (groupStatus === 'EDITING' || groupStatus === 'PENDING_FIRST_ORDER') {
+        const isUserAdmin = activeUser.user_id === groupAdminId;
+        if (isUserAdmin) {
+          container.innerHTML = `
+            <button onclick="lockGroupCart()" class="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl font-black text-lg shadow-lg btn-press transition-colors flex items-center justify-center gap-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+              Lock Cart & Request Split Payments
+            </button>
+            <p class="text-[11px] text-center text-gray-500 font-medium mt-3">This will freeze changes and calculate individual payment shares.</p>
+          `;
+        } else {
+          container.innerHTML = `
+            <button class="w-full bg-gray-300 text-gray-500 py-4 rounded-xl font-black text-lg cursor-not-allowed flex items-center justify-center gap-2" disabled>
+              Waiting for Admin to Lock Cart
+            </button>
+            <p class="text-[11px] text-center text-gray-500 font-medium mt-3">You can continue adding items. The group admin will lock the cart for checkout.</p>
+          `;
+        }
+        return;
+      }
+
+      if (groupStatus === 'WAITING_FOR_CONTRIBUTIONS') {
+        let html = `
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-6">
+            <h3 class="font-black text-gray-900 mb-4 text-xs uppercase tracking-wider border-b border-gray-100 pb-2 flex items-center justify-between">
+              <span>Split Contributions Board</span>
+              <span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-[8px] font-black uppercase">Locked</span>
+            </h3>
+            <div class="space-y-3">
+        `;
+
+        let myContribution = null;
+        contributions.forEach(c => {
+          let stateBadge = '';
+          if (c.status === 'PAID') {
+            stateBadge = `<span class="bg-green-100 text-green-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Paid</span>`;
+          } else if (c.status === 'SUBMITTED') {
+            stateBadge = `<span class="bg-yellow-100 text-yellow-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Submitted</span>`;
+          } else if (c.status === 'PENDING') {
+            stateBadge = `<span class="bg-red-100 text-red-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Pending</span>`;
+          } else if (c.status === 'PENDING' && c.payment_method === 'LENCO_MOBILE_MONEY') {
+            stateBadge = `<span class="bg-blue-100 text-blue-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">MoMo Prompted</span>`;
+          }
+
+          if (c.user_id === activeUser.user_id) {
+            myContribution = c;
+          }
+
+          let adminAction = '';
+          const isUserAdmin = activeUser.user_id === groupAdminId;
+          if (isUserAdmin && c.status === 'SUBMITTED') {
+            adminAction = `
+              <button onclick="approveMemberPayment('${c.id}', '${c.user_name}')" class="mt-2 w-full bg-green-700 hover:bg-green-800 text-white py-1.5 px-3 rounded-lg text-xs font-bold btn-press">
+                Approve Payment Receipt (${c.transaction_reference})
+              </button>
+            `;
+          } else if (isUserAdmin && c.status === 'PENDING') {
+            adminAction = `
+              <button onclick="approveMemberPayment('${c.id}', '${c.user_name}')" class="mt-2 w-full bg-orange-600 hover:bg-orange-700 text-white py-1.5 px-3 rounded-lg text-xs font-bold btn-press">
+                Record Offline Payment
+              </button>
+            `;
+          }
+
+          html += `
+            <div class="p-3 bg-gray-50 border border-gray-100 rounded-xl">
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="font-bold text-sm text-gray-900">${c.user_name} ${c.user_id === activeUser.user_id ? '(You)' : ''}</p>
+                  <p class="text-[10px] text-gray-500 font-medium">Goods: K${c.goods_amount_zmw.toFixed(2)} • Logistics: K${c.logistics_amount_zmw.toFixed(2)}</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-black text-sm text-gray-900">K${c.share_amount_zmw.toFixed(2)}</p>
+                  ${stateBadge}
+                </div>
+              </div>
+              ${adminAction}
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+
+        if (myContribution && myContribution.status === 'PENDING') {
+          html += `
+            <div class="bg-white p-5 rounded-2xl border border-orange-100 shadow-sm mb-6 bg-gradient-to-br from-white to-orange-50/20">
+              <h3 class="font-black text-gray-900 mb-3 text-sm uppercase tracking-wider text-orange-950">Pay Your Contribution</h3>
+              <p class="text-xs text-gray-600 mb-4 font-medium">Your share is <span class="font-black text-orange-600">K${myContribution.share_amount_zmw.toFixed(2)}</span>. Choose how you want to pay:</p>
+              
+              <div class="space-y-3 mb-4">
+                <label class="flex items-center space-x-3 cursor-pointer p-3 border-2 border-gray-200 rounded-xl hover:bg-orange-50 bg-white transition-all select-none">
+                  <input type="radio" name="payment-method-option" value="WALLET" checked onclick="toggleOptionFields('WALLET')" class="w-4 h-4 text-orange-600">
+                  <div class="flex-grow">
+                    <p class="text-xs font-black text-gray-900">Pay from App Wallet</p>
+                    <p class="text-[10px] text-gray-500 font-semibold" id="my-wallet-balance-lbl">Balance: checking...</p>
+                  </div>
+                </label>
+
+                <label class="flex items-center space-x-3 cursor-pointer p-3 border-2 border-gray-200 rounded-xl hover:bg-orange-50 bg-white transition-all select-none">
+                  <input type="radio" name="payment-method-option" value="LENCO_MOBILE_MONEY" onclick="toggleOptionFields('LENCO')" class="w-4 h-4 text-orange-600">
+                  <div class="flex-grow">
+                    <p class="text-xs font-black text-gray-900">Pay Online via Mobile Money (Lenco)</p>
+                    <p class="text-[10px] text-gray-500 font-semibold">MTN, Airtel, Zamtel STK Push</p>
+                  </div>
+                </label>
+                
+                <label class="flex items-center space-x-3 cursor-pointer p-3 border-2 border-gray-200 rounded-xl hover:bg-orange-50 bg-white transition-all select-none">
+                  <input type="radio" name="payment-method-option" value="MOBILE_MONEY_OFFLINE" onclick="toggleOptionFields('OFFLINE')" class="w-4 h-4 text-orange-600">
+                  <div class="flex-grow">
+                    <p class="text-xs font-black text-gray-900">Pay Offline via MoMo P2P (Direct to Admin)</p>
+                    <p class="text-[10px] text-gray-500 font-semibold">MTN / Airtel Transfer directly to Admin</p>
+                  </div>
+                </label>
+              </div>
+
+              <div id="payment-phone-container" class="hidden mb-4 bg-white p-3.5 border border-gray-100 rounded-xl">
+                <label class="block text-[10px] font-black uppercase text-gray-600 mb-1">Your Mobile Money Number</label>
+                <input type="tel" id="payment-phone-input" class="w-full border-2 border-gray-200 p-2.5 rounded-lg text-sm font-bold focus:outline-none" placeholder="+260...">
+              </div>
+
+              <div id="payment-offline-details" class="hidden mb-4 bg-orange-50 border border-orange-200/50 p-4 rounded-xl text-xs space-y-2 text-orange-950 font-semibold">
+                <p>📲 Send <span class="font-black">K${myContribution.share_amount_zmw.toFixed(2)}</span> directly to Admin Phone:</p>
+                <div class="bg-white p-2 rounded border border-orange-200 text-sm font-mono text-center select-all">
+                  ${groupAdminPhone}
+                </div>
+                <p>After transferring, enter the transaction ID/reference code below:</p>
+                <input type="text" id="payment-ref-input" class="w-full bg-white border-2 border-gray-300 p-2.5 rounded-lg text-xs font-mono uppercase tracking-wider text-center focus:outline-none" placeholder="MoMo Ref ID">
+              </div>
+
+              <button onclick="submitMyContribution()" id="btn-submit-contrib" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-black text-base shadow-md btn-press transition-colors">
+                Pay Contribution
+              </button>
+            </div>
+          `;
+          
+          setTimeout(async () => {
+            try {
+              const bRes = await fetch(`${API_BASE}/api/v1/wallet/balance?user_id=${activeUser.user_id}`);
+              if (bRes.ok) {
+                const bData = await bRes.json();
+                const lbl = document.getElementById('my-wallet-balance-lbl');
+                if (lbl) lbl.innerText = `Balance: ZMW ${bData.balance.toLocaleString()}`;
+              }
+            } catch(e) {}
+          }, 100);
+        } else if (myContribution && myContribution.status === 'SUBMITTED') {
+          html += `
+            <div class="bg-yellow-50 border border-yellow-100 p-4 rounded-2xl mb-6 text-center text-yellow-800 text-xs font-bold leading-relaxed">
+              🕒 Receipt Reference <b>"${myContribution.transaction_reference}"</b> submitted. Awaiting verification from Admin.
+            </div>
+          `;
+        } else if (myContribution && myContribution.status === 'PAID') {
+          html += `
+            <div class="bg-green-50 border border-green-100 p-4 rounded-2xl mb-6 text-center text-green-800 text-xs font-bold flex items-center justify-center gap-1">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+              <span>You have paid your contribution. Awaiting other group members.</span>
+            </div>
+          `;
+        }
+
+        container.innerHTML = html;
+        return;
+      }
+
+      if (groupStatus === 'ORDER_PLACED') {
+        container.innerHTML = `
+          <div class="bg-green-700 text-white p-6 rounded-2xl text-center shadow-lg">
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="font-black text-xl mb-1">Group Order Placed!</h3>
+            <p class="text-xs text-green-100 font-medium">All members have paid. The order has been finalized and sent to origin centers.</p>
+            <button onclick="window.location.href='/dashboard.html'" class="mt-4 bg-white text-green-700 px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-gray-100 btn-press">Go to Dashboard</button>
+          </div>
+        `;
+        return;
+      }
+    }
+
+    function toggleOptionFields(type) {
+      const phoneContainer = document.getElementById('payment-phone-container');
+      const offlineDetails = document.getElementById('payment-offline-details');
+      
+      if (type === 'LENCO') {
+        if(phoneContainer) phoneContainer.classList.remove('hidden');
+        if(offlineDetails) offlineDetails.classList.add('hidden');
+      } else if (type === 'OFFLINE') {
+        if(phoneContainer) phoneContainer.classList.add('hidden');
+        if(offlineDetails) offlineDetails.classList.remove('hidden');
+      } else {
+        if(phoneContainer) phoneContainer.classList.add('hidden');
+        if(offlineDetails) offlineDetails.classList.add('hidden');
+      }
+    }
+
+    async function lockGroupCart() {
+      const btn = document.querySelector('#dynamic-actions-container button');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Locking Cart...';
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/cart/lock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ group_id: currentGroupId, user_id: activeUser.user_id })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+          alert('Cart locked successfully! Contribution shares calculated.');
+          fetchCartData();
+        } else {
+          alert('Failed to lock cart: ' + (data.error || 'Unknown error'));
+          if(btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Lock Cart & Request Split Payments';
+          }
+        }
+      } catch (err) {
+        alert('Network error locking cart.');
+        if(btn) {
+          btn.disabled = false;
+          btn.innerHTML = 'Lock Cart & Request Split Payments';
+        }
+      }
+    }
+
+    async function approveMemberPayment(contributionId, memberName) {
+      const label = memberName ? `payment for ${memberName}` : "this payment receipt";
+      if(!confirm(`Are you sure you want to approve ${label}? Make sure you received the funds via Mobile Money first!`)) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/groups/approve-contribution`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ group_id: currentGroupId, contribution_id: contributionId, admin_id: activeUser.user_id })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+          alert('Payment approved successfully!');
+          fetchCartData();
+        } else {
+          alert('Failed to approve: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Network error approving payment.');
+      }
+    }
+
+    async function submitMyContribution() {
+      const selectedOption = document.querySelector('input[name="payment-method-option"]:checked');
+      if (!selectedOption) return alert("Please choose a payment method option.");
+      const method = selectedOption.value;
+      
+      const payload = {
+        group_id: currentGroupId,
+        user_id: activeUser.user_id,
+        payment_method: method
+      };
+
+      if (method === 'MOBILE_MONEY_OFFLINE') {
+        const ref = document.getElementById('payment-ref-input').value.trim();
+        if (!ref) return alert("Please enter the Mobile Money transaction reference number.");
+        payload.transaction_reference = ref;
+      } else if (method === 'LENCO_MOBILE_MONEY') {
+        const phone = document.getElementById('payment-phone-input').value.trim();
+        if (!phone) return alert("Please enter your Mobile Money phone number.");
+        payload.transaction_reference = 'LENCO-CONTR-' + Math.floor(Math.random() * 100000);
+      }
+
+      const btn = document.getElementById('btn-submit-contrib');
+      btn.disabled = true;
+      btn.innerText = 'Processing Payment...';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/cart/contribute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+          if (method === 'WALLET') {
+            alert('✅ Paid successfully from Wallet!');
+          } else if (method === 'MOBILE_MONEY_OFFLINE') {
+            alert('✅ Reference submitted! Awaiting Admin verification.');
+          } else if (method === 'LENCO_MOBILE_MONEY') {
+            alert('✅ Mobile Money STK push simulated! Complete on your phone.');
+            setTimeout(async () => {
+              try {
+                await fetch(`${API_BASE}/api/v1/payments/lenco-callback`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'x-lenco-signature': 'lenco_secure_webhook_secret_key' },
+                  body: JSON.stringify({
+                    event: 'transaction.success',
+                    data: { reference: data.reference, status: 'SUCCESSFUL', amount: 0 }
+                  })
+                });
+                console.log('Simulated Lenco callback success for reference:', data.reference);
+                fetchCartData();
+              } catch(e) {}
+            }, 2000);
+          }
+          fetchCartData();
+        } else {
+          alert('Payment failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Network error submitting payment.');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Pay Contribution';
+      }
+    }
+
+    // --- PHASE 4: GROUP CHAT & VOICE NOTES LOGIC ---
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+    let chatPollingInterval = null;
+    let isChatOpen = false;
+    let recordingTimer = null;
+    let recordingSeconds = 0;
+
+    function toggleChatPanel() {
+      const panel = document.getElementById('chat-panel');
+      if (!panel) return;
+      
+      isChatOpen = !isChatOpen;
+      if (isChatOpen) {
+        panel.classList.remove('translate-x-full');
+        fetchChatMessages();
+        chatPollingInterval = setInterval(fetchChatMessages, 4000);
+      } else {
+        panel.classList.add('translate-x-full');
+        if (chatPollingInterval) {
+          clearInterval(chatPollingInterval);
+          chatPollingInterval = null;
+        }
+      }
+    }
+
+    async function toggleVoiceRecording() {
+      const recordBtn = document.getElementById('voice-record-btn');
+      const dot = document.getElementById('recording-dot');
+      const textInput = document.getElementById('chat-text-input');
+
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+          
+          mediaRecorder.onstop = async () => {
+            if (recordingTimer) {
+              clearInterval(recordingTimer);
+              recordingTimer = null;
+            }
+            if (textInput) textInput.placeholder = "Type a message...";
+            
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = async () => {
+              const base64Audio = reader.result;
+              await uploadVoiceMessage(base64Audio);
+            };
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          recordingSeconds = 0;
+          
+          if(recordBtn) recordBtn.className = "w-10 h-10 bg-red-600 text-white rounded-xl flex items-center justify-center btn-press hover:bg-red-700 shadow-sm relative animate-pulse";
+          if(dot) dot.classList.remove('hidden');
+          if (textInput) textInput.placeholder = "Recording voice... 0s / 60s";
+          
+          recordingTimer = setInterval(() => {
+            recordingSeconds++;
+            if (textInput) textInput.placeholder = `Recording voice... ${recordingSeconds}s / 60s`;
+            
+            if (recordingSeconds >= 60) {
+              toggleVoiceRecording();
+            }
+          }, 1000);
+        } catch (err) {
+          alert('Microphone access is required to record voice notes: ' + err.message);
+        }
+      } else {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        isRecording = false;
+        if (recordingTimer) {
+          clearInterval(recordingTimer);
+          recordingTimer = null;
+        }
+        if (textInput) textInput.placeholder = "Type a message...";
+        if(recordBtn) recordBtn.className = "w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center btn-press hover:bg-orange-600 shadow-sm relative";
+        if(dot) dot.classList.add('hidden');
+      }
+    }
+
+    async function uploadVoiceMessage(base64Audio) {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/groups/messages/${currentGroupId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: activeUser.user_id,
+            user_name: activeUser.display_name || activeUser.name || 'Member',
+            message_type: 'voice',
+            content: base64Audio
+          })
+        });
+        if (res.ok) {
+          fetchChatMessages();
+        } else {
+          alert('Failed to send voice note.');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function sendTextMessage() {
+      const input = document.getElementById('chat-text-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/groups/messages/${currentGroupId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: activeUser.user_id,
+            user_name: activeUser.display_name || activeUser.name || 'Member',
+            message_type: 'text',
+            content: text
+          })
+        });
+        if (res.ok) {
+          fetchChatMessages();
+        } else {
+          alert('Failed to send message.');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function fetchChatMessages() {
+      if (!currentGroupId || currentGroupId.startsWith('PERSONAL_')) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/groups/messages/${currentGroupId}`);
+        if (res.ok) {
+          const data = await res.json();
+          renderMessagesLog(data.messages || []);
+        }
+      } catch (e) {
+        console.error('Error fetching chat:', e);
+      }
+    }
+
+    function renderMessagesLog(messages) {
+      const log = document.getElementById('chat-messages-log');
+      if (!log) return;
+      
+      const isScrolledToBottom = log.scrollHeight - log.clientHeight <= log.scrollTop + 50;
+      
+      log.innerHTML = '';
+      if (messages.length === 0) {
+        log.innerHTML = `<div class="text-center text-xs text-gray-400 font-bold my-auto">Start a discussion! Tap mic to record voice note.</div>`;
+        return;
+      }
+
+      messages.forEach(msg => {
+        const isMe = msg.user_id === activeUser.user_id;
+        
+        let messageBody = '';
+        if (msg.message_type === 'text') {
+          messageBody = `<p class="text-sm font-semibold">${msg.content}</p>`;
+        } else if (msg.message_type === 'voice') {
+          messageBody = `
+            <div class="flex flex-col gap-1">
+              <span class="text-[9px] font-black uppercase text-gray-500 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-orange-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7 7 0 005.93 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path></svg> Voice Note</span>
+              <audio src="${msg.content}" controls class="w-full max-w-[200px] h-8 outline-none rounded-lg bg-white/20"></audio>
+            </div>
+          `;
+        }
+        
+        const timestamp = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const bubbleClass = isMe 
+          ? 'bg-green-700 text-white rounded-2xl rounded-tr-none ml-auto'
+          : 'bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-tl-none mr-auto';
+          
+        log.innerHTML += `
+          <div class="flex flex-col w-max max-w-[85%] mb-2 ${isMe ? 'items-end ml-auto' : 'items-start mr-auto'}">
+            <span class="text-[10px] font-black text-gray-500 mb-0.5 px-1">${isMe ? 'You' : msg.user_name}</span>
+            <div class="p-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] ${bubbleClass}">
+              ${messageBody}
+            </div>
+            <span class="text-[8px] text-gray-400 font-bold mt-0.5 px-1">${timestamp}</span>
+          </div>
+        `;
+      });
+      
+      if (isScrolledToBottom || log.innerHTML.includes('my-auto')) {
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (chatPollingInterval) clearInterval(chatPollingInterval);
+    });
 
         fetchCartData();
     window.addEventListener('cart-updated', fetchCartData);

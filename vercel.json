@@ -25,6 +25,14 @@
       "destination": "/server.js"
     },
     {
+      "source": "/join",
+      "destination": "/public/join.html"
+    },
+    {
+      "source": "/flyer",
+      "destination": "/public/flyer.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/public/$1"
     }
