@@ -2,23 +2,8 @@
 // Custom PWA Install Prompt for Android & iOS mobile devices
 
 (function() {
-  // 1. Check if running in Standalone (Installed) Mode
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  if (isStandalone) {
-    console.log('📱 Chilimba is running in standalone mode. Skipping install prompt.');
-    return;
-  }
 
-  // 2. Register Service Worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('✓ PWA Service Worker registered:', reg.scope))
-        .catch(err => console.error('✗ Service Worker registration failed:', err));
-    });
-  }
-
-  // ── 6-SECOND SPLASH SCREEN ─────────────────────────────
+  // ── SPLASH SCREEN (always runs — browser & installed PWA) ──────────
   window.addEventListener('DOMContentLoaded', () => {
     const splash = document.createElement('div');
     splash.id = 'pwa-splash-screen';
@@ -110,6 +95,25 @@
       setTimeout(() => splash.remove(), 500);
     }, 6000);
   });
+
+  // 1. Check if running in Standalone (Installed) Mode
+  // Install prompt only shown in browser — not needed when already installed
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+  // 2. Always register Service Worker (needed for offline & caching)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('✓ PWA Service Worker registered:', reg.scope))
+        .catch(err => console.error('✗ Service Worker registration failed:', err));
+    });
+  }
+
+  // Skip install prompt if already running as installed PWA
+  if (isStandalone) {
+    console.log('📱 Chilimba is running in standalone mode. Skipping install prompt.');
+    return;
+  }
 
   let deferredPrompt = null;
 
