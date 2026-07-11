@@ -491,14 +491,66 @@
         const res = await fetch('/api/v1/auth/me');
         if (res.ok) {
           const data = await res.json();
-          if (data.authenticated && (data.user.role === 'AGENT' || data.user.role === 'SUPER_ADMIN')) {
-            loginSuccess(data.user);
+          if (data.authenticated) {
+            if (data.user.role === 'AGENT' || data.user.role === 'SUPER_ADMIN') {
+              loginSuccess(data.user);
+            } else {
+              showNonAgentPrompt(data.user);
+            }
           }
         }
       } catch (err) {
         console.error('Auth check failed', err);
       }
     });
+
+    function showNonAgentPrompt(user) {
+      const loginPrompt = document.getElementById('login-prompt');
+      if (loginPrompt) {
+        loginPrompt.innerHTML = `
+          <div class="w-24 h-24 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+          <h2 class="text-2xl font-black text-gray-900 mb-2">Agent Access Required</h2>
+          <p class="text-gray-500 font-medium mb-6 text-sm">
+            Hi <strong>${user.display_name || user.name || 'Member'}</strong>, you are currently logged in as a <strong>${user.role}</strong>. 
+            Only verified Sourcing Agents can access this dashboard to list products and dispatch orders.
+          </p>
+          <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-8 text-left">
+            <h4 class="font-extrabold text-orange-800 text-sm mb-1">💼 Why become a Chilimba Agent?</h4>
+            <ul class="text-xs text-orange-700 font-bold space-y-1.5">
+              <li>• Register your shop and list products for Tanzanian sourcing</li>
+              <li>• Manage cross-border shipments and split transit logistics</li>
+              <li>• Earn commissions and margin markups on group purchases</li>
+            </ul>
+          </div>
+          <button onclick="applyForAgentRole()" class="w-full bg-green-800 text-white py-4 rounded-xl font-black text-lg hover:bg-green-900 transition-colors shadow-lg btn-press mb-4">Apply to Join as Agent</button>
+          <button onclick="window.location.href='/dashboard.html'" class="w-full bg-gray-100 text-gray-700 py-3.5 rounded-xl font-black text-sm hover:bg-gray-200 transition-colors btn-press">Go to Customer Dashboard</button>
+        `;
+      }
+    }
+
+    async function applyForAgentRole() {
+      if (confirm("Would you like to submit an application to register as a Sourcing Agent?")) {
+        try {
+          const res = await fetch('/api/v1/user/update-kyc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              role: 'AGENT'
+            })
+          });
+          if (res.ok) {
+            alert("🎉 Application approved! Your account has been promoted to AGENT. Refreshing page...");
+            window.location.reload();
+          } else {
+            alert("Failed to submit application.");
+          }
+        } catch (e) {
+          alert("Error submitting agent application.");
+        }
+      }
+    }
 
     const productForm = document.getElementById('product-form');
     if (productForm) {

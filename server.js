@@ -50,18 +50,20 @@ app.post('/api/v1/user/update-kyc', async (req, res) => {
   if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-    const { name, surname, whatsapp, province, town } = req.body;
+    const { name, surname, whatsapp, province, town, role } = req.body;
     
     const db = require('./backend/firestore').db;
-    await db.collection('users').doc(decoded.user_id).update({
-       display_name: `${name} ${surname}`,
-       first_name: name,
-       last_name: surname,
-       phone_number: whatsapp,
-       province: province,
-       town: town,
-       kyc_complete: true
-    });
+    const updateData = { kyc_complete: true };
+    
+    if (name) updateData.first_name = name;
+    if (surname) updateData.last_name = surname;
+    if (name && surname) updateData.display_name = `${name} ${surname}`;
+    if (whatsapp) updateData.phone_number = whatsapp;
+    if (province) updateData.province = province;
+    if (town) updateData.town = town;
+    if (role) updateData.role = role;
+    
+    await db.collection('users').doc(decoded.user_id).update(updateData);
     
     res.json({ success: true });
   } catch (err) {
@@ -535,6 +537,48 @@ app.get('/api/v1/cart/:group_id', async (req, res) => {
     }
     
     res.json({ items });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/v1/cart/remove', async (req, res) => {
+  try {
+    const { group_id, user_id, cart_item_id } = req.body;
+    const { db } = require('./backend/firestore');
+    
+    let cartRef;
+    if (group_id.startsWith('PERSONAL_')) {
+      cartRef = db.collection('users').doc(user_id).collection('cart');
+    } else {
+      cartRef = db.collection('groups').doc(group_id).collection('cart');
+    }
+    
+    await cartRef.doc(cart_item_id).delete();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/v1/cart/update-qty', async (req, res) => {
+  try {
+    const { group_id, user_id, cart_item_id, quantity } = req.body;
+    const { db } = require('./backend/firestore');
+    
+    let cartRef;
+    if (group_id.startsWith('PERSONAL_')) {
+      cartRef = db.collection('users').doc(user_id).collection('cart');
+    } else {
+      cartRef = db.collection('groups').doc(group_id).collection('cart');
+    }
+    
+    if (quantity <= 0) {
+      await cartRef.doc(cart_item_id).delete();
+    } else {
+      await cartRef.doc(cart_item_id).update({ quantity: parseInt(quantity) });
+    }
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
