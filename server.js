@@ -77,6 +77,79 @@ app.post('/api/v1/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// Agent Passcode Login (for field agents like runners, scanners)
+app.post('/api/v1/auth/passcode-login', async (req, res) => {
+  try {
+    const { phone, passcode } = req.body;
+    if (!phone || !passcode) return res.status(400).json({ success: false, error: 'Phone and passcode required.' });
+
+    const { db } = require('./backend/firestore');
+    const crypto = require('crypto');
+
+    // Find user by phone number
+    const snap = await db.collection('users').where('phone_number', '==', phone).limit(1).get();
+    if (snap.empty) return res.status(401).json({ success: false, error: 'Invalid phone or passcode.' });
+
+    const userDoc = snap.docs[0];
+    const user = userDoc.data();
+
+    // Verify passcode hash
+    const salt = 'chilimba_agent_salt_2026';
+    const inputHash = crypto.createHash('sha256').update(salt + passcode).digest('hex');
+
+    if (inputHash !== user.passcode_hash) {
+      return res.status(401).json({ success: false, error: 'Invalid phone or passcode.' });
+    }
+
+    // Issue JWT cookie
+    const tokenPayload = {
+      user_id: userDoc.id,
+      name: user.display_name || user.name || 'Agent',
+      email: user.email || '',
+      role: user.role || 'AGENT',
+      phone_number: user.phone_number,
+      avatar: user.avatar || '',
+      kyc_complete: user.kyc_complete || true
+    };
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '30d' });
+    res.cookie('auth_token', token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 30 * 24 * 60 * 60 * 1000 });
+
+    res.json({ success: true, user: tokenPayload });
+  } catch (err) {
+    console.error('[Passcode Login Error]', err);
+    res.status(500).json({ success: false, error: 'Login failed.' });
+  }
+});
+
+// Set / Update Passcode (any authenticated user)
+app.post('/api/v1/auth/set-passcode', async (req, res) => {
+  try {
+    const token = req.cookies.auth_token;
+    if (!token) return res.status(401).json({ success: false, error: 'Not authenticated.' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+
+    const { passcode } = req.body;
+    if (!passcode || passcode.length !== 6 || !/^\d{6}$/.test(passcode)) {
+      return res.status(400).json({ success: false, error: 'Passcode must be exactly 6 digits.' });
+    }
+
+    const crypto = require('crypto');
+    const { db } = require('./backend/firestore');
+    const salt = 'chilimba_agent_salt_2026';
+    const passcodeHash = crypto.createHash('sha256').update(salt + passcode).digest('hex');
+
+    await db.collection('users').doc(decoded.user_id).update({
+      passcode_hash: passcodeHash,
+      updated_at: new Date().toISOString()
+    });
+
+    res.json({ success: true, message: 'Passcode saved.' });
+  } catch (err) {
+    console.error('[Set Passcode Error]', err);
+    res.status(500).json({ success: false, error: 'Failed to save passcode.' });
+  }
+});
+
 // 2. Payment Routes
 app.post('/api/v1/payments/initiate', paymentsController.initiateMobileMoneyPayment);
 app.post('/api/v1/payments/lenco-callback', paymentsController.handleLencoCallback);
@@ -485,7 +558,7 @@ app.get('/api/v1/cart/:group_id', async (req, res) => {
             { min_qty: 3, price_zmw: Math.round(basePrice * 0.9) },
             { min_qty: 6, price_zmw: Math.round(basePrice * 0.8) }
           ];
-          return { id: pid, tiers, basePrice };
+          return { id: pid, tiers, basePrice, weight_kg: p.weight_kg, is_local_stock: p.is_local_stock, custom_logistics: p.custom_logistics };
         }
         return null;
       });
@@ -493,7 +566,7 @@ app.get('/api/v1/cart/:group_id', async (req, res) => {
       const productsData = await Promise.all(productPromises);
       const productMap = {};
       productsData.forEach(p => {
-        if (p) productMap[p.id] = { tiers: p.tiers, basePrice: p.basePrice };
+        if (p) productMap[p.id] = p;
       });
 
       // 3. Update price_zmw of each cart item dynamically based on total group quantity
@@ -522,6 +595,10 @@ app.get('/api/v1/cart/:group_id', async (req, res) => {
           item.price_zmw = activePrice;
           item.discount_unlocked = activePrice < basePrice;
           item.savings_per_unit_zmw = basePrice - activePrice;
+          
+          item.weight_kg = prodInfo.weight_kg;
+          item.is_local_stock = prodInfo.is_local_stock;
+          item.custom_logistics = prodInfo.custom_logistics;
         } else {
           item.original_price_zmw = item.price_zmw;
           item.discount_unlocked = false;
@@ -529,7 +606,28 @@ app.get('/api/v1/cart/:group_id', async (req, res) => {
         }
       });
     } else {
+      // Fetch product details for personal cart too to expose weight, local stock, and custom logistics
+      const productPromises = items.map(async (item) => {
+        const doc = await db.collection('products').doc(item.product_id).get();
+        if (doc.exists) {
+          const p = doc.data();
+          return { id: item.product_id, weight_kg: p.weight_kg, is_local_stock: p.is_local_stock, custom_logistics: p.custom_logistics };
+        }
+        return null;
+      });
+      const productsData = await Promise.all(productPromises);
+      const productMap = {};
+      productsData.forEach(p => {
+        if (p) productMap[p.id] = p;
+      });
+
       items.forEach(item => {
+        const prodInfo = productMap[item.product_id];
+        if (prodInfo) {
+          item.weight_kg = prodInfo.weight_kg;
+          item.is_local_stock = prodInfo.is_local_stock;
+          item.custom_logistics = prodInfo.custom_logistics;
+        }
         item.original_price_zmw = item.price_zmw;
         item.discount_unlocked = false;
         item.savings_per_unit_zmw = 0;

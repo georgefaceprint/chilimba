@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,83 +10,299 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
 
-    body {
-      font-family: 'Inter', sans-serif;
+    /* Tab slider */
+    .tab-btn { transition: all 0.2s ease; }
+    .tab-btn.active { background: white; color: #15803d; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+    /* PIN dots */
+    .pin-dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+    .pin-dot.filled {
+      background: #15803d;
+      border-color: #15803d;
+      transform: scale(1.15);
     }
 
-    .btn-press:active {
-      transform: scale(0.95);
-      transition: transform 0.1s;
+    /* Numpad keys */
+    .num-key {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: white;
+      border: 1.5px solid #e5e7eb;
+      font-size: 22px; font-weight: 800;
+      color: #111827;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
+    .num-key:active { background: #f0fdf4; border-color: #15803d; transform: scale(0.92); }
+    .num-key.delete-key { font-size: 18px; color: #6b7280; }
+    .num-key.empty-key { background: transparent; border: none; box-shadow: none; pointer-events: none; }
   </style>
 </head>
+<body class="bg-gradient-to-br from-green-50 via-white to-orange-50 flex items-center justify-center min-h-[100dvh] p-4">
 
-<body class="bg-gray-50 flex items-center justify-center min-h-[100dvh] p-4">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 relative">
 
-  <div
-    class="bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden border border-gray-100 p-8 text-center relative">
-
-    <!-- Top graphic -->
-    <div
-      class="w-20 h-20 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-      <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4">
-        </path>
-      </svg>
+    <!-- Header -->
+    <div class="bg-gradient-to-br from-green-700 to-green-800 p-8 text-center">
+      <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+        <span class="text-white font-black text-3xl">C</span>
+      </div>
+      <h1 class="text-2xl font-black text-white tracking-tight">Chilimba</h1>
+      <p class="text-green-200 text-xs font-semibold mt-1">Buyers · Agents · Couriers</p>
     </div>
 
-    <h2 class="text-3xl font-black text-gray-900 mb-2 tracking-tight">Chilimba Access</h2>
-    <p class="text-sm font-medium text-gray-500 mb-8">One secure login for Buyers, Agents, and Couriers.</p>
-
-    <div id="auth-step-1">
-      <div id="g_id_onload" data-client_id="714011063581-ki9st10fiap43pjgpu44ur41qg2ahnjr.apps.googleusercontent.com"
-        data-callback="handleCredentialResponse" data-auto_prompt="false">
-      </div>
-      <div class="g_id_signin flex justify-center mb-6" data-type="standard" data-size="large" data-theme="outline"
-        data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="center"></div>
-
-      <div class="relative flex py-2 items-center mb-6">
-        <div class="flex-grow border-t border-gray-200"></div>
-        <span class="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-widest">Or use phone</span>
-        <div class="flex-grow border-t border-gray-200"></div>
-      </div>
-
-      <input type="tel" id="wa-phone" placeholder="Enter Phone Number (+260...)"
-        class="w-full border-2 border-gray-200 bg-gray-50 p-4 rounded-xl text-center font-bold tracking-wide focus:border-green-600 focus:bg-white focus:outline-none mb-3">
-      <button onclick="requestOTP()" id="btn-request-otp"
-        class="w-full bg-green-700 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-green-800 transition-colors btn-press flex items-center justify-center gap-2">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-          <path
-            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z">
-          </path>
-        </svg>
-        Login with WhatsApp
+    <!-- Tab Switcher -->
+    <div class="mx-5 mt-5 bg-gray-100 rounded-2xl p-1 flex gap-1">
+      <button id="tab-google" onclick="switchTab('google')" class="tab-btn active flex-1 py-2.5 rounded-xl text-xs font-black text-green-700 flex items-center justify-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Google
+      </button>
+      <button id="tab-whatsapp" onclick="switchTab('whatsapp')" class="tab-btn flex-1 py-2.5 rounded-xl text-xs font-black text-gray-500 flex items-center justify-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/></svg>
+        WhatsApp
+      </button>
+      <button id="tab-passcode" onclick="switchTab('passcode')" class="tab-btn flex-1 py-2.5 rounded-xl text-xs font-black text-gray-500 flex items-center justify-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        Passcode
       </button>
     </div>
 
-    <div id="auth-step-2" class="hidden">
-      <p class="text-sm font-bold text-gray-900 mb-1">Enter Security Code</p>
-      <p class="text-xs text-gray-500 mb-6 font-medium" id="lbl-otp-msg">We sent a 6-digit code to your WhatsApp</p>
-      <input type="text" id="wa-otp" maxlength="6" placeholder="------"
-        class="w-full border-2 border-gray-200 bg-gray-50 p-4 rounded-xl text-center text-3xl font-mono tracking-[0.5em] focus:bg-white focus:border-green-600 focus:outline-none mb-6">
-      <button onclick="verifyAuthOTP()" id="btn-verify-otp"
-        class="w-full bg-green-700 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-green-800 transition-colors btn-press">Verify
-        & Enter</button>
-      <button onclick="resetAuth()"
-        class="mt-4 text-xs font-bold text-gray-500 hover:text-gray-800 btn-press">Cancel</button>
+    <!-- GOOGLE TAB -->
+    <div id="panel-google" class="p-6">
+      <div id="auth-step-1">
+        <p class="text-sm text-gray-500 font-semibold text-center mb-5">Sign in with your Google account</p>
+        <div id="g_id_onload"
+          data-client_id="714011063581-ki9st10fiap43pjgpu44ur41qg2ahnjr.apps.googleusercontent.com"
+          data-callback="handleCredentialResponse"
+          data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin flex justify-center" data-type="standard" data-size="large" data-theme="outline"
+          data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="center"></div>
+      </div>
+      <!-- Step 2: Link WhatsApp after Google -->
+      <div id="auth-step-2" class="hidden">
+        <p class="text-sm font-bold text-gray-900 mb-1 text-center">Link Your WhatsApp</p>
+        <p class="text-xs text-gray-500 mb-5 font-medium text-center" id="lbl-otp-msg">Enter your phone to receive a code</p>
+        <input type="tel" id="wa-phone-google" placeholder="+260 or +255..."
+          class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl text-center font-bold tracking-wide focus:border-green-600 focus:bg-white focus:outline-none mb-3">
+        <button onclick="requestOTP('google')" id="btn-send-otp-google"
+          class="w-full bg-green-700 text-white py-3.5 rounded-xl font-black shadow-lg hover:bg-green-800 transition-colors btn-press">
+          Send Code
+        </button>
+      </div>
+      <div id="auth-step-3" class="hidden">
+        <p class="text-sm font-bold text-gray-900 mb-1 text-center">Enter Security Code</p>
+        <p class="text-xs text-gray-500 mb-4 font-medium text-center" id="lbl-otp-msg2">We sent a 6-digit code</p>
+        <input type="text" id="wa-otp" maxlength="6" placeholder="------"
+          class="w-full border-2 border-gray-200 bg-gray-50 p-4 rounded-xl text-center text-3xl font-mono tracking-[0.5em] focus:bg-white focus:border-green-600 focus:outline-none mb-5">
+        <button onclick="verifyAuthOTP()" id="btn-verify-otp"
+          class="w-full bg-green-700 text-white py-3.5 rounded-xl font-black shadow-lg hover:bg-green-800 transition-colors btn-press">
+          Verify & Enter
+        </button>
+        <button onclick="resetAuth()" class="mt-3 w-full text-xs font-bold text-gray-500 hover:text-gray-800 btn-press">Cancel</button>
+      </div>
     </div>
 
-    <div class="mt-8 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-      <p>By logging in, you agree to our Terms & Privacy Policy.</p>
+    <!-- WHATSAPP TAB -->
+    <div id="panel-whatsapp" class="p-6 hidden">
+      <div id="wa-step-1">
+        <p class="text-sm text-gray-500 font-semibold text-center mb-4">Login with your WhatsApp number</p>
+        <div class="flex gap-2 mb-3">
+          <select id="wa-country" class="bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold text-sm focus:border-green-600 focus:outline-none w-28 flex-shrink-0">
+            <option value="+260">🇿🇲 +260</option>
+            <option value="+255">🇹🇿 +255</option>
+          </select>
+          <input type="tel" id="wa-phone" placeholder="0977 287 900"
+            class="flex-1 border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold tracking-wide focus:border-green-600 focus:bg-white focus:outline-none text-center">
+        </div>
+        <button onclick="requestOTP('whatsapp')" id="btn-request-otp"
+          class="w-full bg-green-700 text-white py-4 rounded-xl font-black text-base shadow-lg hover:bg-green-800 transition-colors btn-press flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Login with WhatsApp
+        </button>
+      </div>
+      <div id="wa-step-2" class="hidden">
+        <p class="text-sm font-bold text-gray-900 mb-1 text-center">Enter Security Code</p>
+        <p class="text-xs text-gray-500 mb-4 font-medium text-center" id="lbl-wa-otp-msg">We sent a code to your WhatsApp</p>
+        <input type="text" id="wa-otp-direct" maxlength="6" placeholder="------"
+          class="w-full border-2 border-gray-200 bg-gray-50 p-4 rounded-xl text-center text-3xl font-mono tracking-[0.5em] focus:bg-white focus:border-green-600 focus:outline-none mb-5">
+        <button onclick="verifyWAOTP()"
+          class="w-full bg-green-700 text-white py-3.5 rounded-xl font-black shadow-lg hover:bg-green-800 transition-colors btn-press">
+          Verify & Enter
+        </button>
+        <button onclick="document.getElementById('wa-step-1').classList.remove('hidden'); document.getElementById('wa-step-2').classList.add('hidden');"
+          class="mt-3 w-full text-xs font-bold text-gray-500 hover:text-gray-800 btn-press">Back</button>
+      </div>
+    </div>
+
+    <!-- PASSCODE TAB -->
+    <div id="panel-passcode" class="p-6 hidden">
+      <div id="pc-step-1">
+        <p class="text-sm text-gray-500 font-semibold text-center mb-4">Enter your phone & 6-digit passcode</p>
+
+        <!-- Country + Phone -->
+        <p class="text-sm text-gray-500 font-semibold text-center mb-4">Enter your phone & 6-digit passcode</p>
+
+        <div class="flex gap-2 mb-4">
+          <select id="pc-country" onchange="updatePcFlag()" class="bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold text-sm focus:border-green-600 focus:outline-none w-28 flex-shrink-0">
+            <option value="+260">🇿🇲 +260</option>
+            <option value="+255">🇹🇿 +255</option>
+          </select>
+          <input type="tel" id="pc-phone" placeholder="0977 287 900"
+            oninput="normalizePcPhone()"
+            class="flex-1 border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold tracking-wide focus:border-green-600 focus:bg-white focus:outline-none text-center">
+        </div>
+
+        <!-- PIN Dots -->
+        <div class="flex justify-center gap-3 mb-6" id="pin-dots">
+          <div class="pin-dot" id="dot-0"></div>
+          <div class="pin-dot" id="dot-1"></div>
+          <div class="pin-dot" id="dot-2"></div>
+          <div class="pin-dot" id="dot-3"></div>
+          <div class="pin-dot" id="dot-4"></div>
+          <div class="pin-dot" id="dot-5"></div>
+        </div>
+
+        <!-- Error message -->
+        <p id="pc-error" class="text-red-500 text-xs font-bold text-center mb-3 hidden"></p>
+
+        <!-- Number Pad -->
+        <div class="grid grid-cols-3 gap-3 place-items-center mb-4">
+          <button class="num-key btn-press" onclick="pinInput('1')">1</button>
+          <button class="num-key btn-press" onclick="pinInput('2')">2</button>
+          <button class="num-key btn-press" onclick="pinInput('3')">3</button>
+          <button class="num-key btn-press" onclick="pinInput('4')">4</button>
+          <button class="num-key btn-press" onclick="pinInput('5')">5</button>
+          <button class="num-key btn-press" onclick="pinInput('6')">6</button>
+          <button class="num-key btn-press" onclick="pinInput('7')">7</button>
+          <button class="num-key btn-press" onclick="pinInput('8')">8</button>
+          <button class="num-key btn-press" onclick="pinInput('9')">9</button>
+          <button class="num-key empty-key"></button>
+          <button class="num-key btn-press" onclick="pinInput('0')">0</button>
+          <button class="num-key delete-key btn-press" onclick="pinDelete()">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/></svg>
+          </button>
+        </div>
+
+        <button id="btn-passcode-login" onclick="passcodeLogin()"
+          class="w-full bg-orange-500 text-white py-3.5 rounded-xl font-black text-base shadow-lg hover:bg-orange-600 transition-colors btn-press opacity-50 cursor-not-allowed"
+          disabled>
+          Sign In
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 pb-6 text-center">
+      <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">By logging in, you agree to our Terms & Privacy Policy.</p>
     </div>
   </div>
 
   <script>
     const API_BASE = window.location.origin;
     let activeUserId = null;
+    let pinValue = '';
 
+    // ── TAB SWITCHING ────────────────────────────────────────────────
+    function switchTab(tab) {
+      ['google','whatsapp','passcode'].forEach(t => {
+        document.getElementById('tab-' + t).classList.remove('active');
+        document.getElementById('panel-' + t).classList.add('hidden');
+      });
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('panel-' + tab).classList.remove('hidden');
+    }
+
+    // ── PIN PAD ───────────────────────────────────────────────────────
+    function pinInput(digit) {
+      if (pinValue.length >= 6) return;
+      pinValue += digit;
+      updatePinDots();
+      if (pinValue.length === 6) {
+        document.getElementById('btn-passcode-login').disabled = false;
+        document.getElementById('btn-passcode-login').classList.remove('opacity-50','cursor-not-allowed');
+      }
+    }
+
+    function pinDelete() {
+      if (pinValue.length === 0) return;
+      pinValue = pinValue.slice(0, -1);
+      updatePinDots();
+      document.getElementById('btn-passcode-login').disabled = true;
+      document.getElementById('btn-passcode-login').classList.add('opacity-50','cursor-not-allowed');
+      document.getElementById('pc-error').classList.add('hidden');
+    }
+
+    function updatePinDots() {
+      for (let i = 0; i < 6; i++) {
+        const dot = document.getElementById('dot-' + i);
+        if (i < pinValue.length) {
+          dot.classList.add('filled');
+        } else {
+          dot.classList.remove('filled');
+        }
+      }
+    }
+
+    async function passcodeLogin() {
+      const cc = document.getElementById('pc-country').value;
+      let rawPhone = document.getElementById('pc-phone').value.trim();
+      if (!rawPhone) {
+        showPinError('Please enter your phone number first.');
+        pinValue = ''; updatePinDots();
+        return;
+      }
+      const phone = formatPhoneNumber(rawPhone, cc);
+
+      const btn = document.getElementById('btn-passcode-login');
+      btn.innerText = 'Signing in...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/passcode-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, passcode: pinValue })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          processRouting(data.user);
+        } else {
+          showPinError(data.error || 'Incorrect passcode. Try again.');
+          pinValue = ''; updatePinDots();
+          btn.innerText = 'Sign In';
+          btn.disabled = false;
+          btn.classList.add('opacity-50','cursor-not-allowed');
+        }
+      } catch (err) {
+        showPinError('Network error. Please try again.');
+        pinValue = ''; updatePinDots();
+        btn.innerText = 'Sign In';
+        btn.disabled = false;
+        btn.classList.add('opacity-50','cursor-not-allowed');
+      }
+    }
+
+    function showPinError(msg) {
+      const el = document.getElementById('pc-error');
+      el.innerText = msg;
+      el.classList.remove('hidden');
+    }
+
+    // ── GOOGLE AUTH ──────────────────────────────────────────────────
     async function handleCredentialResponse(response) {
       try {
         const res = await fetch(`${API_BASE}/api/v1/auth/google/callback`, {
@@ -96,7 +311,6 @@
           body: JSON.stringify({ token: response.credential })
         });
         const data = await res.json();
-
         if (data.action === 'REQUIRE_WHATSAPP_LINK') {
           activeUserId = data.userId;
           document.getElementById('auth-step-1').classList.add('hidden');
@@ -109,97 +323,148 @@
       }
     }
 
-    function formatPhoneNumber(phone) {
-      let cleaned = phone.replace(/[^\d+]/g, '');
-      if (cleaned.startsWith('0') && cleaned.length === 10) {
-        cleaned = '+260' + cleaned.substring(1);
+    // ── WHATSAPP OTP ─────────────────────────────────────────────────
+    // ── PHONE NORMALISATION ───────────────────────────────────────────
+    // Normalizes Zambia/Tanzania numbers in any format to E.164
+    // Works for: +260977..., 0977..., 977... (Zambia 9/10 digit local)
+    //            +255754..., 0754..., 754...  (Tanzania)
+    function formatPhoneNumber(rawPhone, countryCode) {
+      let d = rawPhone.replace(/[^\d+]/g, '');
+
+      // If already full E.164
+      if (d.startsWith('+260') || d.startsWith('+255')) return d;
+
+      // Detect country from selector if available, else auto-detect
+      const cc = countryCode || '+260';
+
+      // Strip leading zeros
+      if (d.startsWith('0')) d = d.slice(1);
+
+      // Zambia: local is 9 digits (e.g. 977287900), full intl is 12 digits
+      if (cc === '+260') {
+        if (d.length === 9) return '+260' + d;
+        if (d.length === 10 && d.startsWith('0')) return '+260' + d.slice(1);
+        // Already had country code digits without +
+        if (d.startsWith('260') && d.length === 12) return '+' + d;
+        return '+260' + d;
       }
-      if (!cleaned.startsWith('+') && cleaned.length >= 11) {
-        cleaned = '+' + cleaned;
+
+      // Tanzania: local is 9 digits (e.g. 754932831), full intl is 12 digits
+      if (cc === '+255') {
+        if (d.length === 9) return '+255' + d;
+        if (d.length === 10 && d.startsWith('0')) return '+255' + d.slice(1);
+        if (d.startsWith('255') && d.length === 12) return '+' + d;
+        return '+255' + d;
       }
-      return cleaned;
+
+      // Fallback: generic
+      if (!d.startsWith('+')) d = '+' + d;
+      return d;
     }
 
-    async function requestOTP() {
-      let phone = document.getElementById('wa-phone').value.trim();
-      if (!phone) return alert("Enter phone number");
+    function normalizePcPhone() {
+      const input = document.getElementById('pc-phone');
+      input.value = input.value.replace(/[^\d+\s-]/g, '');
+    }
 
-      // Temporary check for super admin override
-      if (phone === 'admin' || phone === 'hq') {
-        window.location.href = '/admin-portal.html';
-        return;
+    function updatePcFlag() {
+      const cc = document.getElementById('pc-country').value;
+      const ph = document.getElementById('pc-phone');
+      ph.placeholder = cc === '+255' ? '0754 932 831' : '0977 287 900';
+    }
+
+    function updateWaFlag() {
+      const cc = document.getElementById('wa-country').value;
+      const ph = document.getElementById('wa-phone');
+      ph.placeholder = cc === '+255' ? '0754 932 831' : '0977 287 900';
+    }
+
+    async function requestOTP(source) {
+      let phoneEl, ccEl;
+      if (source === 'google') {
+        phoneEl = 'wa-phone-google'; ccEl = null;
+      } else {
+        phoneEl = 'wa-phone'; ccEl = 'wa-country';
       }
+      let rawPhone = document.getElementById(phoneEl).value.trim();
+      const cc = ccEl ? document.getElementById(ccEl).value : '+260';
 
-      phone = formatPhoneNumber(phone);
-      document.getElementById('wa-phone').value = phone; // update UI so they see what we're sending
-
-      const btn = document.getElementById('btn-request-otp');
-      btn.innerHTML = '<div class="animate-spin h-5 w-5 border-2 border-white rounded-full mr-2 border-t-transparent"></div> Sending...';
-      btn.disabled = true;
+      if (rawPhone === 'admin' || rawPhone === 'hq') { window.location.href = '/admin-portal.html'; return; }
+      if (!rawPhone) return alert('Enter phone number');
+      const phone = formatPhoneNumber(rawPhone, cc);
+      document.getElementById(phoneEl).value = phone;
 
       try {
         const res = await fetch(`${API_BASE}/api/v1/auth/whatsapp/initiate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          // Send phone number. We might not have a userId if they didn't do Google Auth first.
-          // In a real flow, you might create a pending user row here.
           body: JSON.stringify({ phoneNumber: phone, userId: activeUserId || 'temp_' + Date.now() })
         });
-
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to send code");
+        if (!res.ok) throw new Error(data.error || 'Failed to send code');
 
-        document.getElementById('auth-step-1').classList.add('hidden');
-        document.getElementById('auth-step-2').classList.remove('hidden');
-        document.getElementById('lbl-otp-msg').innerText = `We sent a code to ${phone}`;
-
-        // Fallback for testing if WhatsApp API is missing
-        if (data.test_otp) {
-          console.warn("Using Fallback OTP:", data.test_otp);
-          document.getElementById('lbl-otp-msg').innerHTML = `<span class="text-red-500 font-bold">WhatsApp API Error (Token Expired?)</span><br>Test Code: <b>${data.test_otp}</b>`;
-          document.getElementById('wa-otp').value = data.test_otp;
+        if (source === 'google') {
+          document.getElementById('auth-step-2').classList.add('hidden');
+          document.getElementById('auth-step-3').classList.remove('hidden');
+          document.getElementById('lbl-otp-msg2').innerText = `Code sent to ${phone}`;
+          if (data.test_otp) document.getElementById('wa-otp').value = data.test_otp;
+        } else {
+          document.getElementById('wa-step-1').classList.add('hidden');
+          document.getElementById('wa-step-2').classList.remove('hidden');
+          document.getElementById('lbl-wa-otp-msg').innerText = `Code sent to ${phone}`;
+          if (data.test_otp) document.getElementById('wa-otp-direct').value = data.test_otp;
         }
       } catch (err) {
         alert(err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path></svg> Login with WhatsApp';
       }
     }
 
     async function verifyAuthOTP() {
       const otp = document.getElementById('wa-otp').value;
-      let phone = document.getElementById('wa-phone').value.trim();
-      phone = formatPhoneNumber(phone);
-
-      if (!otp || otp.length < 6) return alert("Enter 6-digit code");
-
-      const btn = document.getElementById('btn-verify-otp');
-      btn.innerHTML = '<div class="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent"></div>';
-      btn.disabled = true;
-
+      let phone = formatPhoneNumber(document.getElementById('wa-phone-google').value.trim());
+      if (!otp || otp.length < 6) return alert('Enter 6-digit code');
       try {
         const res = await fetch(`${API_BASE}/api/v1/auth/whatsapp/verify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: activeUserId, inputOtp: otp, userProvidedPhone: phone })
         });
-
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to verify");
-
+        if (!res.ok) throw new Error(data.error || 'Failed to verify');
         processRouting(data.user);
       } catch (err) {
         alert('Verification failed: ' + err.message);
-        btn.disabled = false;
-        btn.innerText = 'Verify & Enter';
       }
     }
 
+    async function verifyWAOTP() {
+      const otp = document.getElementById('wa-otp-direct').value;
+      let phone = formatPhoneNumber(document.getElementById('wa-phone').value.trim());
+      if (!otp || otp.length < 6) return alert('Enter 6-digit code');
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/whatsapp/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: null, inputOtp: otp, userProvidedPhone: phone })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to verify');
+        processRouting(data.user);
+      } catch (err) {
+        alert('Verification failed: ' + err.message);
+      }
+    }
+
+    function resetAuth() {
+      document.getElementById('auth-step-3').classList.add('hidden');
+      document.getElementById('auth-step-2').classList.add('hidden');
+      document.getElementById('auth-step-1').classList.remove('hidden');
+      document.getElementById('wa-otp').value = '';
+    }
+
+    // ── ROUTING ───────────────────────────────────────────────────────
     async function processRouting(userObj) {
       if (!userObj) return;
-
-      // Use role from DB, default to BUYER
       let role = userObj.role || 'BUYER';
 
       const pendingInviteCode = localStorage.getItem('pending_invite_code');
@@ -219,41 +484,19 @@
             alert(`Joined "${data.group_name}" successfully!`);
             window.location.href = '/group-cart.html';
             return;
-          } else {
-            console.error('Failed to auto-join:', data.error);
           }
-        } catch (err) {
-          console.error('Error auto-joining group:', err);
-        }
+        } catch (err) {}
       }
 
       switch (role) {
-        case 'SUPER_ADMIN':
-          window.location.href = '/admin-portal.html';
-          break;
-        case 'AGENT':
-          window.location.href = '/vendor-dashboard.html';
-          break;
-        case 'COURIER':
-          window.location.href = '/runner-portal.html';
-          break;
-        case 'BUYER':
-        default:
-          if (localStorage.getItem('activeGroupId')) {
-            window.location.href = '/dashboard.html';
-          } else {
-            window.location.href = '/';
-          }
+        case 'SUPER_ADMIN': window.location.href = '/admin-portal.html'; break;
+        case 'AGENT': window.location.href = '/vendor-dashboard.html'; break;
+        case 'COURIER': window.location.href = '/runner-portal.html'; break;
+        case 'BUYER': default:
+          window.location.href = localStorage.getItem('activeGroupId') ? '/dashboard.html' : '/';
           break;
       }
     }
-
-    function resetAuth() {
-      document.getElementById('auth-step-2').classList.add('hidden');
-      document.getElementById('auth-step-1').classList.remove('hidden');
-      document.getElementById('wa-otp').value = '';
-    }
   </script>
 </body>
-
 </html>

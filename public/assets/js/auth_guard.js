@@ -20,10 +20,12 @@ async function requireAuth() {
     // Auth is valid. Return the user payload.
     return data.user;
   } catch (err) {
+    console.warn('Authentication guard check failed:', err.message);
     // Redirect to signup if not authenticated
-    if (!window.location.pathname.includes('kyc-setup.html')) {
+    if (!window.location.pathname.includes('signup.html')) {
       window.location.href = '/signup.html';
     }
+    return null;
   }
 }
 

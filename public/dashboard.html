@@ -174,10 +174,14 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       const user = await requireAuth();
+      if (!user) return;
+      
       DEMO_USER_ID = user.user_id;
-      document.getElementById('profile-name').innerText = user.name || 'User';
-      if (user.avatar) {
-        document.querySelector('#user-profile img').src = user.avatar;
+      document.getElementById('profile-name').innerText = user.display_name || user.name || 'User';
+      
+      const avatarUrl = user.avatar || user.avatar_url;
+      if (avatarUrl) {
+        document.querySelector('#user-profile img').src = avatarUrl;
       }
       fetchMyGroups();
       fetchWalletBalance();

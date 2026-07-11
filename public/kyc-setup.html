@@ -10,6 +10,25 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
     body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+    .pin-dot {
+      width: 13px; height: 13px; border-radius: 50%;
+      border: 2px solid #d1d5db; background: transparent;
+      transition: all 0.15s ease;
+    }
+    .pin-dot.filled { background: #15803d; border-color: #15803d; transform: scale(1.15); }
+    .pin-dot.error  { background: #ef4444; border-color: #ef4444; }
+    .num-key {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: white; border: 1.5px solid #e5e7eb;
+      font-size: 20px; font-weight: 800; color: #111827;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.12s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+    .num-key:active { background: #f0fdf4; border-color: #15803d; transform: scale(0.9); }
+    .num-key.delete-key { font-size: 16px; color: #6b7280; }
+    .num-key.empty-key  { background: transparent; border: none; box-shadow: none; pointer-events: none; }
   </style>
 </head>
 <body class="text-gray-900 min-h-screen flex flex-col">
@@ -75,6 +94,92 @@
           <button type="button" onclick="skipKyc()" class="w-full mt-3 text-gray-500 font-bold py-2 text-sm hover:text-gray-800 btn-press">Skip for now</button>
         </div>
       </form>
+    </div>
+
+    <!-- ── PASSCODE SETUP CARD ────────────────────── -->
+    <div class="w-full max-w-sm mt-5 bg-white rounded-3xl shadow-xl p-6 relative overflow-hidden">
+      <div class="absolute -bottom-12 -left-12 w-28 h-28 bg-orange-500/10 rounded-full blur-2xl"></div>
+      <div class="relative z-10">
+        <div class="flex items-center gap-3 mb-1">
+          <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          </div>
+          <div>
+            <h2 class="font-black text-gray-900 text-base">Set Quick Passcode</h2>
+            <p class="text-xs text-gray-500 font-medium">6-digit PIN for fast login</p>
+          </div>
+        </div>
+
+        <!-- Step 1: Enter PIN -->
+        <div id="pc-setup-step1" class="mt-5">
+          <p class="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3 text-center">Enter new 6-digit passcode</p>
+          <div class="flex justify-center gap-2.5 mb-5" id="pc-dots-1">
+            <div class="pin-dot" id="pc1-dot-0"></div>
+            <div class="pin-dot" id="pc1-dot-1"></div>
+            <div class="pin-dot" id="pc1-dot-2"></div>
+            <div class="pin-dot" id="pc1-dot-3"></div>
+            <div class="pin-dot" id="pc1-dot-4"></div>
+            <div class="pin-dot" id="pc1-dot-5"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2.5 place-items-center">
+            <button class="num-key btn-press" onclick="pc1Input('1')">1</button>
+            <button class="num-key btn-press" onclick="pc1Input('2')">2</button>
+            <button class="num-key btn-press" onclick="pc1Input('3')">3</button>
+            <button class="num-key btn-press" onclick="pc1Input('4')">4</button>
+            <button class="num-key btn-press" onclick="pc1Input('5')">5</button>
+            <button class="num-key btn-press" onclick="pc1Input('6')">6</button>
+            <button class="num-key btn-press" onclick="pc1Input('7')">7</button>
+            <button class="num-key btn-press" onclick="pc1Input('8')">8</button>
+            <button class="num-key btn-press" onclick="pc1Input('9')">9</button>
+            <button class="num-key empty-key"></button>
+            <button class="num-key btn-press" onclick="pc1Input('0')">0</button>
+            <button class="num-key delete-key btn-press" onclick="pc1Delete()">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Re-enter PIN -->
+        <div id="pc-setup-step2" class="mt-5 hidden">
+          <p class="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3 text-center">Re-enter to confirm</p>
+          <div class="flex justify-center gap-2.5 mb-5" id="pc-dots-2">
+            <div class="pin-dot" id="pc2-dot-0"></div>
+            <div class="pin-dot" id="pc2-dot-1"></div>
+            <div class="pin-dot" id="pc2-dot-2"></div>
+            <div class="pin-dot" id="pc2-dot-3"></div>
+            <div class="pin-dot" id="pc2-dot-4"></div>
+            <div class="pin-dot" id="pc2-dot-5"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2.5 place-items-center">
+            <button class="num-key btn-press" onclick="pc2Input('1')">1</button>
+            <button class="num-key btn-press" onclick="pc2Input('2')">2</button>
+            <button class="num-key btn-press" onclick="pc2Input('3')">3</button>
+            <button class="num-key btn-press" onclick="pc2Input('4')">4</button>
+            <button class="num-key btn-press" onclick="pc2Input('5')">5</button>
+            <button class="num-key btn-press" onclick="pc2Input('6')">6</button>
+            <button class="num-key btn-press" onclick="pc2Input('7')">7</button>
+            <button class="num-key btn-press" onclick="pc2Input('8')">8</button>
+            <button class="num-key btn-press" onclick="pc2Input('9')">9</button>
+            <button class="num-key empty-key"></button>
+            <button class="num-key btn-press" onclick="pc2Input('0')">0</button>
+            <button class="num-key delete-key btn-press" onclick="pc2Delete()">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/></svg>
+            </button>
+          </div>
+          <p id="pc-mismatch" class="text-red-500 text-xs font-bold text-center mt-3 hidden">❌ Passcodes don't match. Try again.</p>
+          <button onclick="resetPasscodeSetup()" class="mt-4 w-full text-xs font-bold text-gray-400 hover:text-gray-700 btn-press">← Start over</button>
+        </div>
+
+        <!-- Step 3: Saved -->
+        <div id="pc-setup-step3" class="mt-5 hidden text-center">
+          <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <p class="font-black text-gray-900 text-base">Passcode Saved!</p>
+          <p class="text-xs text-gray-500 mt-1">You can now log in instantly using your phone number + passcode.</p>
+          <button onclick="resetPasscodeSetup()" class="mt-4 text-xs font-bold text-orange-500 hover:text-orange-700 btn-press">Change Passcode</button>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -195,6 +300,96 @@
     }
 
     loadPrexistingData();
+
+    // ── PASSCODE SETUP ────────────────────────────────────
+    let pc1 = ''; // first entry
+    let pc2 = ''; // confirm entry
+
+    function pc1Input(d) {
+      if (pc1.length >= 6) return;
+      pc1 += d;
+      updateDots('pc1', pc1);
+      if (pc1.length === 6) {
+        // Move to confirm step
+        setTimeout(() => {
+          document.getElementById('pc-setup-step1').classList.add('hidden');
+          document.getElementById('pc-setup-step2').classList.remove('hidden');
+        }, 200);
+      }
+    }
+    function pc1Delete() {
+      pc1 = pc1.slice(0, -1);
+      updateDots('pc1', pc1);
+    }
+
+    function pc2Input(d) {
+      if (pc2.length >= 6) return;
+      pc2 += d;
+      updateDots('pc2', pc2);
+      if (pc2.length === 6) {
+        // Validate match
+        if (pc2 === pc1) {
+          savePasscode(pc1);
+        } else {
+          // Show mismatch — flash red then reset confirm
+          for (let i = 0; i < 6; i++) {
+            const dot = document.getElementById(`pc2-dot-${i}`);
+            dot.classList.add('error');
+          }
+          document.getElementById('pc-mismatch').classList.remove('hidden');
+          setTimeout(() => {
+            pc2 = '';
+            updateDots('pc2', pc2);
+            document.getElementById('pc-mismatch').classList.add('hidden');
+          }, 1200);
+        }
+      }
+    }
+    function pc2Delete() {
+      pc2 = pc2.slice(0, -1);
+      updateDots('pc2', pc2);
+      document.getElementById('pc-mismatch').classList.add('hidden');
+    }
+
+    function updateDots(prefix, val) {
+      for (let i = 0; i < 6; i++) {
+        const dot = document.getElementById(`${prefix}-dot-${i}`);
+        dot.classList.remove('error');
+        if (i < val.length) dot.classList.add('filled');
+        else dot.classList.remove('filled');
+      }
+    }
+
+    function resetPasscodeSetup() {
+      pc1 = ''; pc2 = '';
+      updateDots('pc1', ''); updateDots('pc2', '');
+      document.getElementById('pc-mismatch').classList.add('hidden');
+      document.getElementById('pc-setup-step1').classList.remove('hidden');
+      document.getElementById('pc-setup-step2').classList.add('hidden');
+      document.getElementById('pc-setup-step3').classList.add('hidden');
+    }
+
+    async function savePasscode(code) {
+      try {
+        const res = await fetch('/api/v1/auth/set-passcode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: code })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          document.getElementById('pc-setup-step2').classList.add('hidden');
+          document.getElementById('pc-setup-step3').classList.remove('hidden');
+          pc1 = ''; pc2 = '';
+        } else {
+          alert('Could not save passcode: ' + (data.error || 'Unknown error'));
+          resetPasscodeSetup();
+        }
+      } catch (err) {
+        alert('Network error saving passcode.');
+        resetPasscodeSetup();
+      }
+    }
   </script>
 </body>
 </html>
