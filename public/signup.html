@@ -173,7 +173,6 @@
           <div class="pin-dot" id="dot-2"></div>
           <div class="pin-dot" id="dot-3"></div>
           <div class="pin-dot" id="dot-4"></div>
-          <div class="pin-dot" id="dot-5"></div>
         </div>
 
         <!-- Error message -->
@@ -228,10 +227,10 @@
 
     // ── PIN PAD ───────────────────────────────────────────────────────
     function pinInput(digit) {
-      if (pinValue.length >= 6) return;
+      if (pinValue.length >= 5) return;
       pinValue += digit;
       updatePinDots();
-      if (pinValue.length === 6) {
+      if (pinValue.length === 5) {
         document.getElementById('btn-passcode-login').disabled = false;
         document.getElementById('btn-passcode-login').classList.remove('opacity-50','cursor-not-allowed');
       }
@@ -247,7 +246,7 @@
     }
 
     function updatePinDots() {
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 5; i++) {
         const dot = document.getElementById('dot-' + i);
         if (i < pinValue.length) {
           dot.classList.add('filled');

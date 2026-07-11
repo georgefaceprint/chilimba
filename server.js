@@ -129,8 +129,8 @@ app.post('/api/v1/auth/set-passcode', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
 
     const { passcode } = req.body;
-    if (!passcode || passcode.length !== 6 || !/^\d{6}$/.test(passcode)) {
-      return res.status(400).json({ success: false, error: 'Passcode must be exactly 6 digits.' });
+    if (!passcode || passcode.length !== 5 || !/^\d{5}$/.test(passcode)) {
+      return res.status(400).json({ success: false, error: 'Passcode must be exactly 5 digits.' });
     }
 
     const crypto = require('crypto');

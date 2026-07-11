@@ -119,7 +119,6 @@
             <div class="pin-dot" id="pc1-dot-2"></div>
             <div class="pin-dot" id="pc1-dot-3"></div>
             <div class="pin-dot" id="pc1-dot-4"></div>
-            <div class="pin-dot" id="pc1-dot-5"></div>
           </div>
           <div class="grid grid-cols-3 gap-2.5 place-items-center">
             <button class="num-key btn-press" onclick="pc1Input('1')">1</button>
@@ -148,7 +147,6 @@
             <div class="pin-dot" id="pc2-dot-2"></div>
             <div class="pin-dot" id="pc2-dot-3"></div>
             <div class="pin-dot" id="pc2-dot-4"></div>
-            <div class="pin-dot" id="pc2-dot-5"></div>
           </div>
           <div class="grid grid-cols-3 gap-2.5 place-items-center">
             <button class="num-key btn-press" onclick="pc2Input('1')">1</button>
@@ -306,10 +304,10 @@
     let pc2 = ''; // confirm entry
 
     function pc1Input(d) {
-      if (pc1.length >= 6) return;
+      if (pc1.length >= 5) return;
       pc1 += d;
       updateDots('pc1', pc1);
-      if (pc1.length === 6) {
+      if (pc1.length === 5) {
         // Move to confirm step
         setTimeout(() => {
           document.getElementById('pc-setup-step1').classList.add('hidden');
@@ -323,16 +321,16 @@
     }
 
     function pc2Input(d) {
-      if (pc2.length >= 6) return;
+      if (pc2.length >= 5) return;
       pc2 += d;
       updateDots('pc2', pc2);
-      if (pc2.length === 6) {
+      if (pc2.length === 5) {
         // Validate match
         if (pc2 === pc1) {
           savePasscode(pc1);
         } else {
           // Show mismatch — flash red then reset confirm
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 5; i++) {
             const dot = document.getElementById(`pc2-dot-${i}`);
             dot.classList.add('error');
           }
@@ -352,7 +350,7 @@
     }
 
     function updateDots(prefix, val) {
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 5; i++) {
         const dot = document.getElementById(`${prefix}-dot-${i}`);
         dot.classList.remove('error');
         if (i < val.length) dot.classList.add('filled');
