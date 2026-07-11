@@ -70,13 +70,19 @@
       const fallback = document.createElement('div');
       fallback.style.cssText = 'font-size: 28px; font-weight: 900; color: #15803d; letter-spacing: -1px;';
       fallback.innerText = 'CHILIMBA';
-      splash.insertBefore(fallback, loader);
+      splash.insertBefore(fallback, tagline);
     };
+
+    const tagline = document.createElement('div');
+    tagline.style.cssText = 'font-size: 13px; font-weight: 700; color: #166534; margin-top: 16px; font-style: italic; letter-spacing: -0.1px; text-align: center; font-family: system-ui, sans-serif;';
+    tagline.innerText = "Iseni mukwate fyonse!";
 
     const loader = document.createElement('div');
     loader.className = 'splash-loader';
+    loader.style.marginTop = '16px';
 
     splash.appendChild(logo);
+    splash.appendChild(tagline);
     splash.appendChild(loader);
     document.body.appendChild(splash);
 
@@ -163,14 +169,14 @@
     info.style.cssText = 'display: flex; gap: 12px; align-items: center;';
 
     const icon = document.createElement('div');
-    icon.style.cssText = 'width: 42px; height: 42px; background: #ea580c; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex-shrink: 0;';
-    icon.innerText = 'C';
+    icon.style.cssText = 'width: 42px; height: 42px; background: #ffffff; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex-shrink: 0;';
+    icon.innerHTML = `<img src="/assets/img/logo.png" style="width: 100%; height: 100%; object-fit: contain; p-0.5">`;
 
     const text = document.createElement('div');
     text.style.cssText = 'display: flex; flex-direction: column;';
     text.innerHTML = `
-      <span style="font-weight: 800; font-size: 14px; letter-spacing: -0.2px;">Install Chilimba App</span>
-      <span style="font-size: 11px; color: #bbf7d0; font-weight: 500;">Save data, track dispatches, and buy together!</span>
+      <span style="font-weight: 800; font-size: 14px; letter-spacing: -0.2px;">Chilimba</span>
+      <span style="font-size: 11px; color: #bbf7d0; font-weight: 700; font-style: italic;">Iseni mukwate fyonse!</span>
     `;
 
     info.appendChild(icon);
