@@ -18,13 +18,13 @@
     });
   }
 
-  // ── 3-SECOND SPLASH SCREEN ─────────────────────────────
+  // ── 6-SECOND SPLASH SCREEN ─────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
     const splash = document.createElement('div');
     splash.id = 'pwa-splash-screen';
     splash.style.cssText = `
       position: fixed;
-      inset: 0;
+      top: 0; left: 0; width: 100%; height: 100%;
       background: #ffffff;
       z-index: 100000;
       display: flex;
@@ -36,15 +36,24 @@
     
     const style = document.createElement('style');
     style.innerHTML = `
+      @-webkit-keyframes splashPulse {
+        0% { -webkit-transform: scale(0.85); opacity: 0.7; }
+        50% { -webkit-transform: scale(1.05); opacity: 1; }
+        100% { -webkit-transform: scale(1); opacity: 1; }
+      }
       @keyframes splashPulse {
         0% { transform: scale(0.85); opacity: 0.7; }
         50% { transform: scale(1.05); opacity: 1; }
         100% { transform: scale(1); opacity: 1; }
       }
+      @-webkit-keyframes splashSpinner {
+        to { -webkit-transform: rotate(360deg); }
+      }
       @keyframes splashSpinner {
         to { transform: rotate(360deg); }
       }
       .splash-logo {
+        -webkit-animation: splashPulse 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
         animation: splashPulse 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
         width: 140px;
         height: 140px;
@@ -56,8 +65,11 @@
         border: 2.5px solid #f3f3f3;
         border-top: 2.5px solid #15803d;
         border-radius: 50%;
+        -webkit-animation: splashSpinner 0.8s linear infinite;
         animation: splashSpinner 0.8s linear infinite;
         margin-top: 24px;
+        opacity: 0;
+        transition: opacity 1s ease-out;
       }
     `;
     document.head.appendChild(style);
@@ -74,7 +86,7 @@
     };
 
     const tagline = document.createElement('div');
-    tagline.style.cssText = 'font-size: 13px; font-weight: 700; color: #166534; margin-top: 16px; font-style: italic; letter-spacing: -0.1px; text-align: center; font-family: system-ui, sans-serif;';
+    tagline.style.cssText = 'font-size: 13px; font-weight: 700; color: #166534; margin-top: 16px; font-style: italic; letter-spacing: -0.1px; text-align: center; font-family: system-ui, sans-serif; opacity: 0; transition: opacity 1s ease-out;';
     tagline.innerText = "Iseni mukwate fyonse!";
 
     const loader = document.createElement('div');
@@ -86,11 +98,17 @@
     splash.appendChild(loader);
     document.body.appendChild(splash);
 
-    // Hide after 3 seconds
+    // Fade in tagline and loader after 1.5 seconds
+    setTimeout(() => {
+      tagline.style.opacity = '1';
+      loader.style.opacity = '1';
+    }, 1500);
+
+    // Hide after 6 seconds
     setTimeout(() => {
       splash.style.opacity = '0';
       setTimeout(() => splash.remove(), 500);
-    }, 3000);
+    }, 6000);
   });
 
   let deferredPrompt = null;

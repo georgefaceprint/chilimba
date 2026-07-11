@@ -139,13 +139,11 @@
 
     </div><!-- end #dashboard-content -->
 
-  <!-- Floating Chat Button -->
-  <button id="chat-toggle-btn" onclick="toggleChatPanel()" class="fixed bottom-24 right-5 w-12 h-12 bg-green-700 text-white rounded-full shadow-lg flex items-center justify-center btn-press hover:bg-green-800 z-40 transition-all transform scale-0 duration-300">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-  </button>
+  <!-- Floating Chat Button (temporarily hidden for debugging) -->
+  <button id="chat-toggle-btn" onclick="toggleChatPanel()" style="display: none !important;">
 
-  <!-- Side Chat Panel Overlay -->
-  <div id="chat-panel" class="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl z-[60] transform translate-x-full transition-transform duration-300 ease-out flex flex-col">
+  <!-- Side Chat Panel Overlay (temporarily hidden for debugging) -->
+  <div id="chat-panel" style="display: none !important;" class="fixed top-0 bottom-0 right-0 w-full max-w-sm bg-white shadow-2xl z-[60] transform translate-x-full transition-transform duration-300 ease-out flex flex-col">
     <!-- Chat Header -->
     <div class="bg-green-800 text-white p-4 flex justify-between items-center shadow-md">
       <div class="flex items-center space-x-2">
@@ -266,7 +264,7 @@
 
 
   <!-- CHECKOUT MODAL -->
-  <div id="checkout-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+  <div id="checkout-modal" class="fixed top-0 left-0 w-full h-full z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
     <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform" id="checkout-content">
       <div class="p-6 text-center">
         <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
