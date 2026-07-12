@@ -10,7 +10,7 @@
     splash.style.cssText = `
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: #ffffff;
+      background: #f5f5f5;
       z-index: 100000;
       display: flex;
       flex-direction: column;
