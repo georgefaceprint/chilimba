@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>My Orders - Chilimba</title>
+  <meta name="theme-color" content="#15803d">
+  <link rel="manifest" href="/manifest.json">
+  <link href="/assets/css/tailwind.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
+    .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+  </style>
+</head>
+<body class="text-gray-900 flex flex-col min-h-screen pb-[80px]">
+
+  <!-- HEADER -->
+  <header class="bg-white text-gray-900 px-4 py-4 sticky top-0 z-50 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded-b-2xl flex justify-between items-center border-b border-gray-100">
+    <div class="flex items-center gap-3">
+      <button onclick="window.history.back()" class="p-2 bg-gray-50 rounded-full btn-press border border-gray-100">
+        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+      </button>
+      <div>
+        <h1 class="text-xl font-black tracking-tight leading-none">My Orders</h1>
+        <p class="text-xs text-gray-500 font-medium mt-0.5">Your full purchase history</p>
+      </div>
+    </div>
+    <div id="user-profile" class="hidden items-center">
+      <img src="https://ui-avatars.com/api/?name=User&background=15803d&color=fff" id="profile-img" class="w-9 h-9 rounded-full shadow-sm">
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 w-full max-w-md mx-auto px-4 pt-6 pb-6">
+
+    <!-- Stats Bar -->
+    <div id="stats-bar" class="hidden grid grid-cols-3 gap-3 mb-6">
+      <div class="bg-white rounded-2xl p-3 text-center border border-gray-100 shadow-sm">
+        <div class="text-2xl font-black text-green-700" id="stat-total">0</div>
+        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Orders</div>
+      </div>
+      <div class="bg-white rounded-2xl p-3 text-center border border-gray-100 shadow-sm">
+        <div class="text-2xl font-black text-orange-500" id="stat-spent">K0</div>
+        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Spent</div>
+      </div>
+      <div class="bg-white rounded-2xl p-3 text-center border border-gray-100 shadow-sm">
+        <div class="text-2xl font-black text-blue-600" id="stat-pending">0</div>
+        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Pending</div>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div id="filter-tabs" class="hidden flex bg-gray-100 p-1 rounded-2xl mb-5 gap-1">
+      <button onclick="filterOrders('all')" id="tab-all" class="flex-1 py-2 text-xs font-black rounded-xl bg-white text-gray-900 shadow-sm transition-all">All</button>
+      <button onclick="filterOrders('PENDING')" id="tab-pending" class="flex-1 py-2 text-xs font-black rounded-xl text-gray-500 transition-all">Pending</button>
+      <button onclick="filterOrders('PAID')" id="tab-paid" class="flex-1 py-2 text-xs font-black rounded-xl text-gray-500 transition-all">Paid</button>
+      <button onclick="filterOrders('DELIVERED')" id="tab-delivered" class="flex-1 py-2 text-xs font-black rounded-xl text-gray-500 transition-all">Delivered</button>
+    </div>
+
+    <!-- Skeleton Loaders -->
+    <div id="loading-skeletons" class="space-y-3">
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        <div class="flex justify-between mb-3"><div class="skeleton h-4 w-32"></div><div class="skeleton h-4 w-16"></div></div>
+        <div class="skeleton h-3 w-48 mb-2"></div><div class="skeleton h-3 w-24"></div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        <div class="flex justify-between mb-3"><div class="skeleton h-4 w-32"></div><div class="skeleton h-4 w-16"></div></div>
+        <div class="skeleton h-3 w-48 mb-2"></div><div class="skeleton h-3 w-24"></div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        <div class="flex justify-between mb-3"><div class="skeleton h-4 w-32"></div><div class="skeleton h-4 w-16"></div></div>
+        <div class="skeleton h-3 w-48 mb-2"></div><div class="skeleton h-3 w-24"></div>
+      </div>
+    </div>
+
+    <!-- Orders List -->
+    <div id="orders-list" class="space-y-3 hidden"></div>
+
+    <!-- Not logged in -->
+    <div id="login-prompt" class="hidden bg-orange-50 border border-orange-100 p-6 rounded-2xl text-center">
+      <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+      </div>
+      <h3 class="font-black text-lg text-orange-900 mb-2">Sign in to view orders</h3>
+      <p class="text-sm text-orange-700 mb-4">Your order history will appear here after you sign in.</p>
+      <button onclick="window.location.href='/signup.html'" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-xl btn-press">Sign In</button>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 z-50 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_20px_rgba(0,0,0,0.04)] rounded-t-2xl">
+    <div class="max-w-md mx-auto flex justify-around items-center h-[65px]">
+      <a href="/" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M11.47 3.84a.75.75 0 011.06 0l8.99 8.99a.75.75 0 11-1.06 1.06L12 5.44 3.53 13.89a.75.75 0 11-1.06-1.06l8.99-8.99z"></path><path d="M12 5.44l-8.47 8.45a.75.75 0 00-.22.53v6.83c0 .96.78 1.75 1.75 1.75h13.88c.97 0 1.75-.79 1.75-1.75v-6.83a.75.75 0 00-.22-.53L12 5.44z"></path></svg>
+        <span class="text-[9px] font-bold">Home</span>
+      </a>
+      <a href="/dashboard.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <span class="text-[9px] font-bold">Groups</span>
+      </a>
+      <a href="/group-cart.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
+        <div class="relative">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        </div>
+        <span class="text-[9px] font-bold">Cart</span>
+      </a>
+      <a href="/orders.html" class="flex flex-col items-center gap-1 text-green-700 w-14 relative transition-colors btn-press">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        <span class="text-[9px] font-bold">Orders</span>
+        <div class="absolute -bottom-1 w-1 h-1 bg-orange-500 rounded-full"></div>
+      </a>
+      <a href="/kyc-setup.html?returnTo=/orders.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+        <span class="text-[9px] font-bold">Profile</span>
+      </a>
+    </div>
+  </nav>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let allOrders = [];
+    let activeFilter = 'all';
+
+    const STATUS_CONFIG = {
+      PENDING:   { label: 'Pending',   bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-400' },
+      PAID:      { label: 'Paid',      bg: 'bg-green-100',  text: 'text-green-800',  dot: 'bg-green-500' },
+      DELIVERED: { label: 'Delivered', bg: 'bg-blue-100',   text: 'text-blue-800',   dot: 'bg-blue-500' },
+      CANCELLED: { label: 'Cancelled', bg: 'bg-red-100',    text: 'text-red-800',    dot: 'bg-red-400' },
+    };
+
+    function statusBadge(status) {
+      const cfg = STATUS_CONFIG[status] || { label: status, bg: 'bg-gray-100', text: 'text-gray-700', dot: 'bg-gray-400' };
+      return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${cfg.bg} ${cfg.text}">
+        <span class="w-1.5 h-1.5 rounded-full ${cfg.dot}"></span>${cfg.label}
+      </span>`;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-ZM', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleTimeString('en-ZM', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderOrders(orders) {
+      const list = document.getElementById('orders-list');
+      if (orders.length === 0) {
+        list.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+            </div>
+            <h3 class="font-bold text-lg text-gray-900 mb-1">No orders yet</h3>
+            <p class="text-sm text-gray-500 mb-4">Once you checkout, your orders will appear here.</p>
+            <button onclick="window.location.href='/'" class="bg-green-700 text-white font-bold py-2 px-6 rounded-xl btn-press">Start Shopping</button>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = orders.map((order, idx) => {
+        const itemCount = (order.items || []).length;
+        const isGroup = order.group_id && !order.group_id.startsWith('PERSONAL_');
+        const orderNum = `ORD-${order.id.slice(-6).toUpperCase()}`;
+        const previewItems = (order.items || []).slice(0, 3);
+
+        return `
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <!-- Order Header -->
+            <div class="p-4 border-b border-gray-50">
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${orderNum}</p>
+                  <p class="text-[11px] text-gray-500 font-medium mt-0.5">${formatDate(order.created_at)} · ${formatTime(order.created_at)}</p>
+                </div>
+                ${statusBadge(order.status || 'PENDING')}
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                ${isGroup ? `<span class="text-[10px] bg-blue-50 text-blue-700 font-black px-2 py-0.5 rounded-full border border-blue-100">👥 Group Order</span>` : `<span class="text-[10px] bg-gray-50 text-gray-600 font-black px-2 py-0.5 rounded-full border border-gray-100">🛒 Personal</span>`}
+                <span class="text-[10px] text-gray-500 font-medium">${itemCount} item${itemCount !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+
+            <!-- Items Preview -->
+            ${previewItems.length > 0 ? `
+            <div class="px-4 py-3 bg-gray-50/50">
+              <div class="space-y-2">
+                ${previewItems.map(item => `
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-lg border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <img src="${(item.image_urls && item.image_urls[0]) || item.image_url || '/assets/img/logo.png'}" 
+                           alt="${item.title || 'Item'}" 
+                           class="w-full h-full object-contain mix-blend-multiply"
+                           onerror="this.onerror=null;this.style.display='none';this.parentElement.innerHTML='<svg class=\\'w-5 h-5 text-gray-300\\' fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\'><path d=\\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\\'></path></svg>'">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs font-bold text-gray-800 truncate">${item.title || 'Product'}</p>
+                      <p class="text-[10px] text-gray-500">Qty: ${item.quantity || 1} · K${parseFloat(item.price_zmw || item.price || 0).toLocaleString()}</p>
+                    </div>
+                  </div>
+                `).join('')}
+                ${itemCount > 3 ? `<p class="text-[10px] text-gray-400 font-medium">+${itemCount - 3} more item${itemCount - 3 !== 1 ? 's' : ''}...</p>` : ''}
+              </div>
+            </div>` : ''}
+
+            <!-- Order Footer -->
+            <div class="px-4 py-3 flex justify-between items-center border-t border-gray-50">
+              <div>
+                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Total Paid</p>
+                <p class="text-lg font-black text-green-700">K${parseFloat(order.total_amount || 0).toLocaleString()}</p>
+              </div>
+              <div class="flex gap-2">
+                ${order.group_id ? `<button onclick="window.location.href='/customer-tracking.html?order=${order.id}'" class="text-xs bg-gray-50 border border-gray-200 text-gray-700 font-bold px-3 py-2 rounded-xl btn-press hover:bg-gray-100">Track</button>` : ''}
+                <button onclick="window.location.href='/group-cart.html'" class="text-xs bg-green-700 text-white font-bold px-3 py-2 rounded-xl btn-press hover:bg-green-800">Reorder</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterOrders(filter) {
+      activeFilter = filter;
+      // Update tab styles
+      ['all', 'PENDING', 'PAID', 'DELIVERED'].forEach(f => {
+        const tab = document.getElementById(`tab-${f === 'all' ? 'all' : f.toLowerCase()}`);
+        if (tab) {
+          if (f === filter) {
+            tab.className = 'flex-1 py-2 text-xs font-black rounded-xl bg-white text-gray-900 shadow-sm transition-all';
+          } else {
+            tab.className = 'flex-1 py-2 text-xs font-black rounded-xl text-gray-500 transition-all';
+          }
+        }
+      });
+      const filtered = filter === 'all' ? allOrders : allOrders.filter(o => (o.status || 'PENDING') === filter);
+      renderOrders(filtered);
+    }
+
+    async function loadOrders() {
+      try {
+        const authRes = await fetch(`${API_BASE}/api/v1/auth/me`);
+        const authData = await authRes.json();
+
+        if (!authData.authenticated) {
+          document.getElementById('loading-skeletons').classList.add('hidden');
+          document.getElementById('login-prompt').classList.remove('hidden');
+          return;
+        }
+
+        // Show profile pic
+        const profileEl = document.getElementById('user-profile');
+        if (profileEl) { profileEl.classList.remove('hidden'); profileEl.classList.add('flex'); }
+        if (authData.user.avatar) document.getElementById('profile-img').src = authData.user.avatar;
+
+        const res = await fetch(`${API_BASE}/api/v1/orders`);
+        const data = await res.json();
+        allOrders = data.orders || [];
+
+        // Hide skeletons, show content
+        document.getElementById('loading-skeletons').classList.add('hidden');
+        document.getElementById('orders-list').classList.remove('hidden');
+        document.getElementById('stats-bar').classList.remove('hidden');
+        document.getElementById('filter-tabs').classList.remove('hidden');
+
+        // Compute stats
+        const totalSpent = allOrders.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+        const pendingCount = allOrders.filter(o => (o.status || 'PENDING') === 'PENDING').length;
+        document.getElementById('stat-total').textContent = allOrders.length;
+        document.getElementById('stat-spent').textContent = `K${Math.round(totalSpent).toLocaleString()}`;
+        document.getElementById('stat-pending').textContent = pendingCount;
+
+        renderOrders(allOrders);
+      } catch(e) {
+        console.error(e);
+        document.getElementById('loading-skeletons').classList.add('hidden');
+        document.getElementById('orders-list').classList.remove('hidden');
+        document.getElementById('orders-list').innerHTML = `
+          <div class="bg-red-50 border border-red-100 p-4 rounded-2xl text-center">
+            <p class="text-red-700 font-bold text-sm">Failed to load orders. Please try again.</p>
+            <button onclick="loadOrders()" class="mt-3 bg-red-500 text-white font-bold py-2 px-4 rounded-xl text-xs btn-press">Retry</button>
+          </div>`;
+      }
+    }
+
+    loadOrders();
+  </script>
+  <script src="/pwa-install.js"></script>
+</body>
+</html>

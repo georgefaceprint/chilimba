@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chilimba-v10';
+const CACHE_NAME = 'chilimba-v11';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const ASSETS_TO_CACHE = [
   '/vendor-dashboard.html',
   '/signup.html',
   '/group-cart.html',
+  '/orders.html',
   '/manifest.json',
   '/assets/img/logo.png',
   '/assets/img/potatoes_bucket.png',
