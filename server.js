@@ -7,6 +7,7 @@ const path = require('path');
 
 // Import Controllers and Middleware
 const authController = require('./backend/auth');
+const { sendWhatsAppMessage } = require('./backend/auth');
 const paymentsController = require('./backend/payments');
 const { authorizeRoute, ROLES } = require('./backend/rbac');
 const db = require('./backend/db');
@@ -1091,6 +1092,34 @@ app.post('/api/v1/cart/checkout', async (req, res) => {
       });
     } catch(e) {
       console.error('[Order Save Error]', e.message);
+    }
+
+    // Send WhatsApp receipt
+    try {
+      const { db: fsDb } = require('./backend/firestore');
+      const userDoc = await fsDb.collection('users').doc(user_id).get();
+      const userData = userDoc.exists ? userDoc.data() : {};
+      const phone = userData.phone_number;
+      const name = userData.display_name || userData.first_name || 'Customer';
+      const orderRef = `ORD-${Date.now().toString(36).toUpperCase()}`;
+      const isGroup = !group_id.startsWith('PERSONAL_');
+      const receipt = [
+        `✅ *Chilimba Order Confirmed!*`,
+        ``,
+        `Hi ${name}, your order has been placed.`,
+        ``,
+        `📦 *Reference:* ${orderRef}`,
+        `💰 *Amount:* K${parseFloat(total_amount || 0).toLocaleString()}`,
+        `💳 *Payment:* ${use_wallet ? 'Chilimba Wallet' : 'Mobile Money'}`,
+        `🚚 *Type:* ${isGroup ? 'Group Order' : 'Personal Order'}`,
+        ``,
+        `Track your order at: ${process.env.APP_BASE_URL || 'https://chilimba-pwa.vercel.app'}/orders.html`,
+        ``,
+        `Thank you for shopping with Chilimba! 🛒`
+      ].join('\n');
+      if (phone) await sendWhatsAppMessage(phone, receipt);
+    } catch(e) {
+      console.error('[WhatsApp Receipt Error]', e.message);
     }
 
     res.json({ success: true });

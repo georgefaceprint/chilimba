@@ -273,5 +273,6 @@ function generateSessionToken(user) {
 module.exports = {
   handleGoogleAuthCallback,
   initiateWhatsAppVerification,
-  verifyWhatsAppOTP
+  verifyWhatsAppOTP,
+  sendWhatsAppMessage
 };
