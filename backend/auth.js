@@ -155,9 +155,10 @@ async function initiateWhatsAppVerification(req, res) {
     });
 
     // Send the WhatsApp template message
-    const sendResult = await sendWhatsAppMessage(phoneNumber, `Your Chilimba App verification code is: ${otpCode}`);
+    const sendResult = await sendWhatsAppMessage(phoneNumber, `Hi! Your Chilimba access key is: ${otpCode}`);
 
     res.status(200).json({ 
+
       success: true, 
       message: 'Verification code sent via WhatsApp.',
       // 🟢 FALLBACK: If Meta API fails/missing, return OTP in response so developer can test UI flow
