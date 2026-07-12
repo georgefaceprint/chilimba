@@ -33,6 +33,10 @@
       "destination": "/public/flyer.html"
     },
     {
+      "source": "/policy",
+      "destination": "/public/policy.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/public/$1"
     }
