@@ -330,8 +330,8 @@
     function formatPhoneNumber(rawPhone, countryCode) {
       let d = rawPhone.replace(/[^\d+]/g, '');
 
-      // If already full E.164
-      if (d.startsWith('+260') || d.startsWith('+255')) return d;
+      // If it already starts with a plus, it's already formatted
+      if (d.startsWith('+')) return d;
 
       // Detect country from selector if available, else auto-detect
       const cc = countryCode || '+260';
