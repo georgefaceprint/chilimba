@@ -142,23 +142,6 @@ async function initiateWhatsAppVerification(req, res) {
       return res.status(409).json({ success: false, error: 'This phone number is already linked to another account.' });
     }
 
-    // HARDCODED OVERRIDE: Freda's Test Account
-    if (phoneNumber === '+255754932831') {
-      const otpCode = '097287';
-      const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-      await db.collection('otps').doc(phoneNumber).set({
-        user_id: userId,
-        phone_number: phoneNumber,
-        code: otpCode,
-        expires: expiresAt
-      });
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Test account ready.',
-        test_otp: otpCode 
-      });
-    }
-
     // Generate secure 6-digit code
     const otpCode = crypto.randomInt(100000, 999999).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes from now
