@@ -38,7 +38,7 @@
           <p class="text-sm font-bold leading-none" id="profile-name">Freda</p>
           <p class="text-[10px] text-green-300 font-bold uppercase tracking-wide">Master Agent</p>
         </div>
-        <img src="https://ui-avatars.com/api/?name=Freda&background=f97316&color=fff" id="profile-img" class="w-10 h-10 rounded-full border-2 border-white shadow-sm">
+        <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
       </div>
     </div>
   </header>
@@ -177,7 +177,7 @@
                   <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tap to upload / Drag & Drop</p>
                 </div>
                 <div id="upload-preview-state" class="hidden absolute inset-0 w-full h-full bg-white flex items-center justify-center">
-                  <img id="img-preview-display" class="w-full h-full object-contain p-2" src="" alt="Preview">
+                  <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
                   <div class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                     <span class="bg-white/95 text-gray-900 px-4 py-2 rounded-xl text-xs font-bold shadow-md">Change Image</span>
                   </div>
@@ -218,7 +218,7 @@
             
             <div class="flex gap-3 mb-4">
               <div class="w-16 h-16 bg-gray-50 rounded-xl flex-shrink-0 border border-gray-100 p-1">
-                <img src="https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=200&q=80" class="w-full h-full object-cover rounded-lg">
+                <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
               </div>
               <div>
                 <h4 class="font-bold text-sm text-gray-900 leading-tight">Gentleman Children Outfits (M, Blue)</h4>
@@ -256,7 +256,7 @@
             
             <div class="flex gap-3 mb-4">
               <div class="w-16 h-16 bg-gray-50 rounded-xl flex-shrink-0 border border-gray-100 p-1">
-                 <img src="https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=200&q=80" class="w-full h-full object-cover rounded-lg">
+                 <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
               </div>
               <div>
                 <h4 class="font-bold text-sm text-gray-900 leading-tight">Premium Arabica Beans</h4>
@@ -341,13 +341,13 @@
           <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-wider">Or Use Preset Image</label>
           <div class="grid grid-cols-3 gap-2">
             <button type="button" onclick="usePresetImage('/assets/img/potatoes_bucket.png')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
-              <img src="/assets/img/potatoes_bucket.png" class="w-full h-full object-contain" onerror="this.src='https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=100&q=80'">
+              <img src="/assets/img/potatoes_bucket.png" class="w-full h-full object-contain" onerror="this.src='/assets/img/logo.png'">
             </button>
             <button type="button" onclick="usePresetImage('/assets/img/nakonde_rice.png')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
-              <img src="/assets/img/nakonde_rice.png" class="w-full h-full object-contain" onerror="this.src='https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&q=80'">
+              <img src="/assets/img/nakonde_rice.png" class="w-full h-full object-contain" onerror="this.src='/assets/img/logo.png'">
             </button>
-            <button type="button" onclick="usePresetImage('https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=200&q=80')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
-              <img src="https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=100&q=80" class="w-full h-full object-cover">
+            <button type="button" onclick="usePresetImage('/assets/img/logo.png')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
+              <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
             </button>
           </div>
         </div>
@@ -375,7 +375,7 @@
         <div class="space-y-3.5 border-t border-b border-gray-100 py-4 mb-4">
           <!-- Image preview -->
           <div class="w-full h-32 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center border border-gray-100">
-            <img id="conf-image" class="w-full h-full object-contain" src="/assets/img/logo.png">
+            <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
           </div>
           
           <div class="flex justify-between items-start">

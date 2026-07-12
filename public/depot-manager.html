@@ -95,7 +95,7 @@
         <!-- Customer Details -->
         <div class="flex items-center space-x-4">
           <div class="h-16 w-16 bg-gray-200 rounded-full flex-shrink-0 overflow-hidden" id="modal-avatar">
-            <img src="" alt="Avatar" class="h-full w-full object-cover">
+            <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
           </div>
           <div>
             <p class="font-bold text-gray-800 text-lg" id="modal-customer-name">John Doe</p>
@@ -109,7 +109,7 @@
         <!-- Item Details -->
         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center space-x-4">
           <div class="h-16 w-16 bg-white rounded-md border shadow-sm flex-shrink-0 overflow-hidden">
-             <img src="" id="modal-item-image" class="h-full w-full object-contain p-1">
+             <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
           </div>
           <div>
              <p class="font-bold text-gray-700 text-sm" id="modal-item-title">Product Title</p>

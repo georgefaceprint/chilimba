@@ -65,7 +65,7 @@
       <div class="bg-white pt-4 pb-8 px-4 rounded-b-3xl shadow-sm relative">
         <div id="stock-badge-container" class="absolute top-4 right-4 z-10"></div>
         <div class="w-full h-72 flex items-center justify-center mb-4">
-          <img id="main-image" src="" alt="Product Image" class="w-full h-full object-contain product-image drop-shadow-md">
+          <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
         </div>
         
         <!-- Thumbnail Gallery (Optional, rendered if multiple images) -->
@@ -264,7 +264,7 @@
           const border = idx === 0 ? 'border-green-600 border-2' : 'border-gray-200 border';
           thumbHtml += `
             <button onclick="setMainImage('${src}', this)" class="thumbnail-btn w-16 h-16 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 ${border} p-1 transition-all">
-              <img src="${src}" class="w-full h-full object-contain product-image">
+              <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
             </button>
           `;
         });

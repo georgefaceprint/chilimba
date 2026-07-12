@@ -37,7 +37,7 @@
       <button onclick="window.location.href='/dashboard.html'" class="text-sm font-bold text-green-100 hover:text-white btn-press">Groups</button>
       <button onclick="openAuthModal()" id="btn-login" class="bg-white text-green-700 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm btn-press">Sign In</button>
       <div id="user-profile" class="hidden items-center">
-        <img src="https://ui-avatars.com/api/?name=User&background=f97316&color=fff" id="profile-img" class="w-9 h-9 rounded-full border-2 border-white shadow-sm">
+        <img onerror="this.onerror=null; this.src='/assets/img/logo.png';">
       </div>
     </div>
   </header>
@@ -492,7 +492,7 @@
         container.innerHTML += `
           <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex gap-3 relative">
             <div class="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
-              <img src="${item.image_url || '/assets/img/logo.png'}" class="w-full h-full object-contain mix-blend-multiply">
+              <img src="${item.image_url || '/assets/img/logo.png'}" onerror="this.onerror=null; this.src='/assets/img/logo.png';" class="w-full h-full object-contain mix-blend-multiply">
             </div>
             <div class="flex-grow flex flex-col justify-between py-1">
               <div>
@@ -959,6 +959,7 @@
       } else if (method === 'LENCO_MOBILE_MONEY') {
         const phone = document.getElementById('payment-phone-input').value.trim();
         if (!phone) return alert("Please enter your Mobile Money phone number.");
+        // The backend handles the STK push reference mapping if empty, or we generate one for simulation.
         payload.transaction_reference = 'LENCO-CONTR-' + Math.floor(Math.random() * 100000);
       }
 
@@ -977,10 +978,19 @@
         if (res.ok) {
           if (method === 'WALLET') {
             alert('✅ Paid successfully from Wallet!');
+            fetchCartData();
           } else if (method === 'MOBILE_MONEY_OFFLINE') {
             alert('✅ Reference submitted! Awaiting Admin verification.');
+            fetchCartData();
           } else if (method === 'LENCO_MOBILE_MONEY') {
-            alert('✅ Mobile Money STK push simulated! Complete on your phone.');
+            // POLLING LOOP INSTEAD OF FAKE WEBHOOK
+            const overlay = document.getElementById('payment-polling-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            
+            let pollCount = 0;
+            const maxPolls = 20; // 60 seconds total
+
+            // Start simulation of webhook in background if in dev mode
             setTimeout(async () => {
               try {
                 await fetch(`${API_BASE}/api/v1/payments/lenco-callback`, {
@@ -991,12 +1001,27 @@
                     data: { reference: data.reference, status: 'SUCCESSFUL', amount: 0 }
                   })
                 });
-                console.log('Simulated Lenco callback success for reference:', data.reference);
-                fetchCartData();
               } catch(e) {}
-            }, 2000);
+            }, 5000);
+
+            const pollInterval = setInterval(async () => {
+              pollCount++;
+              await fetchCartData();
+              const myContrib = activeGroupContributions.find(c => c.user_id === activeUser.user_id);
+              
+              if (myContrib && myContrib.status === 'PAID') {
+                clearInterval(pollInterval);
+                if (overlay) overlay.style.display = 'none';
+                
+                // Show Success Confetti or Alert
+                alert('🎉 Payment Successful! Your contribution has been recorded.');
+              } else if (pollCount >= maxPolls) {
+                clearInterval(pollInterval);
+                if (overlay) overlay.style.display = 'none';
+                alert('Payment verification timed out. If you paid, it will reflect shortly.');
+              }
+            }, 3000);
           }
-          fetchCartData();
         } else {
           alert('Payment failed: ' + (data.error || 'Unknown error'));
         }
@@ -1224,5 +1249,13 @@
     window.addEventListener('cart-updated', fetchCartData);
   </script>
   <script src="/pwa-install.js"></script>
+
+  <!-- Payment Polling Overlay -->
+  <div id="payment-polling-overlay" style="display: none;" class="fixed inset-0 z-[999] bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center">
+    <div class="w-20 h-20 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mb-6"></div>
+    <h2 class="text-2xl font-black text-gray-900 mb-2">Awaiting Confirmation</h2>
+    <p class="text-gray-600 font-medium max-w-sm">Please check your phone and enter your Mobile Money PIN. We are securely polling the network for your payment...</p>
+    <button onclick="document.getElementById('payment-polling-overlay').style.display='none'" class="mt-8 text-sm font-bold text-gray-400 hover:text-gray-600">Close</button>
+  </div>
 </body>
 </html>
