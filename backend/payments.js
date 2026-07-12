@@ -117,17 +117,40 @@ async function initiateMobileMoneyPayment(req, res) {
 }
 
 /**
+ * Verify Lenco webhook HMAC-SHA256 signature
+ * Lenco signs the raw request body with the webhook secret
+ */
+function verifyLencoSignature(rawBody, signatureHeader, secret) {
+  if (!secret) return true; // Skip verification in dev/no-secret mode
+  if (!signatureHeader) return false;
+  try {
+    // Lenco sends: sha256=<hex_digest>  or just the raw hex
+    const incoming = signatureHeader.replace(/^sha256=/, '');
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(rawBody, 'utf8')
+      .digest('hex');
+    // Constant-time comparison to prevent timing attacks
+    return crypto.timingSafeEqual(Buffer.from(incoming, 'hex'), Buffer.from(expected, 'hex'));
+  } catch(e) {
+    console.error('[Webhook Sig Error]', e.message);
+    return false;
+  }
+}
+
+/**
  * 4 & 5. Secure Public Webhook Endpoint for Lenco Callback
  */
 async function handleLencoCallback(req, res) {
   try {
-    // Validate Signature to handle duplicate/fake webhook receipts
+    // ── Security: Verify HMAC-SHA256 signature ──────────────────────────
     const signature = req.headers['x-lenco-signature'];
-    
-    // In production, verify HMAC signature using LENCO_WEBHOOK_SECRET
-    // if (!verifySignature(req.body, signature, LENCO_WEBHOOK_SECRET)) {
-    //   return res.status(401).json({ success: false, error: 'Unauthorized webhook payload.' });
-    // }
+    const rawBody = JSON.stringify(req.body); // body-parser has already parsed it
+
+    if (LENCO_WEBHOOK_SECRET && !verifyLencoSignature(rawBody, signature, LENCO_WEBHOOK_SECRET)) {
+      console.warn('[Lenco Webhook] Rejected — invalid signature. Header:', signature);
+      return res.status(401).json({ success: false, error: 'Unauthorized webhook payload.' });
+    }
 
     const { reference, status, amount } = req.body.data; // Assuming Lenco payload structure
 
@@ -172,6 +195,17 @@ async function handleLencoCallback(req, res) {
               updated_at: new Date().toISOString()
             });
             
+            // Update the matching order record to PAID
+            try {
+              const ordersSnap = await firestoreDb.collection('orders')
+                .where('group_id', '==', contribData.group_id)
+                .where('status', '==', 'PENDING')
+                .limit(1).get();
+              if (!ordersSnap.empty) {
+                await ordersSnap.docs[0].ref.update({ status: 'PAID', updated_at: new Date().toISOString() });
+              }
+            } catch(e) { console.error('[Order PAID Update Error]', e.message); }
+
             const cartRef = firestoreDb.collection('groups').doc(contribData.group_id).collection('cart');
             const cartSnap = await cartRef.get();
             const batch = firestoreDb.batch();

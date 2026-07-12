@@ -1048,50 +1048,60 @@ app.post('/api/v1/cart/checkout', async (req, res) => {
        }
     }
 
-    if (group_id.startsWith('PERSONAL_')) {
-      // Clear personal cart after successful checkout
-      const cartRef = db.collection('users').doc(user_id).collection('cart');
-      const snapshot = await cartRef.get();
-      const batch = db.batch();
-      snapshot.docs.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
-    } else {
-      const groupDoc = await db.collection('groups').doc(group_id).get();
-      if (!groupDoc.exists) return res.status(404).json({ error: 'Group not found' });
-      
-      // Change the group status
-      await groupDoc.ref.update({
-        status: 'ORDER_PLACED',
-        updated_at: new Date().toISOString()
-      });
-    }
-    
-    // Save order snapshot to history
     const { db: firestoreDb } = require('./backend/firestore');
+
+    // ── STEP 1: Snapshot cart items BEFORE clearing ──────────────────────
     let cartItems = [];
     try {
       if (group_id.startsWith('PERSONAL_')) {
-        // Already cleared above — snapshot was taken before clearing
-        // Re-read is not possible, but we can log what we have
+        const cartSnap = await firestoreDb.collection('users').doc(user_id).collection('cart').get();
+        cartItems = cartSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       } else {
         const cartSnap = await firestoreDb.collection('groups').doc(group_id).collection('cart').get();
-        cartItems = cartSnap.docs.map(d => d.data());
+        cartItems = cartSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       }
-    } catch(e) {}
+    } catch(e) { console.error('[Cart Snapshot Error]', e.message); }
 
+    // ── STEP 2: Save order to Firestore history ───────────────────────────
+    let savedOrderId = null;
     try {
-      await firestoreDb.collection('orders').add({
+      const orderRef = await firestoreDb.collection('orders').add({
         user_id,
         group_id,
         items: cartItems,
         total_amount: total_amount || 0,
-        status: 'PENDING',
+        status: use_wallet ? 'PAID' : 'PENDING',
         payment_method: use_wallet ? 'wallet' : 'mobile_money',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
+      savedOrderId = orderRef.id;
     } catch(e) {
       console.error('[Order Save Error]', e.message);
+    }
+
+    // ── STEP 3: Clear cart and update group status ────────────────────────
+    if (group_id.startsWith('PERSONAL_')) {
+      // Clear personal cart
+      try {
+        const cartRef = firestoreDb.collection('users').doc(user_id).collection('cart');
+        const snapshot = await cartRef.get();
+        const batch = firestoreDb.batch();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      } catch(e) { console.error('[Cart Clear Error]', e.message); }
+    } else {
+      // Update group status to ORDER_PLACED
+      try {
+        const groupDoc = await firestoreDb.collection('groups').doc(group_id).get();
+        if (groupDoc.exists) {
+          await groupDoc.ref.update({
+            status: 'ORDER_PLACED',
+            order_id: savedOrderId,
+            updated_at: new Date().toISOString()
+          });
+        }
+      } catch(e) { console.error('[Group Status Error]', e.message); }
     }
 
     // Send WhatsApp receipt

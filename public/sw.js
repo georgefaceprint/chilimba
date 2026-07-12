@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chilimba-v12';
+const CACHE_NAME = 'chilimba-v13';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
