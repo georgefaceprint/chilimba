@@ -67,7 +67,17 @@ app.post('/api/v1/user/update-kyc', async (req, res) => {
     
     await db.collection('users').doc(decoded.user_id).update(updateData);
     
-    res.json({ success: true });
+    // Refresh the JWT token so the frontend immediately sees the new name
+    const newToken = jwt.sign({
+      ...decoded,
+      name: updateData.display_name || decoded.name,
+      phone: updateData.phone_number || decoded.phone,
+      role: updateData.role || decoded.role
+    }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
+    
+    res.cookie('auth_token', newToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    
+    res.json({ success: true, user: jwt.decode(newToken) });
   } catch (err) {
     console.error('[KYC Update Error]', err);
     res.status(500).json({ success: false, error: 'Failed to update profile' });
