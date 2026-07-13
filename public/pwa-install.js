@@ -5,6 +5,9 @@
 
   // ── SPLASH SCREEN (always runs — browser & installed PWA) ──────────
   window.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('splashShown')) return;
+    sessionStorage.setItem('splashShown', 'true');
+
     const splash = document.createElement('div');
     splash.id = 'pwa-splash-screen';
     splash.style.cssText = `

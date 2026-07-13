@@ -141,6 +141,9 @@ function verifyLencoSignature(rawBody, signatureHeader, secret) {
 /**
  * 4 & 5. Secure Public Webhook Endpoint for Lenco Callback
  */
+const { db: firestoreDb } = require('./firestore');
+const { sendWhatsAppMessage } = require('./auth');
+
 async function handleLencoCallback(req, res) {
   try {
     // ── Security: Verify HMAC-SHA256 signature ──────────────────────────
@@ -160,7 +163,6 @@ async function handleLencoCallback(req, res) {
 
     // Intercept Firestore Group Contributions (Phase 3 Hybrid)
     if (reference.startsWith('LENCO-CONTR-')) {
-      const { db: firestoreDb } = require('./firestore');
       const snapshot = await firestoreDb.collection('group_contributions')
         .where('transaction_reference', '==', reference)
         .limit(1)
@@ -176,6 +178,15 @@ async function handleLencoCallback(req, res) {
             updated_at: new Date().toISOString()
           });
           
+          // Send WhatsApp Receipt to User
+          try {
+            const userDoc = await firestoreDb.collection('users').doc(contribData.user_id).get();
+            const userPhone = userDoc.exists ? (userDoc.data().phone_number || userDoc.data().phone) : null;
+            if (userPhone) {
+              await sendWhatsAppMessage(userPhone, `✅ Payment received! Your contribution of ZMW ${contribData.share_amount_zmw} is confirmed.`);
+            }
+          } catch(err) { console.error('[WhatsApp Receipt Error]', err.message); }
+          
           const contribsSnap = await firestoreDb.collection('group_contributions')
             .where('group_id', '==', contribData.group_id)
             .get();
@@ -190,10 +201,23 @@ async function handleLencoCallback(req, res) {
           });
           
           if (allPaid) {
-            await firestoreDb.collection('groups').doc(contribData.group_id).update({
+            const groupDoc = await firestoreDb.collection('groups').doc(contribData.group_id).get();
+            await groupDoc.ref.update({
               status: 'ORDER_PLACED',
               updated_at: new Date().toISOString()
             });
+            
+            // Send WhatsApp Alert to Group Admin
+            try {
+              const groupData = groupDoc.data();
+              if (groupData && groupData.admin_id) {
+                const adminDoc = await firestoreDb.collection('users').doc(groupData.admin_id).get();
+                const adminPhone = adminDoc.exists ? (adminDoc.data().phone_number || adminDoc.data().phone) : null;
+                if (adminPhone) {
+                  await sendWhatsAppMessage(adminPhone, `🚀 Great news! Your Chilimba group '${groupData.name || 'Group'}' has fully funded their cart. Please prepare for fulfillment!`);
+                }
+              }
+            } catch(err) { console.error('[WhatsApp Admin Alert Error]', err.message); }
             
             // Update the matching order record to PAID
             try {
