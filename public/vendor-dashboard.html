@@ -1094,31 +1094,60 @@
       if (!selectedFile) return;
       
       const reader = new FileReader();
-      reader.onload = async function(e) {
-        const base64 = e.target.result;
-        
-        document.getElementById('uploading-spinner').classList.remove('hidden');
-        document.getElementById('btn-upload-submit').disabled = true;
-        
-        try {
-          const res = await fetch('/api/v1/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: selectedFile.name, base64: base64 })
-          });
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = async function() {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 1200;
+          if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          
+          document.getElementById('uploading-spinner').classList.remove('hidden');
+          document.getElementById('btn-upload-submit').disabled = true;
+          
+          try {
+            const res = await fetch('/api/v1/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: selectedFile.name, base64: compressedBase64 })
+            });
+          
+          if (!res.ok) {
+            let errorText = await res.text();
+            try {
+              const jsonError = JSON.parse(errorText);
+              errorText = jsonError.error || errorText;
+            } catch(e) { } // Not JSON
+            throw new Error(errorText || res.statusText);
+          }
+          
           const data = await res.json();
-          if (res.ok && data.success) {
+          if (data.success) {
             usePresetImage(data.url);
           } else {
-            alert('Upload failed: ' + (data.error || 'Unknown error'));
+            throw new Error(data.error || 'Unknown server error');
           }
         } catch (err) {
-          console.error(err);
-          alert('Upload request failed.');
+          console.error('Upload Error:', err);
+          alert('Upload failed: ' + err.message);
         } finally {
           document.getElementById('uploading-spinner').classList.add('hidden');
           document.getElementById('btn-upload-submit').disabled = false;
         }
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(selectedFile);
     }

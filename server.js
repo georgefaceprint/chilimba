@@ -16,7 +16,7 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 // SPA catch-all moved to the bottom
 app.use(cors({ origin: ['https://chilimba-pwa.vercel.app','https://chilimba-kv32tixjo-georgefaceprints-projects.vercel.app'], credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
 // --- ROUTES ---
