@@ -498,7 +498,7 @@
   
   <!-- BOTTOM NAVIGATION BAR (Agent Only) -->
   <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 z-50 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_20px_rgba(0,0,0,0.04)] rounded-t-2xl">
-    <div id="agent-tools" class="hidden max-w-md mx-auto justify-around items-center h-[65px]">
+    <div id="agent-bottom-nav" class="hidden max-w-md mx-auto justify-around items-center h-[65px]">
       
       <!-- Overview -->
       <button onclick="switchTab('overview')" id="nav-overview" class="flex flex-col items-center gap-1 text-gray-400 w-14 relative transition-colors btn-press">
@@ -1283,6 +1283,12 @@
       document.getElementById('dashboard-content').classList.remove('hidden');
       document.getElementById('agent-tools').classList.remove('hidden');
       document.getElementById('agent-tools').classList.add('flex');
+      
+      const bottomNav = document.getElementById('agent-bottom-nav');
+      if (bottomNav) {
+        bottomNav.classList.remove('hidden');
+        bottomNav.classList.add('flex');
+      }
       
       document.getElementById('btn-login').classList.add('hidden');
       document.getElementById('user-profile').classList.remove('hidden');
