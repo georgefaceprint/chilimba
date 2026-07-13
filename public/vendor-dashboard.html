@@ -38,7 +38,10 @@
           <p class="text-sm font-bold leading-none" id="profile-name">Freda</p>
           <p class="text-[10px] text-green-300 font-bold uppercase tracking-wide">Master Agent</p>
         </div>
-        <img onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='1.5'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E';">
+        <div class="relative group cursor-pointer" onclick="openPasscodeModal()">
+          <img id="profile-img" class="w-10 h-10 rounded-full border-2 border-green-500 bg-white" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23d1d5db\' stroke-width=\'1.5\'%3E%3Crect x=\'3\' y=\'3\' width=\'18\' height=\'18\' rx=\'2\'/%3E%3Ccircle cx=\'8.5\' cy=\'8.5\' r=\'1.5\'/%3E%3Cpath d=\'M21 15l-5-5L5 21\'/%3E%3C/svg%3E';">
+          <div class="absolute -bottom-2 -right-2 bg-green-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow border-2 border-green-900 group-hover:scale-110 transition-transform">⚙️</div>
+        </div>
       </div>
     </div>
   </header>
@@ -294,6 +297,20 @@
       <button onclick="window.location.href='/signup.html?returnTo=/vendor-dashboard.html'" class="w-full bg-green-800 text-white py-4 rounded-xl font-black text-lg hover:bg-green-900 transition-colors shadow-lg btn-press">Sign In</button>
     </div>
   </main>
+
+  <!-- Change Passcode Modal -->
+  <div id="passcode-modal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="glass-modal w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden p-6 relative">
+      <button onclick="closeModal('passcode-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800 btn-press">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      <h3 class="font-black text-2xl text-gray-900 mb-2">Set Quick Passcode</h3>
+      <p class="text-sm text-gray-500 mb-6">Create a 5-digit passcode for faster logins.</p>
+      <input type="password" id="new-passcode-input" class="w-full border-2 border-gray-300 p-4 rounded-xl text-center text-3xl font-black tracking-[1em] focus:border-green-600 focus:outline-none mb-4" maxlength="5" placeholder="•••••">
+      <button onclick="submitNewPasscode()" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 btn-press">Save Passcode</button>
+      <button onclick="logoutUser()" class="w-full mt-3 bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 btn-press">Logout Completely</button>
+    </div>
+  </div>
 
   <!-- NEW SHOP MODAL -->
   <div id="new-shop-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
@@ -578,6 +595,39 @@
         const m = document.getElementById('auth-modal');
         m.classList.add('hidden'); m.classList.remove('flex');
       }, 200);
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      document.getElementById(id).classList.remove('flex');
+    }
+
+    function openPasscodeModal() {
+      document.getElementById('passcode-modal').classList.remove('hidden');
+      document.getElementById('passcode-modal').classList.add('flex');
+    }
+
+    async function submitNewPasscode() {
+      const pc = document.getElementById('new-passcode-input').value;
+      if (!pc || pc.length < 5) return alert('Passcode must be at least 5 digits');
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/change-passcode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: pc })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Passcode successfully set! You can use it to log in next time.');
+          closeModal('passcode-modal');
+          document.getElementById('new-passcode-input').value = '';
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch(e) {
+        alert('Network error.');
+      }
     }
 
     function openNewShopModal() {

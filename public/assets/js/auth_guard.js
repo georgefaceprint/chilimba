@@ -8,11 +8,10 @@ async function requireAuth() {
       throw new Error('Not authenticated');
     }
     
-    // Check KYC
-    if (!data.user.kyc_complete) {
-      const skipped = sessionStorage.getItem('skipped_kyc');
-      if (!skipped && !window.location.pathname.includes('kyc-setup.html')) {
-        window.location.href = '/kyc-setup.html?returnTo=' + encodeURIComponent(window.location.href);
+    // Strict Onboarding Gate
+    if (data.user.account_status === 'PENDING_ONBOARDING') {
+      if (!window.location.pathname.includes('kyc-setup.html')) {
+        window.location.href = '/kyc-setup.html?onboarding=true';
         return new Promise(() => {}); // Stop execution
       }
     }

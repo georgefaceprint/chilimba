@@ -1,11 +1,12 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
-const { db } = require('./firestore'); // 🟢 Using Firestore instead of Postgres
+const { db } = require('./firestore'); 
+const { getAuth } = require('firebase-admin/auth'); // Needed to verify Firebase Client tokens
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); 
 
-// Live Meta WhatsApp API Integration
+// Live Meta WhatsApp API Integration (KEPT FOR RECEIPTS/NOTIFICATIONS)
 const sendWhatsAppMessage = async (phone, message) => {
   console.log(`[WhatsApp API] Preparing to send to ${phone}...`);
   
@@ -18,7 +19,6 @@ const sendWhatsAppMessage = async (phone, message) => {
     return { success: false, fallbackMode: true };
   }
   
-  // Format phone number (Meta requires no '+' symbol)
   const formattedPhone = phone.replace('+', '').replace(/\s+/g, '').trim();
   
   try {
@@ -39,7 +39,7 @@ const sendWhatsAppMessage = async (phone, message) => {
     const data = await response.json();
     if (!response.ok) {
       console.error("[WhatsApp API Error]", data);
-      return { success: false, fallbackMode: true };
+      return { success: false, fallbackMode: true, errorDetails: data };
     } else {
       console.log("[WhatsApp API Success] Message Dispatched.");
       return { success: true, fallbackMode: false };
@@ -52,194 +52,201 @@ const sendWhatsAppMessage = async (phone, message) => {
 
 /**
  * 1. Google OAuth Callback Handler
- * Handles the Google Sign-In redirect, extracting user info.
  */
 async function handleGoogleAuthCallback(req, res) {
   try {
     const { token } = req.body;
     if (!token) return res.status(400).json({ error: 'Missing token' });
 
-    // Verify the Google ID token securely
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     
     const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
+    const { email, name, picture, sub: google_id } = payload;
 
-    // Check if user exists in Firestore
     const usersRef = db.collection('users');
-    const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+    const snapshot = await usersRef.where('google_id', '==', google_id).limit(1).get();
     
+    let user;
     if (!snapshot.empty) {
       const userDoc = snapshot.docs[0];
-      const user = { user_id: userDoc.id, ...userDoc.data() };
-      
-      if (!user.phone_number) {
-        // User exists but hasn't linked WhatsApp yet
-        return res.status(200).json({ 
-          success: true, 
-          action: 'REQUIRE_WHATSAPP_LINK',
-          userId: user.user_id,
-          message: 'Please link your WhatsApp number to continue.' 
-        });
+      user = { user_id: userDoc.id, ...userDoc.data() };
+    } else {
+      // Fallback: check by email if google_id isn't linked yet
+      const emailSnap = await usersRef.where('email', '==', email).limit(1).get();
+      if (!emailSnap.empty) {
+        const userDoc = emailSnap.docs[0];
+        await usersRef.doc(userDoc.id).update({ google_id });
+        user = { user_id: userDoc.id, ...userDoc.data(), google_id };
+      } else {
+        // Create new user
+        const newUser = {
+          google_id,
+          email: email || '',
+          display_name: name || 'User',
+          avatar_url: picture || '',
+          role: 'BUYER',
+          account_status: 'PENDING_ONBOARDING',
+          is_phone_verified: false,
+          created_at: new Date().toISOString()
+        };
+        const docRef = await usersRef.add(newUser);
+        user = { user_id: docRef.id, ...newUser };
       }
-      
-      // User is fully authenticated
+    }
+
+    if (user.account_status !== 'ACTIVE' || !user.is_phone_verified) {
       const sessionToken = generateSessionToken(user);
       res.cookie('auth_token', sessionToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
       return res.status(200).json({ 
         success: true, 
-        action: 'AUTHENTICATED', 
-        user,
+        action: 'REQUIRE_ONBOARDING',
+        userId: user.user_id,
+        message: 'Please link your phone number and set a passcode to continue.',
         token: sessionToken
       });
-    } else {
-      // User does not exist, create a partial profile
-      const newUser = {
-        email,
-        display_name: name,
-        avatar_url: picture,
-        role: 'BUYER',
-        created_at: new Date().toISOString()
-      };
-      
-      const docRef = await usersRef.add(newUser);
-      
-      return res.status(201).json({
-        success: true,
-        action: 'REQUIRE_WHATSAPP_LINK',
-        userId: docRef.id,
-        message: 'Account created. Please link your WhatsApp number to complete registration.'
-      });
     }
+    
+    // User is fully authenticated and ACTIVE
+    const sessionToken = generateSessionToken(user);
+    res.cookie('auth_token', sessionToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    return res.status(200).json({ 
+      success: true, 
+      action: 'AUTHENTICATED', 
+      user,
+      token: sessionToken
+    });
   } catch (error) {
     console.error('Google Auth Error:', error);
-    res.status(500).json({ success: false, error: 'Authentication failed.' });
+    res.status(500).json({ success: false, error: error.message || 'Authentication failed.' });
   }
 }
 
 /**
- * 2. Initiate WhatsApp Number Verification
- * Generates OTP and sends it via WhatsApp.
+ * 2. Verify Phone & Set Passcode (Onboarding Step 2)
  */
-async function initiateWhatsAppVerification(req, res) {
+async function verifyPhoneAndSetPasscode(req, res) {
   try {
-    let { userId, phoneNumber } = req.body;
-    phoneNumber = (phoneNumber || '').replace(/\s+/g, '');
+    const { firebaseIdToken, passcode, profileData } = req.body;
+    // We get userId from the secure cookie we just set during Google Login
+    const token = req.cookies.auth_token;
+    if (!token) return res.status(401).json({ success: false, error: 'Unauthorized: missing auth cookie' });
     
-    if (!phoneNumber || !phoneNumber.startsWith('+')) {
-      // For testing, allowing any number. In prod, enforce +260
-      // return res.status(400).json({ success: false, error: 'Valid Zambian WhatsApp number required (+260...).' });
+    const decodedSession = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    const userId = decodedSession.user_id;
+
+    if (!firebaseIdToken || !passcode || passcode.length < 5) {
+      return res.status(400).json({ success: false, error: 'Missing token or invalid passcode' });
     }
 
-    // Check if phone number is already registered to another user
-    const usersRef = db.collection('users');
-    const snapshot = await usersRef.where('phone_number', '==', phoneNumber).limit(1).get();
+    // Verify Firebase ID Token to confirm phone number
+    const decodedFirebaseToken = await getAuth().verifyIdToken(firebaseIdToken);
+    const phoneNumber = decodedFirebaseToken.phone_number;
     
-    if (!snapshot.empty && snapshot.docs[0].id !== userId && !userId.startsWith('temp_')) {
-      return res.status(409).json({ success: false, error: 'This phone number is already linked to another account.' });
+    if (!phoneNumber) {
+      return res.status(400).json({ success: false, error: 'Phone number not found in Firebase token' });
     }
 
-    // Generate secure 6-digit code
-    const otpCode = crypto.randomInt(100000, 999999).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes from now
+    // Hash the Passcode using sha256 to match legacy
+    const saltStr = 'chilimba_agent_salt_2026';
+    const passcodeHash = crypto.createHash('sha256').update(saltStr + passcode).digest('hex');
 
-    // Store OTP in Firestore
-    await db.collection('otps').doc(phoneNumber).set({
-      user_id: userId,
+    // Update the user
+    const updatePayload = {
       phone_number: phoneNumber,
-      code: otpCode,
-      expires: expiresAt
+      passcode_hash: passcodeHash,
+      is_phone_verified: true,
+      account_status: 'ACTIVE'
+    };
+
+    if (profileData) {
+      updatePayload.first_name = profileData.firstName || '';
+      updatePayload.surname = profileData.surname || '';
+      updatePayload.country = profileData.country || '';
+      updatePayload.province = profileData.province || '';
+      updatePayload.town = profileData.town || '';
+    }
+
+    await db.collection('users').doc(userId).update(updatePayload);
+
+    const userDoc = await db.collection('users').doc(userId).get();
+    const updatedUser = { user_id: userId, ...userDoc.data() };
+
+    // Issue updated session token
+    const newSessionToken = generateSessionToken(updatedUser);
+    res.cookie('auth_token', newSessionToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+    res.status(200).json({
+      success: true,
+      message: 'Phone verified and passcode set successfully.',
+      user: updatedUser,
+      token: newSessionToken
     });
 
-    // Send the WhatsApp template message
-    const sendResult = await sendWhatsAppMessage(phoneNumber, `Hi! Your Chilimba access key is: ${otpCode}`);
-
-    res.status(200).json({ 
-
-      success: true, 
-      message: 'Verification code sent via WhatsApp.',
-      // 🟢 FALLBACK: If Meta API fails/missing, return OTP in response so developer can test UI flow
-      test_otp: sendResult.fallbackMode ? otpCode : undefined 
-    });
   } catch (error) {
-    console.error('WhatsApp OTP Initiation Error:', error);
-    res.status(500).json({ success: false, error: 'Failed to send verification code.' });
+    console.error('Verify Phone Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to verify phone or set passcode.' });
   }
 }
 
 /**
- * 3. Verify WhatsApp OTP and Link Account
- * Validates the OTP and updates the User's phone_number.
+ * 3. Passcode Sign In (Fast Login)
  */
-async function verifyWhatsAppOTP(req, res) {
+async function loginWithPasscode(req, res) {
   try {
-    const { userId, inputOtp, userProvidedPhone } = req.body;
-
-    const otpDoc = await db.collection('otps').doc(userProvidedPhone).get();
+    const passcode = req.body.passcode;
+    const phoneNumber = req.body.phoneNumber || req.body.phone;
     
-    if (!otpDoc.exists) {
-      return res.status(404).json({ success: false, error: 'No active verification session found.' });
+    if (!phoneNumber || !passcode) {
+      return res.status(400).json({ success: false, error: 'Phone number and passcode required' });
     }
 
-    const activeOtpRow = otpDoc.data();
+    // Format phone just in case (ensure starts with +)
+    let formattedPhone = phoneNumber.trim().replace(/\s+/g, '');
+    if (!formattedPhone.startsWith('+')) formattedPhone = '+' + formattedPhone;
 
-    if (new Date() > new Date(activeOtpRow.expires)) {
-      return res.status(400).json({ success: false, error: 'OTP has expired. Please request a new one.' });
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('phone_number', '==', formattedPhone).limit(1).get();
+
+    if (snapshot.empty) {
+      return res.status(404).json({ success: false, error: 'No account found with this phone number.' });
     }
 
-    if (activeOtpRow.code !== inputOtp) {
-      return res.status(400).json({ success: false, error: 'Invalid verification code.' });
+    const userDoc = snapshot.docs[0];
+    const user = { user_id: userDoc.id, ...userDoc.data() };
+
+    if (!user.passcode_hash) {
+      return res.status(400).json({ success: false, error: 'Please sign in with Google to set up your passcode first.' });
     }
 
-    // OTP is valid. 
-    // If they used a temp ID (didn't do Google Auth) or sent no ID, we need to create/fetch a Firestore user doc for them
-    let finalUserId = userId;
-    let updatedUser = {};
+    // Compare passcode using sha256
+    const saltStr = 'chilimba_agent_salt_2026';
+    const inputHash = crypto.createHash('sha256').update(saltStr + passcode).digest('hex');
+    const isMatch = (inputHash === user.passcode_hash);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: 'Incorrect passcode.' });
+    }
+
+    if (user.account_status !== 'ACTIVE') {
+       return res.status(403).json({ success: false, error: 'Account is pending onboarding. Please sign in with Google to complete setup.' });
+    }
+
+    // Success!
+    const sessionToken = generateSessionToken(user);
+    res.cookie('auth_token', sessionToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
     
-    if (!userId || userId.startsWith('temp_')) {
-      // Check if user already exists by phone
-      const usersSnap = await db.collection('users').where('phone_number', '==', userProvidedPhone).limit(1).get();
-      if (!usersSnap.empty) {
-        finalUserId = usersSnap.docs[0].id;
-        updatedUser = { user_id: finalUserId, ...usersSnap.docs[0].data() };
-      } else {
-        // Create new barebones user based just on phone
-        const newUserRef = await db.collection('users').add({
-          phone_number: userProvidedPhone,
-          role: 'BUYER',
-          created_at: new Date().toISOString()
-        });
-        finalUserId = newUserRef.id;
-        updatedUser = { user_id: finalUserId, phone_number: userProvidedPhone, role: 'BUYER' };
-      }
-    } else {
-      // Update existing Google Auth user profile with phone number
-      await db.collection('users').doc(userId).update({
-        phone_number: userProvidedPhone
-      });
-      const userDoc = await db.collection('users').doc(userId).get();
-      updatedUser = { user_id: userId, ...userDoc.data() };
-    }
-
-    // Clear the used OTP
-    await db.collection('otps').doc(userProvidedPhone).delete();
-
-    const token = generateSessionToken(updatedUser);
-    res.cookie('auth_token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
-
     res.status(200).json({ 
       success: true, 
-      message: 'WhatsApp identity verified successfully.',
-      user: updatedUser,
-      token
+      action: 'AUTHENTICATED', 
+      user,
+      token: sessionToken
     });
 
   } catch (error) {
-    console.error('OTP Verification Error:', error);
-    res.status(500).json({ success: false, error: 'Failed to verify OTP.' });
+    console.error('Passcode Login Error:', error);
+    res.status(500).json({ success: false, error: 'Authentication failed.' });
   }
 }
 
@@ -250,13 +257,48 @@ function generateSessionToken(user) {
     phone: user.phone_number, 
     name: user.display_name, 
     avatar: user.avatar_url,
-    role: user.role 
+    role: user.role,
+    account_status: user.account_status 
   }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
 }
 
+const requireAuth = (req, res, next) => {
+  const token = req.cookies.auth_token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    req.user = { uid: decoded.user_id, ...decoded };
+    next();
+  } catch (err) {
+    res.status(401).json({ success: false, error: 'Invalid or expired token' });
+  }
+};
+
+const setNewPasscode = async (req, res) => {
+  try {
+    const { passcode } = req.body;
+    if (!passcode || passcode.length < 5) {
+      return res.status(400).json({ success: false, error: 'Passcode must be at least 5 digits.' });
+    }
+    const saltStr = 'chilimba_agent_salt_2026';
+    const passcodeHash = crypto.createHash('sha256').update(saltStr + passcode).digest('hex');
+    
+    await db.collection('users').doc(req.user.uid).update({
+      passcode_hash: passcodeHash
+    });
+    
+    res.json({ success: true, message: 'Passcode updated successfully.' });
+  } catch (error) {
+    console.error('Set Passcode Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update passcode.' });
+  }
+};
+
 module.exports = {
+  requireAuth,
   handleGoogleAuthCallback,
-  initiateWhatsAppVerification,
-  verifyWhatsAppOTP,
+  verifyPhoneAndSetPasscode,
+  loginWithPasscode,
+  setNewPasscode,
   sendWhatsAppMessage
 };

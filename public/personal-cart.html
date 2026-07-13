@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Personal Cart - Chilimba</title>
+  <link rel="icon" href="/assets/img/logo.png">
+  <link rel="apple-touch-icon" href="/assets/img/logo.png">
+
   <meta name="theme-color" content="#15803d">
   <link rel="manifest" href="/manifest.json">
   <link href="/assets/css/tailwind.css" rel="stylesheet">
@@ -134,6 +137,18 @@
         <button onclick="closeCheckoutModal()" class="text-gray-500 text-sm font-bold hover:text-gray-800 btn-press">Cancel</button>
       </div>
     </div>
+  </div>
+
+  <div id="payment-polling-overlay" style="display: none;" class="fixed inset-0 z-[999] bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center">
+    <div class="relative mb-6">
+      <div class="w-24 h-24 border-8 border-orange-100 border-t-orange-500 rounded-full animate-spin"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <svg class="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+      </div>
+    </div>
+    <h2 class="text-2xl font-black text-gray-900 mb-2">Check Your Phone</h2>
+    <p class="text-gray-600 font-medium mb-1">We've sent a payment request to your mobile money number.</p>
+    <p class="text-sm text-gray-400">Waiting for you to enter your PIN...</p>
   </div>
 
   <!-- ORDER SUCCESS OVERLAY -->
@@ -369,10 +384,45 @@
         const data = await res.json();
         if (res.ok) {
           closeCheckoutModal();
-          document.getElementById('success-amount').textContent = `K${currentGrandTotal.toFixed(2)}`;
-          document.getElementById('order-success-overlay').style.display = 'flex';
-          personalCart = [];
-          renderCart();
+          
+          if (data.order_id) {
+            const overlay = document.getElementById('payment-polling-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            
+            let pollCount = 0;
+            const maxPolls = 20;
+            
+            const pollInterval = setInterval(async () => {
+              pollCount++;
+              try {
+                const orderRes = await fetch('/api/v1/orders');
+                if (orderRes.ok) {
+                  const orderData = await orderRes.json();
+                  const myOrder = (orderData.orders || []).find(o => o.id === data.order_id);
+                  
+                  if (myOrder && myOrder.status === 'PAID') {
+                    clearInterval(pollInterval);
+                    if (overlay) overlay.style.display = 'none';
+                    document.getElementById('success-amount').textContent = `K${currentGrandTotal.toFixed(2)}`;
+                    document.getElementById('order-success-overlay').style.display = 'flex';
+                    personalCart = [];
+                    renderCart();
+                  } else if (pollCount >= maxPolls) {
+                    clearInterval(pollInterval);
+                    if (overlay) overlay.style.display = 'none';
+                    alert('Payment verification timed out. If you paid, it will reflect shortly.');
+                    personalCart = [];
+                    renderCart();
+                  }
+                }
+              } catch(e) {}
+            }, 3000);
+          } else {
+            document.getElementById('success-amount').textContent = `K${currentGrandTotal.toFixed(2)}`;
+            document.getElementById('order-success-overlay').style.display = 'flex';
+            personalCart = [];
+            renderCart();
+          }
         } else {
           alert('Checkout failed: ' + (data.error || 'Unknown error'));
         }

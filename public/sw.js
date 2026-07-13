@@ -1,4 +1,5 @@
-const CACHE_NAME = 'chilimba-v13';
+const CACHE_NAME = 'chilimba-cache-v19';
+const OFFLINE_URL = '/offline.html';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

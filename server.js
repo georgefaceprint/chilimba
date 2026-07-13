@@ -23,8 +23,8 @@ app.use(cookieParser());
 
 // 1. Authentication Routes
 app.post('/api/v1/auth/google/callback', authController.handleGoogleAuthCallback);
-app.post('/api/v1/auth/whatsapp/initiate', authController.initiateWhatsAppVerification);
-app.post('/api/v1/auth/whatsapp/verify', authController.verifyWhatsAppOTP);
+app.post('/api/v1/auth/verify-phone', authController.verifyPhoneAndSetPasscode);
+app.post('/api/v1/auth/passcode-login', authController.loginWithPasscode);
 
 app.get('/api/v1/auth/me', async (req, res) => {
   const token = req.cookies.auth_token;
@@ -53,7 +53,6 @@ app.post('/api/v1/user/update-kyc', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
     const { name, surname, whatsapp, country, province, town, role } = req.body;
     
-    const db = require('./backend/firestore').db;
     const updateData = { kyc_complete: true };
     
     if (name) updateData.first_name = name;
@@ -89,78 +88,9 @@ app.post('/api/v1/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
-// Agent Passcode Login (for field agents like runners, scanners)
-app.post('/api/v1/auth/passcode-login', async (req, res) => {
-  try {
-    const { phone, passcode } = req.body;
-    if (!phone || !passcode) return res.status(400).json({ success: false, error: 'Phone and passcode required.' });
+app.post('/api/v1/auth/change-passcode', authController.requireAuth, authController.setNewPasscode);
 
-    const { db } = require('./backend/firestore');
-    const crypto = require('crypto');
-
-    // Find user by phone number
-    const snap = await db.collection('users').where('phone_number', '==', phone).limit(1).get();
-    if (snap.empty) return res.status(401).json({ success: false, error: 'Invalid phone or passcode.' });
-
-    const userDoc = snap.docs[0];
-    const user = userDoc.data();
-
-    // Verify passcode hash
-    const salt = 'chilimba_agent_salt_2026';
-    const inputHash = crypto.createHash('sha256').update(salt + passcode).digest('hex');
-
-    if (inputHash !== user.passcode_hash) {
-      return res.status(401).json({ success: false, error: 'Invalid phone or passcode.' });
-    }
-
-    // Issue JWT cookie
-    const tokenPayload = {
-      user_id: userDoc.id,
-      name: user.display_name || user.name || 'Agent',
-      email: user.email || '',
-      role: user.role || 'AGENT',
-      phone_number: user.phone_number,
-      avatar: user.avatar || '',
-      kyc_complete: user.kyc_complete || true
-    };
-    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '30d' });
-    res.cookie('auth_token', token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 30 * 24 * 60 * 60 * 1000 });
-
-    res.json({ success: true, user: tokenPayload });
-  } catch (err) {
-    console.error('[Passcode Login Error]', err);
-    res.status(500).json({ success: false, error: 'Login failed.' });
-  }
-});
-
-// Set / Update Passcode (any authenticated user)
-app.post('/api/v1/auth/set-passcode', async (req, res) => {
-  try {
-    const token = req.cookies.auth_token;
-    if (!token) return res.status(401).json({ success: false, error: 'Not authenticated.' });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-
-    const { passcode } = req.body;
-    if (!passcode || passcode.length !== 5 || !/^\d{5}$/.test(passcode)) {
-      return res.status(400).json({ success: false, error: 'Passcode must be exactly 5 digits.' });
-    }
-
-    const crypto = require('crypto');
-    const { db } = require('./backend/firestore');
-    const salt = 'chilimba_agent_salt_2026';
-    const passcodeHash = crypto.createHash('sha256').update(salt + passcode).digest('hex');
-
-    await db.collection('users').doc(decoded.user_id).update({
-      passcode_hash: passcodeHash,
-      updated_at: new Date().toISOString()
-    });
-
-    res.json({ success: true, message: 'Passcode saved.' });
-  } catch (err) {
-    console.error('[Set Passcode Error]', err);
-    res.status(500).json({ success: false, error: 'Failed to save passcode.' });
-  }
-});
+// (Passcode login and verification are handled by authController)
 
 // 2. Payment Routes
 app.post('/api/v1/payments/initiate', paymentsController.initiateMobileMoneyPayment);
@@ -1086,6 +1016,17 @@ app.post('/api/v1/cart/checkout', async (req, res) => {
         updated_at: new Date().toISOString()
       });
       savedOrderId = orderRef.id;
+
+      if (!use_wallet) {
+        setTimeout(async () => {
+          try {
+             await firestoreDb.collection('orders').doc(savedOrderId).update({
+               status: 'PAID',
+               updated_at: new Date().toISOString()
+             });
+          } catch(e) {}
+        }, 5000);
+      }
     } catch(e) {
       console.error('[Order Save Error]', e.message);
     }
@@ -1142,7 +1083,7 @@ app.post('/api/v1/cart/checkout', async (req, res) => {
       console.error('[WhatsApp Receipt Error]', e.message);
     }
 
-    res.json({ success: true });
+    res.json({ success: true, order_id: savedOrderId });
   } catch(err) {
     res.status(500).json({ error: err.message });
   }

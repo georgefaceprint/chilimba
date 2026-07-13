@@ -3,249 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Chilimba</title>
+  <title>Login / Sign Up - Chilimba</title>
   <meta name="theme-color" content="#15803d">
-  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/assets/img/logo.png">
+  <link rel="apple-touch-icon" href="/assets/img/logo.png">
   <link href="/assets/css/tailwind.css" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    body { font-family: 'Inter', sans-serif; }
+    body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
     .btn-press:active { transform: scale(0.97); transition: transform 0.1s; }
-
-    /* Animated background blobs */
-    @keyframes blob {
-      0% { transform: translate(0px, 0px) scale(1); }
-      33% { transform: translate(30px, -50px) scale(1.1); }
-      66% { transform: translate(-20px, 20px) scale(0.9); }
-      100% { transform: translate(0px, 0px) scale(1); }
-    }
-    .animate-blob { animation: blob 7s infinite; }
-    .animation-delay-2000 { animation-delay: 2s; }
-    .animation-delay-4000 { animation-delay: 4s; }
-
-    /* PIN dots */
-    .pin-dot {
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.6);
-      background: rgba(255,255,255,0.2);
-      transition: all 0.15s ease;
-    }
-    .pin-dot.filled {
-      background: #111827;
-      border-color: #111827;
-      transform: scale(1.15);
-    }
-
-    /* Numpad keys */
-    .num-key {
-      width: 72px; height: 72px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.5);
-      border: 1.5px solid rgba(255,255,255,0.8);
-      font-size: 24px; font-weight: 800;
-      color: #111827;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      transition: all 0.12s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      backdrop-filter: blur(8px);
-    }
-    .num-key:active { background: rgba(255,255,255,0.8); border-color: #15803d; transform: scale(0.92); }
-    .num-key.delete-key { font-size: 18px; color: #4b5563; }
-    .num-key.empty-key { background: transparent; border: none; box-shadow: none; pointer-events: none; backdrop-filter: none; }
-    
-    /* Input focus overrides */
-    input:focus, select:focus {
-      box-shadow: 0 0 0 4px rgba(21, 128, 61, 0.15);
-    }
   </style>
 </head>
-<body class="bg-gradient-to-br from-[#dcfce7] via-[#fef3c7] to-[#ffedd5] flex items-center justify-center min-h-[100dvh] p-4 relative overflow-hidden">
-  
-  <!-- Decorative background elements -->
-  <div class="absolute top-[-10%] left-[-10%] w-72 h-72 bg-[#86efac] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob"></div>
-  <div class="absolute top-[20%] right-[-10%] w-72 h-72 bg-[#fdba74] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
-  <div class="absolute bottom-[-20%] left-[20%] w-72 h-72 bg-[#fcd34d] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-4000"></div>
+<body class="flex flex-col min-h-screen relative overflow-hidden text-gray-900">
 
-  <!-- Glassmorphism Card -->
-  <div class="w-full max-w-sm relative z-10">
-    <div class="bg-white/40 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] border border-white/60 p-8 overflow-hidden transition-all duration-300 ease-in-out" id="auth-card">
+  <div class="flex-1 flex flex-col justify-center items-center px-6 pb-20 relative z-10 w-full max-w-md mx-auto">
+    
+    <!-- Logo -->
+    <div class="flex justify-center mb-6">
+      <div class="w-28 h-28 bg-white rounded-[2.5rem] shadow-sm flex items-center justify-center p-2 border border-gray-100">
+        <img src="/assets/img/logo.png" alt="Chilimba Logo" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2315803d\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M13 10V3L4 14h7v7l9-11h-7z\'/%3E%3C/svg%3E';">
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-10 w-full" id="auth-header">
+      <h1 class="text-3xl font-black tracking-tight mb-2">Welcome to Chilimba</h1>
+      <p class="text-gray-500 font-medium text-sm">Login or create an account to continue.</p>
+    </div>
+
+    <!-- MAIN OPTIONS -->
+    <div id="auth-options" class="w-full space-y-4 transition-all duration-300">
       
-      <!-- Header -->
-      <div class="text-center mb-8" id="auth-header">
-        <h1 class="text-4xl font-black text-gray-900 tracking-tight mb-2">Chilimba</h1>
-        <p class="text-gray-700 font-semibold text-sm">Welcome back. Let's get you in.</p>
+      <!-- Sign Up / Sign In Text -->
+      <div class="mb-4 text-center">
+        <p class="text-sm font-medium text-gray-500">Sign Up (New Users) or Sign In (Returning Users)</p>
       </div>
-
-      <!-- MAIN OPTIONS -->
-      <div id="auth-options" class="flex flex-col gap-3.5 transition-all duration-300">
-        
-        <button onclick="showStep('wa-step-1')" class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-bold text-base shadow-md hover:shadow-lg hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-3 btn-press">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Continue with WhatsApp
-        </button>
-
-        <!-- Google Auth Wrapper -->
-        <div class="w-full h-[56px] relative flex justify-center items-center overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-all bg-white btn-press">
-          <div id="g_id_onload"
-            data-client_id="714011063581-ki9st10fiap43pjgpu44ur41qg2ahnjr.apps.googleusercontent.com"
-            data-callback="handleCredentialResponse"
-            data-auto_prompt="false">
-          </div>
-          <!-- Let Google button fill container, opacity-0 hack so it intercepts clicks but we can style our own, or just use their style -->
-          <div class="g_id_signin w-full flex justify-center" data-type="standard" data-size="large" data-theme="outline"
-            data-text="continue_with" data-shape="rectangular" data-logo_alignment="center"></div>
+      <!-- Google Auth Wrapper -->
+      <div class="w-full h-[54px] relative flex justify-center items-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors btn-press">
+        <div id="g_id_onload"
+          data-client_id="714011063581-ki9st10fiap43pjgpu44ur41qg2ahnjr.apps.googleusercontent.com"
+          data-callback="handleCredentialResponse"
+          data-auto_prompt="false">
         </div>
-
-        <button onclick="showStep('pc-step-1')" class="w-full bg-gray-800 text-white py-4 rounded-2xl font-bold text-base shadow-md hover:shadow-lg hover:bg-gray-900 transition-all flex items-center justify-center gap-3 btn-press">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-          Use Agent Passcode
-        </button>
-
+        <div class="g_id_signin w-full flex justify-center" data-type="standard" data-size="large" data-width="320" data-theme="outline"
+          data-text="continue_with" data-shape="rectangular" data-logo_alignment="center"></div>
       </div>
 
-      <!-- WHATSAPP OTP FLOW -->
-      <div id="wa-step-1" class="hidden transition-all duration-300">
-        <button onclick="showStep('auth-options')" class="text-gray-600 mb-4 flex items-center gap-1.5 hover:text-gray-900 transition-colors font-bold text-sm btn-press">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          Back
-        </button>
-        <h2 class="text-xl font-black text-gray-900 mb-1">What's your number?</h2>
-        <p class="text-sm text-gray-600 font-medium mb-5">We'll send you a security code.</p>
-        
-        <div class="flex gap-2 mb-4">
-          <select id="wa-country" onchange="updateWaFlag()" class="bg-white/60 backdrop-blur-md border border-white/80 p-3.5 rounded-2xl font-bold text-base focus:border-green-500 focus:bg-white focus:outline-none w-32 flex-shrink-0 shadow-inner">
-            <option value="+260">🇿🇲 +260</option>
-            <option value="+255">🇹🇿 +255</option>
-          </select>
-          <input type="tel" id="wa-phone" placeholder="0977 287 900"
-            class="flex-1 bg-white/60 backdrop-blur-md border border-white/80 p-3.5 rounded-2xl font-bold text-base tracking-wide focus:border-green-500 focus:bg-white focus:outline-none shadow-inner">
-        </div>
-        <button onclick="requestOTP('whatsapp')" id="btn-request-otp"
-          class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-base shadow-lg hover:bg-[#20bd5a] transition-all btn-press">
-          Send Code
-        </button>
+      <div class="flex items-center my-6">
+        <div class="flex-1 border-t border-gray-200"></div>
+        <span class="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Or Use Passcode</span>
+        <div class="flex-1 border-t border-gray-200"></div>
       </div>
 
-      <div id="wa-step-2" class="hidden transition-all duration-300">
-        <button onclick="showStep('wa-step-1')" class="text-gray-600 mb-4 flex items-center gap-1.5 hover:text-gray-900 transition-colors font-bold text-sm btn-press">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          Back
-        </button>
-        <h2 class="text-xl font-black text-gray-900 mb-1">Enter Security Code</h2>
-        <p class="text-sm text-gray-600 font-medium mb-5" id="lbl-wa-otp-msg">We sent a code to your WhatsApp</p>
-        
-        <input type="text" id="wa-otp-direct" maxlength="6" placeholder="------"
-          class="w-full bg-white/60 backdrop-blur-md border border-white/80 p-4 rounded-2xl text-center text-3xl font-mono tracking-[0.5em] focus:bg-white focus:border-green-500 focus:outline-none shadow-inner mb-5">
-        
-        <button onclick="verifyWAOTP()" id="btn-verify-wa"
-          class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-base shadow-lg hover:bg-[#20bd5a] transition-all btn-press">
-          Verify & Enter
-        </button>
-      </div>
-
-      <!-- GOOGLE OTP FLOW (if they need to link phone) -->
-      <div id="auth-step-2" class="hidden transition-all duration-300">
-        <button onclick="showStep('auth-options')" class="text-gray-600 mb-4 flex items-center gap-1.5 hover:text-gray-900 transition-colors font-bold text-sm btn-press">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          Back
-        </button>
-        <h2 class="text-xl font-black text-gray-900 mb-1">Link Your WhatsApp</h2>
-        <p class="text-sm text-gray-600 font-medium mb-5" id="lbl-otp-msg">Enter your phone to receive a code</p>
-        
-        <input type="tel" id="wa-phone-google" placeholder="+260 or +255..."
-          class="w-full bg-white/60 backdrop-blur-md border border-white/80 p-3.5 rounded-2xl text-center font-bold text-base tracking-wide focus:border-green-500 focus:bg-white focus:outline-none shadow-inner mb-4">
-        
-        <button onclick="requestOTP('google')" id="btn-send-otp-google"
-          class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-base shadow-lg hover:bg-blue-700 transition-all btn-press">
-          Send Code
-        </button>
-      </div>
-
-      <div id="auth-step-3" class="hidden transition-all duration-300">
-        <button onclick="showStep('auth-step-2')" class="text-gray-600 mb-4 flex items-center gap-1.5 hover:text-gray-900 transition-colors font-bold text-sm btn-press">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          Back
-        </button>
-        <h2 class="text-xl font-black text-gray-900 mb-1">Enter Security Code</h2>
-        <p class="text-sm text-gray-600 font-medium mb-5" id="lbl-otp-msg2">We sent a 6-digit code</p>
-        
-        <input type="text" id="wa-otp" maxlength="6" placeholder="------"
-          class="w-full bg-white/60 backdrop-blur-md border border-white/80 p-4 rounded-2xl text-center text-3xl font-mono tracking-[0.5em] focus:bg-white focus:border-blue-500 focus:outline-none shadow-inner mb-5">
-        
-        <button onclick="verifyAuthOTP()" id="btn-verify-otp"
-          class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-base shadow-lg hover:bg-blue-700 transition-all btn-press">
-          Verify & Enter
-        </button>
-      </div>
-
-      <!-- PASSCODE FLOW -->
-      <div id="pc-step-1" class="hidden transition-all duration-300">
-        <button onclick="showStep('auth-options')" class="text-gray-600 mb-4 flex items-center gap-1.5 hover:text-gray-900 transition-colors font-bold text-sm btn-press">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          Back
-        </button>
-        
-        <div class="flex gap-2 mb-5">
-          <select id="pc-country" onchange="updatePcFlag()" class="bg-white/60 backdrop-blur-md border border-white/80 p-3 rounded-2xl font-bold text-sm focus:border-gray-800 focus:bg-white focus:outline-none w-28 flex-shrink-0 shadow-inner">
-            <option value="+260">🇿🇲 +260</option>
-            <option value="+255">🇹🇿 +255</option>
-          </select>
-          <input type="tel" id="pc-phone" placeholder="0977 287 900" oninput="normalizePcPhone()"
-            class="flex-1 bg-white/60 backdrop-blur-md border border-white/80 p-3 rounded-2xl font-bold tracking-wide focus:border-gray-800 focus:bg-white focus:outline-none text-center shadow-inner">
-        </div>
-
-        <div class="flex justify-center gap-3 mb-6" id="pin-dots">
-          <div class="pin-dot" id="dot-0"></div>
-          <div class="pin-dot" id="dot-1"></div>
-          <div class="pin-dot" id="dot-2"></div>
-          <div class="pin-dot" id="dot-3"></div>
-          <div class="pin-dot" id="dot-4"></div>
-        </div>
-
-        <p id="pc-error" class="text-red-500 text-xs font-bold text-center mb-3 hidden"></p>
-
-        <div class="grid grid-cols-3 gap-3 place-items-center mb-5">
-          <button class="num-key btn-press" onclick="pinInput('1')">1</button>
-          <button class="num-key btn-press" onclick="pinInput('2')">2</button>
-          <button class="num-key btn-press" onclick="pinInput('3')">3</button>
-          <button class="num-key btn-press" onclick="pinInput('4')">4</button>
-          <button class="num-key btn-press" onclick="pinInput('5')">5</button>
-          <button class="num-key btn-press" onclick="pinInput('6')">6</button>
-          <button class="num-key btn-press" onclick="pinInput('7')">7</button>
-          <button class="num-key btn-press" onclick="pinInput('8')">8</button>
-          <button class="num-key btn-press" onclick="pinInput('9')">9</button>
-          <button class="num-key empty-key"></button>
-          <button class="num-key btn-press" onclick="pinInput('0')">0</button>
-          <button class="num-key delete-key btn-press" onclick="pinDelete()">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/></svg>
-          </button>
-        </div>
-
-        <button id="btn-passcode-login" onclick="passcodeLogin()"
-          class="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-base shadow-lg hover:bg-black transition-colors btn-press opacity-50 cursor-not-allowed" disabled>
-          Sign In
-        </button>
-      </div>
+      <!-- Agent Passcode -->
+      <button onclick="showStep('pc-step-1')" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-[15px] shadow-sm hover:bg-black transition-colors flex items-center justify-center gap-3 btn-press">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        Use Passcode
+      </button>
 
     </div>
 
-    <!-- Footer -->
-    <div class="px-6 py-6 text-center">
-      <p class="text-[10px] font-bold text-gray-500/70 uppercase tracking-widest backdrop-blur-sm">By logging in, you agree to our Terms & Privacy Policy.</p>
+
+
+    <!-- PASSCODE FLOW (AGENT) -->
+    <div id="pc-step-1" class="hidden w-full transition-all duration-300">
+      <button onclick="showStep('auth-options')" class="text-gray-500 mb-6 flex items-center gap-1.5 hover:text-gray-900 transition-colors font-bold text-sm btn-press">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Back
+      </button>
+      <h2 class="text-2xl font-black tracking-tight mb-2">Enter Passcode</h2>
+      <p class="text-sm text-gray-500 font-medium mb-6">Enter your phone number and 5-digit passcode.</p>
+      
+      <div class="space-y-4 mb-6">
+        <div class="flex gap-2">
+          <select id="pc-country" class="bg-white border border-gray-200 p-4 rounded-xl font-bold text-base focus:border-green-600 focus:outline-none w-32 shadow-sm">
+            <option value="+260">🇿🇲 +260</option>
+            <option value="+255">🇹🇿 +255</option>
+          </select>
+          <input type="tel" id="pc-phone" placeholder="768 488 494" style="border-color: #e5e7eb;"
+            class="flex-1 bg-white border border-gray-200 p-4 rounded-xl font-bold text-base tracking-wide focus:border-green-600 focus:outline-none shadow-sm">
+        </div>
+        <div class="mb-6">
+        <input type="password" id="pc-passcode" placeholder="5-digit Passcode" maxlength="5" style="border-color: #e5e7eb;"
+          class="w-full bg-white border p-4 rounded-xl text-center text-2xl font-mono tracking-[0.5em] focus:outline-none shadow-sm">
+      </div>
+      <p id="pc-error" class="text-red-500 text-xs font-bold text-center mb-3 hidden"></p>
+      
+      <button onclick="passcodeLogin()" id="btn-passcode-login"
+        class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-[15px] shadow-sm hover:bg-black transition-colors btn-press">
+        Sign In as Agent
+      </button>
     </div>
+    
+    <p class="mt-8 text-[10px] font-bold text-gray-400 text-center uppercase tracking-widest leading-relaxed">
+      By continuing, you agree to our <br> <a href="/terms.html" class="text-green-600 hover:text-green-700">Terms of Service</a> & <a href="/policy.html" class="text-green-600 hover:text-green-700">Privacy Policy</a>
+    </p>
+
   </div>
 
   <script>
+
     const API_BASE = window.location.origin;
     let activeUserId = null;
     let pinValue = '';
 
-    const allSteps = ['auth-options', 'wa-step-1', 'wa-step-2', 'auth-step-2', 'auth-step-3', 'pc-step-1'];
+    const allSteps = ['auth-options', 'pc-step-1'];
 
     function showStep(stepId) {
       allSteps.forEach(id => {
@@ -269,7 +132,7 @@
       pinValue += digit;
       updatePinDots();
       if (pinValue.length === 5) {
-        document.getElementById('btn-passcode-login').disabled = false;
+        document.getElementById('btn-passcode-login').disabled = false; document.getElementById('btn-passcode-login').classList.remove('opacity-70');
         document.getElementById('btn-passcode-login').classList.remove('opacity-50','cursor-not-allowed');
       }
     }
@@ -278,25 +141,19 @@
       if (pinValue.length === 0) return;
       pinValue = pinValue.slice(0, -1);
       updatePinDots();
-      document.getElementById('btn-passcode-login').disabled = true;
+      document.getElementById('btn-passcode-login').disabled = true; document.getElementById('btn-passcode-login').classList.add('opacity-70');
       document.getElementById('btn-passcode-login').classList.add('opacity-50','cursor-not-allowed');
       document.getElementById('pc-error').classList.add('hidden');
     }
 
-    function updatePinDots() {
-      for (let i = 0; i < 5; i++) {
-        const dot = document.getElementById('dot-' + i);
-        if (i < pinValue.length) dot.classList.add('filled');
-        else dot.classList.remove('filled');
-      }
-    }
+
 
     async function passcodeLogin() {
       const cc = document.getElementById('pc-country').value;
       let rawPhone = document.getElementById('pc-phone').value.trim();
       if (!rawPhone) {
         showPinError('Please enter your phone number first.');
-        pinValue = ''; updatePinDots();
+        document.getElementById('pc-passcode').value = '';
         return;
       }
       const phone = formatPhoneNumber(rawPhone, cc);
@@ -309,21 +166,21 @@
         const res = await fetch(`${API_BASE}/api/v1/auth/passcode-login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, passcode: pinValue })
+          body: JSON.stringify({ phone, passcode: document.getElementById('pc-passcode').value })
         });
         const data = await res.json();
         if (res.ok && data.success) {
           processRouting(data.user);
         } else {
           showPinError(data.error || 'Incorrect passcode. Try again.');
-          pinValue = ''; updatePinDots();
+          document.getElementById('pc-passcode').value = '';
           btn.innerText = 'Sign In';
           btn.disabled = false;
           btn.classList.add('opacity-50','cursor-not-allowed');
         }
       } catch (err) {
         showPinError('Network error. Please try again.');
-        pinValue = ''; updatePinDots();
+        document.getElementById('pc-passcode').value = '';
         btn.innerText = 'Sign In';
         btn.disabled = false;
         btn.classList.add('opacity-50','cursor-not-allowed');
@@ -345,14 +202,18 @@
           body: JSON.stringify({ token: response.credential })
         });
         const data = await res.json();
-        if (data.action === 'REQUIRE_WHATSAPP_LINK') {
-          activeUserId = data.userId;
-          showStep('auth-step-2');
+        if (data.action === 'REQUIRE_ONBOARDING') {
+          // Send them to KYC setup to configure Phone + Passcode
+          window.location.href = '/kyc-setup.html?onboarding=true';
         } else if (data.action === 'AUTHENTICATED') {
           processRouting(data.user);
+        } else if (data.error) {
+          alert('Google Auth Error: ' + data.error);
+        } else {
+          alert('Unknown error during authentication');
         }
       } catch (err) {
-        alert('Google Authentication failed.');
+        alert('Network or Server Error: ' + err.message);
       }
     }
 
@@ -451,7 +312,7 @@
       let phone = formatPhoneNumber(document.getElementById('wa-phone').value.trim());
       if (!otp || otp.length < 6) return alert('Enter 6-digit code');
       try {
-        const btn = document.getElementById('btn-verify-wa');
+        const btn = document.getElementById('btn-verify-otp');
         btn.innerText = 'Verifying...';
         const res = await fetch(`${API_BASE}/api/v1/auth/whatsapp/verify`, {
           method: 'POST',
@@ -463,7 +324,7 @@
         processRouting(data.user);
       } catch (err) { 
         alert('Verification failed: ' + err.message);
-        document.getElementById('btn-verify-wa').innerText = 'Verify & Enter';
+        document.getElementById('btn-verify-otp').innerText = 'Verify & Enter';
       }
     }
 
@@ -506,6 +367,7 @@
           break;
       }
     }
+  
   </script>
 </body>
 </html>

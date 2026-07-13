@@ -7,24 +7,36 @@ const fs = require('fs');
 const path = require('path');
 
 let serviceAccount;
+let db;
 
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  try {
+try {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  } catch (err) {
-    console.error('❌ FIREBASE_SERVICE_ACCOUNT is not valid JSON:', err);
-    process.exit(1);
+  } else if (process.env.FIREBASE_SA_PATH) {
+    const saPath = process.env.FIREBASE_SA_PATH;
+    if (fs.existsSync(path.resolve(saPath))) {
+      serviceAccount = JSON.parse(fs.readFileSync(path.resolve(saPath), 'utf8'));
+    } else {
+      console.warn(`⚠️ FIREBASE_SA_PATH file not found: ${saPath}`);
+    }
+  } else {
+    console.warn('⚠️ No FIREBASE_SERVICE_ACCOUNT or FIREBASE_SA_PATH found.');
   }
-} else if (process.env.FIREBASE_SA_PATH) {
-  const saPath = process.env.FIREBASE_SA_PATH;
-  serviceAccount = JSON.parse(fs.readFileSync(path.resolve(saPath), 'utf8'));
-} else {
-  console.error('❌ FIREBASE_SA_PATH or FIREBASE_SERVICE_ACCOUNT not set');
-  process.exit(1);
-}
 
-initializeApp({ credential: cert(serviceAccount) });
-const db = getFirestore();
+  initializeApp(serviceAccount ? { credential: cert(serviceAccount) } : undefined);
+  db = getFirestore();
+} catch (err) {
+  console.error('❌ Firebase Initialization Error:', err.message);
+  // Create a mock db object that throws a descriptive error if used
+  db = {
+    collection: () => ({
+      where: () => { throw new Error('Firebase Database not initialized: ' + err.message); },
+      doc: () => { throw new Error('Firebase Database not initialized: ' + err.message); },
+      add: () => { throw new Error('Firebase Database not initialized: ' + err.message); },
+      orderBy: () => ({ get: () => { throw new Error('Firebase Database not initialized: ' + err.message); } })
+    })
+  };
+}
 
 /**
  * Simple query helper mimicking the old pg pool interface.

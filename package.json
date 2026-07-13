@@ -27,5 +27,9 @@
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.15",
     "tailwindcss": "^3.3.5"
+  },
+  "overrides": {
+    "jose": "4.15.5",
+    "jwks-rsa": "3.1.0"
   }
 }

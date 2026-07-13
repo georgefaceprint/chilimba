@@ -30,6 +30,26 @@
     .num-key.delete-key { font-size: 16px; color: #6b7280; }
     .num-key.empty-key  { background: transparent; border: none; box-shadow: none; pointer-events: none; }
   </style>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDyYTgZjok86T5o0Bc-vFS9Bk-P5j6kn50",
+      authDomain: "musolemutesi29-lab.firebaseapp.com",
+      projectId: "musolemutesi29-lab",
+      storageBucket: "musolemutesi29-lab.firebasestorage.app",
+      messagingSenderId: "714011063581",
+      appId: "1:714011063581:web:894d4fdbb9d96181daddf4",
+      measurementId: "G-NL3Y974KZ6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    window.firebaseAuth = getAuth(app);
+    window.RecaptchaVerifier = RecaptchaVerifier;
+    window.signInWithPhoneNumber = signInWithPhoneNumber;
+  </script>
 </head>
 <body class="text-gray-900 min-h-screen flex flex-col">
 
@@ -92,6 +112,22 @@
           <button type="button" onclick="skipKyc()" class="w-full mt-3 text-gray-500 font-bold py-2 text-sm hover:text-gray-800 btn-press">Skip for now</button>
         </div>
       </form>
+    </div>
+
+    
+    <!-- ── SMS VERIFICATION CARD ────────────────────── -->
+    <div id="sms-setup-card" class="w-full max-w-sm mt-5 bg-white rounded-3xl shadow-xl p-6 relative overflow-hidden hidden">
+      <div class="relative z-10 text-center">
+        <h2 class="font-black text-gray-900 text-lg">Verify Phone Number</h2>
+        <p class="text-sm text-gray-500 font-medium mb-4" id="sms-prompt">We sent an SMS with a 6-digit code.</p>
+        
+        <input type="text" id="sms-code-input" placeholder="000000" maxlength="6" class="w-full text-center tracking-[0.5em] bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-black text-2xl focus:border-green-500 focus:bg-white outline-none mb-4">
+        
+        <button id="btn-verify-sms" onclick="verifySmsCode()" class="w-full bg-green-700 text-white py-3.5 rounded-xl font-black text-lg shadow-md hover:bg-green-800 transition-colors btn-press">
+          Verify & Complete
+        </button>
+        <div id="recaptcha-container" class="mt-4 flex justify-center"></div>
+      </div>
     </div>
 
     <!-- ── PASSCODE SETUP CARD ────────────────────── -->
@@ -205,6 +241,7 @@
       const provLabel = document.getElementById('lbl-province');
       const provSelect = document.getElementById('kyc-province');
       const townSelect = document.getElementById('kyc-town');
+      const phoneInput = document.getElementById('kyc-whatsapp');
 
       provSelect.innerHTML = '<option value="">Select Option</option>';
       townSelect.innerHTML = '<option value="">Select Option</option>';
@@ -212,11 +249,19 @@
 
       if (country === 'Tanzania') {
         provLabel.innerText = 'Region';
+        phoneInput.placeholder = '+255...';
+        if (!phoneInput.value || phoneInput.value.trim() === '+260' || phoneInput.value.trim() === '') {
+          phoneInput.value = '+255 ';
+        }
         Object.keys(tanzaniaLocations).forEach(r => {
           provSelect.innerHTML += `<option value="${r}">${r}</option>`;
         });
       } else {
         provLabel.innerText = 'Province';
+        phoneInput.placeholder = '+260...';
+        if (!phoneInput.value || phoneInput.value.trim() === '+255' || phoneInput.value.trim() === '') {
+          phoneInput.value = '+260 ';
+        }
         Object.keys(zambiaLocations).forEach(p => {
           provSelect.innerHTML += `<option value="${p}">${p}</option>`;
         });
@@ -276,6 +321,11 @@
 
     function formatPhoneNumber(phone) {
       let cleaned = phone.replace(/[^\d+]/g, '');
+      
+      // If user typed a 0 after the prefilled country code, remove it
+      if (cleaned.startsWith('+2600')) cleaned = '+260' + cleaned.substring(5);
+      if (cleaned.startsWith('+2550')) cleaned = '+255' + cleaned.substring(5);
+
       const country = document.getElementById('kyc-country').value;
       if (country === 'Tanzania') {
         if (cleaned.startsWith('0') && cleaned.length === 10) {
@@ -292,12 +342,9 @@
       return cleaned;
     }
 
-    async function submitKyc(e) {
+    
+    function submitKyc(e) {
       e.preventDefault();
-      const btn = document.getElementById('btn-submit');
-      btn.innerText = 'Saving...';
-      btn.disabled = true;
-
       const payload = {
         name: document.getElementById('kyc-name').value.trim(),
         surname: document.getElementById('kyc-surname').value.trim(),
@@ -306,31 +353,13 @@
         province: document.getElementById('kyc-province').value,
         town: document.getElementById('kyc-town').value
       };
-
-      try {
-        const res = await fetch('/api/v1/user/update-kyc', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        
-        if (res.ok) {
-           // Clear skip flag just in case
-           sessionStorage.removeItem('skipped_kyc');
-           
-           // Redirect back to where they came from or dashboard
-           const params = new URLSearchParams(window.location.search);
-           const returnTo = params.get('returnTo') || '/dashboard.html';
-           window.location.href = returnTo;
-        } else {
-          alert('Failed to save profile details.');
-        }
-      } catch (err) {
-        alert('Error saving details.');
-      } finally {
-        btn.innerText = 'Save Profile';
-        btn.disabled = false;
-      }
+      
+      // Save locally and show passcode screen
+      localStorage.setItem('temp_kyc', JSON.stringify(payload));
+      
+      document.getElementById('kyc-form').parentElement.classList.add('hidden');
+      const passCard = document.querySelector('.max-w-sm.bg-white:not(.hidden)');
+      if (passCard) passCard.classList.remove('mt-5');
     }
 
     function skipKyc() {
@@ -340,7 +369,13 @@
       window.location.href = returnTo;
     }
 
-    loadPrexistingData();
+    loadPrexistingData().then(() => {
+      // If the phone field is still empty after loading existing data, force the initial prefix
+      const phoneInput = document.getElementById('kyc-whatsapp');
+      if (!phoneInput.value) {
+        phoneInput.value = document.getElementById('kyc-country').value === 'Tanzania' ? '+255 ' : '+260 ';
+      }
+    });
 
     // ── PASSCODE SETUP ────────────────────────────────────
     let pc1 = ''; // first entry
@@ -410,27 +445,85 @@
       document.getElementById('pc-setup-step3').classList.add('hidden');
     }
 
+    
+    let confirmationResult = null;
+    let storedPasscode = '';
+
     async function savePasscode(code) {
+      storedPasscode = code;
+      const kycData = JSON.parse(localStorage.getItem('temp_kyc'));
+      const phoneNumber = kycData.whatsapp;
+
+      // Hide Passcode Card, Show SMS Card
+      const passCards = document.querySelectorAll('.max-w-sm.bg-white:not(.hidden)');
+      passCards[passCards.length - 1].classList.add('hidden');
+      
+      document.getElementById('sms-setup-card').classList.remove('hidden');
+      document.getElementById('sms-setup-card').classList.remove('mt-5');
+      document.getElementById('sms-prompt').innerText = `We are sending an SMS to ${phoneNumber}...`;
+
       try {
-        const res = await fetch('/api/v1/auth/set-passcode', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ passcode: code })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          document.getElementById('pc-setup-step2').classList.add('hidden');
-          document.getElementById('pc-setup-step3').classList.remove('hidden');
-          pc1 = ''; pc2 = '';
-        } else {
-          alert('Could not save passcode: ' + (data.error || 'Unknown error'));
-          resetPasscodeSetup();
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'recaptcha-container', {
+            'size': 'invisible',
+            'callback': (response) => { }
+          });
         }
-      } catch (err) {
-        alert('Network error saving passcode.');
-        resetPasscodeSetup();
+
+        confirmationResult = await window.signInWithPhoneNumber(window.firebaseAuth, phoneNumber, window.recaptchaVerifier);
+        document.getElementById('sms-prompt').innerText = `Code sent to ${phoneNumber}. Enter it below.`;
+      } catch (error) {
+        console.error("SMS sending failed", error);
+        alert("Failed to send SMS: " + error.message);
+        document.getElementById('sms-prompt').innerText = `Failed to send SMS.`;
       }
     }
+
+    async function verifySmsCode() {
+      const code = document.getElementById('sms-code-input').value;
+      if (!code || code.length < 6) return alert("Enter the 6-digit code");
+      if (!confirmationResult) return alert("Please wait for SMS");
+
+      document.getElementById('btn-verify-sms').innerText = "Verifying...";
+      
+      try {
+        const result = await confirmationResult.confirm(code);
+        const user = result.user;
+        const idToken = await user.getIdToken();
+        
+        const kycData = JSON.parse(localStorage.getItem('temp_kyc'));
+
+        // Send to backend
+        const res = await fetch('/api/v1/auth/verify-phone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firebaseIdToken: idToken,
+            passcode: storedPasscode,
+            profileData: {
+              firstName: kycData.name,
+              surname: kycData.surname,
+              country: kycData.country,
+              province: kycData.province,
+              town: kycData.town
+            }
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/dashboard.html';
+        } else {
+          alert('Backend Error: ' + data.error);
+          document.getElementById('btn-verify-sms').innerText = "Verify & Complete";
+        }
+      } catch (error) {
+        console.error("Verification failed", error);
+        alert("Invalid code: " + error.message);
+        document.getElementById('btn-verify-sms').innerText = "Verify & Complete";
+      }
+    }
+
   </script>
 </body>
 </html>

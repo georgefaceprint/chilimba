@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chilimba Shared Cart</title>
+  <link rel="icon" href="/assets/img/logo.png">
+  <link rel="apple-touch-icon" href="/assets/img/logo.png">
+
   <meta name="theme-color" content="#15803d">
   <link rel="manifest" href="/manifest.json">
   <link href="/assets/css/tailwind.css" rel="stylesheet">
@@ -644,8 +647,42 @@
         const data = await res.json();
         if (res.ok) {
           closeCheckoutModal();
-          document.getElementById('success-amount').textContent = `K${currentGrandTotal.toFixed(2)}`;
-          document.getElementById('order-success-overlay').style.display = 'flex';
+          
+          if (!useWallet && data.order_id) {
+            const overlay = document.getElementById('payment-polling-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            
+            let pollCount = 0;
+            const maxPolls = 20;
+            
+            const pollInterval = setInterval(async () => {
+              pollCount++;
+              try {
+                const orderRes = await fetch(`${API_BASE}/api/v1/orders`);
+                if (orderRes.ok) {
+                  const orderData = await orderRes.json();
+                  const myOrder = (orderData.orders || []).find(o => o.id === data.order_id);
+                  
+                  if (myOrder && myOrder.status === 'PAID') {
+                    clearInterval(pollInterval);
+                    if (overlay) overlay.style.display = 'none';
+                    document.getElementById('success-amount').textContent = `K${currentGrandTotal.toFixed(2)}`;
+                    document.getElementById('order-success-overlay').style.display = 'flex';
+                    fetchCartData();
+                  } else if (pollCount >= maxPolls) {
+                    clearInterval(pollInterval);
+                    if (overlay) overlay.style.display = 'none';
+                    alert('Payment verification timed out. If you paid, it will reflect shortly.');
+                    fetchCartData();
+                  }
+                }
+              } catch(e) {}
+            }, 3000);
+          } else {
+            document.getElementById('success-amount').textContent = `K${currentGrandTotal.toFixed(2)}`;
+            document.getElementById('order-success-overlay').style.display = 'flex';
+            fetchCartData();
+          }
         } else {
           alert('Checkout failed: ' + (data.error || 'Unknown error'));
         }
@@ -995,20 +1032,28 @@
 
             const pollInterval = setInterval(async () => {
               pollCount++;
-              await fetchCartData();
-              const myContrib = activeGroupContributions.find(c => c.user_id === activeUser.user_id);
-              
-              if (myContrib && myContrib.status === 'PAID') {
-                clearInterval(pollInterval);
-                if (overlay) overlay.style.display = 'none';
-                
-                // Show Success Confetti or Alert
-                alert('🎉 Payment Successful! Your contribution has been recorded.');
-              } else if (pollCount >= maxPolls) {
-                clearInterval(pollInterval);
-                if (overlay) overlay.style.display = 'none';
-                alert('Payment verification timed out. If you paid, it will reflect shortly.');
-              }
+              try {
+                const contribRes = await fetch(`${API_BASE}/api/v1/groups/contributions/${currentGroupId}`);
+                if (contribRes.ok) {
+                  const contribData = await contribRes.json();
+                  const myContrib = (contribData.contributions || []).find(c => c.user_id === activeUser.user_id);
+                  
+                  if (myContrib && myContrib.status === 'PAID') {
+                    clearInterval(pollInterval);
+                    if (overlay) overlay.style.display = 'none';
+                    
+                    // Show Success Confetti or Alert
+                    document.getElementById('success-amount').textContent = `K${myContrib.share_amount_zmw.toFixed(2)}`;
+                    document.getElementById('order-success-overlay').style.display = 'flex';
+                    fetchCartData(); // Re-render the UI
+                  } else if (pollCount >= maxPolls) {
+                    clearInterval(pollInterval);
+                    if (overlay) overlay.style.display = 'none';
+                    alert('Payment verification timed out. If you paid, it will reflect shortly.');
+                    fetchCartData();
+                  }
+                }
+              } catch(e) {}
             }, 3000);
           }
         } else {
