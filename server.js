@@ -95,13 +95,13 @@ app.post('/api/v1/user/add-shop', async (req, res) => {
     }
     
     const db = require('./backend/firestore').db;
-    const admin = require('firebase-admin');
+    const { FieldValue } = require('firebase-admin/firestore');
     
     const shopId = 'shop_' + Math.floor(Math.random() * 1000000);
     const newShop = { id: shopId, name: shop_name };
     
     await db.collection('users').doc(decoded.user_id).update({
-      shops: admin.firestore.FieldValue.arrayUnion(newShop)
+      shops: FieldValue.arrayUnion(newShop)
     });
     
     res.json({ success: true, shop: newShop });
