@@ -1084,7 +1084,8 @@
 
     function usePresetImage(url) {
       document.getElementById('p-image-url').value = url;
-      document.getElementById('img-preview-display').src = url;
+      const imgPreview = document.getElementById('upload-preview-img');
+      if (imgPreview) imgPreview.src = url;
       document.getElementById('upload-placeholder-state').classList.add('hidden');
       document.getElementById('upload-preview-state').classList.remove('hidden');
       closeUploadModal();
