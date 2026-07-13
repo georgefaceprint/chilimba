@@ -85,113 +85,165 @@
               <p class="text-xs text-gray-500 font-medium">Listing on behalf of: <span id="lbl-active-shop" class="font-bold text-green-700">Kariakoo Electronics</span></p>
             </div>
           </div>
-
-          <form id="product-form" class="space-y-4">
-            <div>
-              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Product Title</label>
-              <input type="text" id="p-title" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="e.g. Tanzanian Arabica Coffee">
-            </div>
-            
-            <div>
-              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Description</label>
-              <textarea id="p-description" rows="2" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-medium focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Brief details about the item..."></textarea>
-            </div>
-
-            <div>
-              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Search Category Suggestion (Optional)</label>
-              <div class="relative">
-                <input type="text" id="p-category-search" oninput="suggestCategory()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Type to search, e.g. Sneakers, Laptops, Rice...">
-                <div id="category-search-suggestions" class="hidden absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto z-50 p-2 space-y-1"></div>
+          <!-- Wizard Progress Bar -->
+          <div class="mb-8 mt-2">
+            <div class="flex items-center justify-between relative px-2">
+              <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-100 rounded-full z-0"></div>
+              <div id="wizard-progress-bar" class="absolute left-0 top-1/2 -translate-y-1/2 w-[15%] h-1.5 bg-green-600 rounded-full z-0 transition-all duration-300"></div>
+              
+              <div class="relative z-10 flex flex-col items-center">
+                <div id="step-1-circle" class="w-8 h-8 rounded-full bg-green-600 text-white font-bold flex items-center justify-center text-xs shadow border-2 border-white transition-colors duration-300">1</div>
+                <span id="step-1-text" class="text-[9px] font-bold text-green-700 mt-1 uppercase tracking-wider">Basic Info</span>
+              </div>
+              <div class="relative z-10 flex flex-col items-center">
+                <div id="step-2-circle" class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 font-bold flex items-center justify-center text-xs border-2 border-white transition-colors duration-300">2</div>
+                <span id="step-2-text" class="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-wider">Category</span>
+              </div>
+              <div class="relative z-10 flex flex-col items-center">
+                <div id="step-3-circle" class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 font-bold flex items-center justify-center text-xs border-2 border-white transition-colors duration-300">3</div>
+                <span id="step-3-text" class="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-wider">Pricing</span>
               </div>
             </div>
+          </div>
 
-            <div class="grid grid-cols-3 gap-3">
+          <form id="product-form">
+            <!-- STEP 1: BASIC INFO -->
+            <div id="wizard-step-1" class="space-y-4">
               <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Category (Parent)</label>
-                <select id="p-category" required onchange="handleCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
-                </select>
-                <input type="text" id="p-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="Enter Custom Category">
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Product Title</label>
+                <input type="text" id="p-title" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="e.g. Tanzanian Arabica Coffee">
               </div>
+              
               <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Sub-category (Child)</label>
-                <select id="p-sub-category" required onchange="handleSubCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
-                </select>
-                <input type="text" id="p-sub-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="Enter Custom Sub-cat">
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Description</label>
+                <textarea id="p-description" rows="2" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-medium focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Brief details about the item..."></textarea>
               </div>
-              <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Sub-sub (Grandchild)</label>
-                <select id="p-sub-sub-category" required onchange="handleSubSubCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
-                </select>
-                <input type="text" id="p-sub-sub-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="Enter Custom Sub-sub">
-              </div>
-            </div>
 
-            <div id="fashion-attributes-panel" class="hidden bg-green-50/50 border border-green-100 p-4 rounded-2xl space-y-3">
-              <p class="text-[10px] font-black uppercase text-green-800 tracking-wider">Fashion Specific Details</p>
+              <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Product Image</label>
+                <div id="image-upload-trigger" onclick="openUploadModal()" class="border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl p-6 text-center cursor-pointer hover:bg-green-50/50 hover:border-green-500 transition-all flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden group">
+                  <div id="upload-placeholder-state" class="flex flex-col items-center justify-center space-y-2">
+                    <div class="w-12 h-12 bg-green-100 text-green-700 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                    </div>
+                    <p class="text-xs font-black text-gray-700">Add Product Image</p>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tap to upload / Drag & Drop</p>
+                  </div>
+                  <div id="upload-preview-state" class="hidden absolute inset-0 w-full h-full bg-white flex items-center justify-center">
+                    <img id="upload-preview-img" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23d1d5db\' stroke-width=\'1.5\'%3E%3Crect x=\'3\' y=\'3\' width=\'18\' height=\'18\' rx=\'2\'/%3E%3Ccircle cx=\'8.5\' cy=\'8.5\' r=\'1.5\'/%3E%3Cpath d=\'M21 15l-5-5L5 21\'/%3E%3C/svg%3E';">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span class="bg-white/95 text-gray-900 px-4 py-2 rounded-xl text-xs font-bold shadow-md">Change Image</span>
+                    </div>
+                  </div>
+                </div>
+                <input type="hidden" id="p-image-url">
+              </div>
+
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-xs font-bold text-gray-700 mb-1.5">Available Sizes (Comma-separated)</label>
-                  <input type="text" id="p-sizes" class="w-full border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="e.g. S, M, L or 38, 39, 40">
+                  <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Origin Country</label>
+                  <select id="p-origin-country" onchange="updatePriceLabel()" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
+                    <option value="Tanzania">Tanzania</option>
+                    <option value="Zambia">Zambia</option>
+                  </select>
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-gray-700 mb-1.5">Available Colors (Comma-separated)</label>
-                  <input type="text" id="p-colors" class="w-full border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="e.g. Red, Blue, Black">
+                  <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Dispatch City</label>
+                  <select id="p-origin-city" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
+                    <option value="Dar es Salaam">Dar es Salaam</option>
+                    <option value="Tunduma/Nakonde">Tunduma/Nakonde</option>
+                    <option value="Lusaka">Lusaka</option>
+                  </select>
                 </div>
               </div>
+
+              <button type="button" onclick="goToWizardStep(2)" class="w-full bg-green-800 text-white py-4 mt-6 rounded-xl font-black text-sm shadow hover:bg-green-900 transition-colors btn-press flex justify-center items-center gap-2">
+                Continue to Categories <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+              </button>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <!-- STEP 2: CATEGORY -->
+            <div id="wizard-step-2" class="hidden space-y-4">
               <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Origin Country</label>
-                <select id="p-origin-country" onchange="updatePriceLabel()" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
-                  <option value="Tanzania">Tanzania</option>
-                  <option value="Zambia">Zambia</option>
-                </select>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Search Category Suggestion (Optional)</label>
+                <div class="relative">
+                  <input type="text" id="p-category-search" oninput="suggestCategory()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Type to search, e.g. Sneakers, Laptops...">
+                  <div id="category-search-suggestions" class="hidden absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto z-50 p-2 space-y-1"></div>
+                </div>
               </div>
-              <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Dispatch Hub / City</label>
-                <select id="p-origin-city" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
-                  <option value="Dar es Salaam">Dar es Salaam</option>
-                  <option value="Tunduma/Nakonde">Tunduma/Nakonde</option>
-                  <option value="Lusaka">Lusaka</option>
-                </select>
-              </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label id="lbl-price" class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Price (TZS)</label>
-                <input type="number" id="p-price" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="50000">
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-[10px] font-black uppercase tracking-wider text-gray-700 mb-2">Category</label>
+                  <select id="p-category" required onchange="handleCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-2.5 rounded-xl font-bold text-xs focus:bg-white focus:border-green-600 focus:outline-none">
+                  </select>
+                  <input type="text" id="p-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold text-xs focus:border-green-600 focus:outline-none" placeholder="Custom">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-black uppercase tracking-wider text-gray-700 mb-2">Sub-Category</label>
+                  <select id="p-sub-category" required onchange="handleSubCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-2.5 rounded-xl font-bold text-xs focus:bg-white focus:border-green-600 focus:outline-none">
+                  </select>
+                  <input type="text" id="p-sub-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold text-xs focus:border-green-600 focus:outline-none" placeholder="Custom">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-black uppercase tracking-wider text-gray-700 mb-2">Specifics</label>
+                  <select id="p-sub-sub-category" required onchange="handleSubSubCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-2.5 rounded-xl font-bold text-xs focus:bg-white focus:border-green-600 focus:outline-none">
+                  </select>
+                  <input type="text" id="p-sub-sub-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold text-xs focus:border-green-600 focus:outline-none" placeholder="Custom">
+                </div>
               </div>
-              <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Weight (KG)</label>
-                <input type="number" id="p-weight" step="0.1" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="1.5">
-              </div>
-            </div>
 
-            <div>
-              <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Product Image</label>
-              <div id="image-upload-trigger" onclick="openUploadModal()" class="border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl p-6 text-center cursor-pointer hover:bg-green-50/50 hover:border-green-500 transition-all flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden group">
-                <div id="upload-placeholder-state" class="flex flex-col items-center justify-center space-y-2">
-                  <div class="w-12 h-12 bg-green-100 text-green-700 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+              <div id="fashion-attributes-panel" class="hidden bg-green-50/50 border border-green-100 p-4 rounded-2xl space-y-3">
+                <p class="text-[10px] font-black uppercase text-green-800 tracking-wider">Fashion Specific Details</p>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1.5">Sizes (Comma-separated)</label>
+                    <input type="text" id="p-sizes" class="w-full border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="e.g. S, M, L or 38, 39, 40">
                   </div>
-                  <p class="text-xs font-black text-gray-700">Add Product Image</p>
-                  <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tap to upload / Drag & Drop</p>
-                </div>
-                <div id="upload-preview-state" class="hidden absolute inset-0 w-full h-full bg-white flex items-center justify-center">
-                  <img onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='1.5'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E';">
-                  <div class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span class="bg-white/95 text-gray-900 px-4 py-2 rounded-xl text-xs font-bold shadow-md">Change Image</span>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1.5">Colors (Comma-separated)</label>
+                    <input type="text" id="p-colors" class="w-full border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="e.g. Red, Blue, Black">
                   </div>
                 </div>
               </div>
-              <input type="hidden" id="p-image-url">
+
+              <div class="flex gap-3 pt-4">
+                <button type="button" onclick="goToWizardStep(1)" class="w-1/3 bg-gray-100 text-gray-700 py-4 rounded-xl font-black text-sm hover:bg-gray-200 transition-colors btn-press">
+                  Back
+                </button>
+                <button type="button" onclick="goToWizardStep(3)" class="w-2/3 bg-green-800 text-white py-4 rounded-xl font-black text-sm shadow hover:bg-green-900 transition-colors btn-press flex justify-center items-center gap-2">
+                  Continue to Pricing <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
             </div>
 
-            <button type="submit" id="btn-submit" class="w-full bg-green-800 text-white py-4 mt-4 rounded-xl font-black text-lg shadow-lg hover:bg-green-900 transition-colors btn-press">
-              Publish Listing
-            </button>
+            <!-- STEP 3: PRICING -->
+            <div id="wizard-step-3" class="hidden space-y-4">
+              <div class="bg-gray-50 border border-gray-200 p-4 rounded-2xl mb-4">
+                <p class="text-xs font-bold text-gray-600 mb-1">Pricing Guide</p>
+                <p class="text-[10px] text-gray-500">ZMW prices are calculated automatically if origin is outside Zambia. Make sure to input the true origin price correctly.</p>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label id="lbl-price" class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Price (TZS)</label>
+                  <input type="number" id="p-price" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="50000">
+                </div>
+                <div>
+                  <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Weight (KG)</label>
+                  <input type="number" id="p-weight" step="0.1" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="1.5">
+                </div>
+              </div>
+
+              <div class="flex gap-3 pt-6">
+                <button type="button" onclick="goToWizardStep(2)" class="w-1/3 bg-gray-100 text-gray-700 py-4 rounded-xl font-black text-sm hover:bg-gray-200 transition-colors btn-press">
+                  Back
+                </button>
+                <button type="submit" id="btn-submit" class="w-2/3 bg-green-800 text-white py-4 rounded-xl font-black text-sm shadow hover:bg-green-900 transition-colors btn-press flex justify-center items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Publish Listing
+                </button>
+              </div>
+            </div>
           </form>
         </div>
       </div>
@@ -643,18 +695,40 @@
       }, 200);
     }
 
-    function saveNewShop() {
+    async function saveNewShop() {
       const name = document.getElementById('ns-name').value;
       if(!name) return alert("Shop name required");
       
-      const select = document.getElementById('active-shop-select');
-      const newOption = new Option(name, 'shop_' + Math.floor(Math.random()*1000));
-      select.add(newOption);
-      select.value = newOption.value;
-      switchActiveShop();
-      
-      closeNewShopModal();
-      document.getElementById('ns-name').value = '';
+      const btn = document.querySelector('#new-shop-modal button.bg-green-600');
+      const oldText = btn.innerText;
+      btn.innerText = 'Saving...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/v1/user/add-shop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shop_name: name })
+        });
+        const data = await res.json();
+        
+        if (data.success && data.shop) {
+          const select = document.getElementById('active-shop-select');
+          const newOption = new Option(data.shop.name, data.shop.id);
+          select.add(newOption);
+          select.value = newOption.value;
+          switchActiveShop();
+          closeNewShopModal();
+          document.getElementById('ns-name').value = '';
+        } else {
+          alert('Failed to save shop: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Network error while saving shop.');
+      } finally {
+        btn.innerText = oldText;
+        btn.disabled = false;
+      }
     }
 
     // --- CATEGORY TAXONOMY DATABASE ---
@@ -1201,6 +1275,53 @@
       if (user && user.avatar) {
         document.getElementById('profile-img').src = user.avatar;
       }
+      
+      const select = document.getElementById('active-shop-select');
+      select.innerHTML = '';
+      if (user && user.shops && user.shops.length > 0) {
+        user.shops.forEach(shop => {
+          select.add(new Option(shop.name, shop.id));
+        });
+      } else {
+        select.add(new Option('My First Shop', 'default_shop'));
+      }
+      switchActiveShop();
+    }
+
+    function goToWizardStep(step) {
+      if (step === 2) {
+        if (!document.getElementById('p-title').value || !document.getElementById('p-description').value) {
+          return alert('Please fill in the Product Title and Description first.');
+        }
+      }
+
+      document.getElementById('wizard-step-1').classList.add('hidden');
+      document.getElementById('wizard-step-2').classList.add('hidden');
+      document.getElementById('wizard-step-3').classList.add('hidden');
+      
+      document.getElementById('wizard-step-' + step).classList.remove('hidden');
+
+      const bar = document.getElementById('wizard-progress-bar');
+      if (step === 1) bar.style.width = '15%';
+      if (step === 2) bar.style.width = '50%';
+      if (step === 3) bar.style.width = '100%';
+
+      ['step-1', 'step-2', 'step-3'].forEach((s, idx) => {
+        const circle = document.getElementById(s + '-circle');
+        const text = document.getElementById(s + '-text');
+        
+        if (idx + 1 <= step) {
+          circle.classList.remove('bg-gray-200', 'text-gray-400');
+          circle.classList.add('bg-green-600', 'text-white');
+          text.classList.remove('text-gray-400');
+          text.classList.add('text-green-700');
+        } else {
+          circle.classList.add('bg-gray-200', 'text-gray-400');
+          circle.classList.remove('bg-green-600', 'text-white');
+          text.classList.add('text-gray-400');
+          text.classList.remove('text-green-700');
+        }
+      });
     }
 
   </script>

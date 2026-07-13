@@ -83,6 +83,34 @@ app.post('/api/v1/user/update-kyc', async (req, res) => {
   }
 });
 
+app.post('/api/v1/user/add-shop', async (req, res) => {
+  const token = req.cookies.auth_token;
+  if (!token) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    const { shop_name } = req.body;
+    
+    if (!shop_name) {
+      return res.status(400).json({ success: false, error: 'Shop name is required' });
+    }
+    
+    const db = require('./backend/firestore').db;
+    const admin = require('firebase-admin');
+    
+    const shopId = 'shop_' + Math.floor(Math.random() * 1000000);
+    const newShop = { id: shopId, name: shop_name };
+    
+    await db.collection('users').doc(decoded.user_id).update({
+      shops: admin.firestore.FieldValue.arrayUnion(newShop)
+    });
+    
+    res.json({ success: true, shop: newShop });
+  } catch (err) {
+    console.error('[Add Shop Error]', err);
+    res.status(500).json({ success: false, error: 'Failed to add shop' });
+  }
+});
+
 app.post('/api/v1/auth/logout', (req, res) => {
   res.clearCookie('auth_token');
   res.json({ success: true });
