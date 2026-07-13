@@ -132,7 +132,7 @@
             </div>
           </div>
 
-          <form id="product-form">
+          <form id="product-form" novalidate>
             <!-- STEP 1: BASIC INFO -->
             <div id="wizard-step-1" class="space-y-4">
               <div>
@@ -1211,6 +1211,10 @@
         const originCity = document.getElementById('p-origin-city').value;
         const priceValue = parseFloat(document.getElementById('p-price').value);
         const weight = parseFloat(document.getElementById('p-weight').value);
+        
+        if (isNaN(priceValue) || isNaN(weight)) {
+          return alert('Please enter a valid Price and Weight.');
+        }
         const imageUrl = document.getElementById('p-image-url').value || '/assets/img/logo.png';
         
         const attributes = {};
