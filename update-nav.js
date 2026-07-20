@@ -134,8 +134,8 @@ function processFile(filePath, activePage) {
   const fullPath = path.join(__dirname, 'public', filePath);
   let content = fs.readFileSync(fullPath, 'utf8');
   
-  // Regex to match the entire <nav>...</nav> block
-  const navRegex = /<nav\b[^>]*>[\s\S]*?<\/nav>/i;
+  // Regex to match the unified nav block specifically
+  const navRegex = /<!-- BOTTOM NAVIGATION BAR \(Unified\) -->[\s\S]*?<\/nav>/i;
   
   if (navRegex.test(content)) {
     content = content.replace(navRegex, getNavForPage(activePage));
