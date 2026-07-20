@@ -1,123 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agent Dashboard - Chilimba</title>
-  <meta name="theme-color" content="#15803d">
-  <link href="/assets/css/tailwind.css" rel="stylesheet">
-  <script src="/assets/js/auth_guard.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-    .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  </style>
-</head>
-<body class="bg-gray-50 text-gray-800 flex flex-col h-[100dvh] overflow-hidden relative">
-
-  <!-- Header -->
-  <header class="flex-none bg-green-900 text-white shadow-md z-40">
-    <div class="max-w-7xl mx-auto w-full p-4 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-      <div class="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center font-black text-white shadow-sm border border-white">
-        A
-      </div>
-      <div>
-        <h1 class="text-lg font-black tracking-tight leading-none">Agent Portal</h1>
-        <p class="text-[10px] font-bold text-green-300 uppercase tracking-widest mt-0.5">Sourcing & Dispatch</p>
-      </div>
-    </div>
-    <div class="flex items-center space-x-3">
-      <button onclick="window.location.href='/signup.html?returnTo=/vendor-dashboard.html'" id="btn-login" class="bg-white text-green-900 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors btn-press">Sign In</button>
-      
-      <div id="user-profile" class="hidden items-center space-x-2">
-        <div class="text-right hidden sm:block">
-          <p class="text-sm font-bold leading-none" id="profile-name">Freda</p>
-          <p class="text-[10px] text-green-300 font-bold uppercase tracking-wide">Master Agent</p>
-        </div>
-        <div class="relative group cursor-pointer" onclick="openPasscodeModal()">
-          <img id="profile-img" class="w-10 h-10 rounded-full border-2 border-green-500 bg-white" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23d1d5db\' stroke-width=\'1.5\'%3E%3Crect x=\'3\' y=\'3\' width=\'18\' height=\'18\' rx=\'2\'/%3E%3Ccircle cx=\'8.5\' cy=\'8.5\' r=\'1.5\'/%3E%3Cpath d=\'M21 15l-5-5L5 21\'/%3E%3C/svg%3E';">
-          <div class="absolute -bottom-2 -right-2 bg-green-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow border-2 border-green-900 group-hover:scale-110 transition-transform">⚙️</div>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Agent Tools Strip (Shop Context) -->
-  <div id="agent-tools" class="hidden bg-white border-b border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.02)] z-30">
-    <div class="max-w-7xl mx-auto w-full p-3 flex gap-2 items-center overflow-x-auto hide-scrollbar">
-      <div class="flex-shrink-0 flex items-center bg-gray-100 rounded-lg p-1.5 px-3 border border-gray-200">
-      <span class="text-xs font-bold text-gray-500 mr-2 uppercase tracking-wider">Managing:</span>
-      <select id="active-shop-select" onchange="switchActiveShop()" class="bg-transparent text-sm font-black text-green-800 focus:outline-none cursor-pointer">
-        <option value="shop_1">Kariakoo Electronics</option>
-        <option value="shop_2">Tanzania Coffee Co.</option>
-      </select>
-    </div>
-    
-    <button onclick="openNewShopModal()" class="flex-shrink-0 bg-orange-50 text-orange-600 border border-orange-200 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 btn-press hover:bg-orange-100">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-      Add New Shop
-      </button>
-    </div>
-  </div>
-
-  <!-- Desktop Wrapper -->
-  <div class="flex flex-1 overflow-hidden w-full max-w-7xl mx-auto">
-  
-    <!-- DESKTOP SIDEBAR NAVIGATION -->
-    <aside id="desktop-sidebar" class="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 overflow-y-auto">
-      <div class="p-6">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Dashboard</p>
-        
-  <!-- BOTTOM NAVIGATION BAR (Unified) -->
-  <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 z-50 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_20px_rgba(0,0,0,0.04)] rounded-t-2xl">
-    <div class="max-w-md mx-auto flex justify-around items-center h-[65px]">
-      
-      <!-- Home -->
-      <a href="/" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M11.47 3.84a.75.75 0 011.06 0l8.99 8.99a.75.75 0 11-1.06 1.06L12 5.44 3.53 13.89a.75.75 0 11-1.06-1.06l8.99-8.99z"></path><path d="M12 5.44l-8.47 8.45a.75.75 0 00-.22.53v6.83c0 .96.78 1.75 1.75 1.75h13.88c.97 0 1.75-.79 1.75-1.75v-6.83a.75.75 0 00-.22-.53L12 5.44z"></path></svg>
-        <span class="text-[9px] font-bold">Home</span>
-        
-      </a>
-      
-      <!-- Groups -->
-      <a href="/dashboard.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-        <span class="text-[9px] font-bold">Groups</span>
-        
-      </a>
-      
-      <!-- Cart -->
-      <a href="/group-cart.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
-        <div class="relative">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-          <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full border border-white shadow-sm" id="nav-cart-badge"></span>
-        </div>
-        <span class="text-[9px] font-bold">Cart</span>
-        
-      </a>
-      
-      <!-- Agent -->
-      <a href="/vendor-dashboard.html" class="flex flex-col items-center gap-1 text-green-700 w-14 relative transition-colors btn-press">
-        <svg class="w-6 h-6" fill="currentColor" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-        <span class="text-[9px] font-bold">Agent</span>
-        <div class="absolute -bottom-1 w-1 h-1 bg-orange-500 rounded-full"></div>
-      </a>
-
-      <!-- Profile -->
-      <a href="/kyc-setup.html?returnTo=/dashboard.html" class="flex flex-col items-center gap-1 text-gray-400 hover:text-green-700 w-14 relative transition-colors btn-press">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-        <span class="text-[9px] font-bold">Profile</span>
-        
-      </a>
-      
-    </div>
-  </nav>
-  <script>
     async function updateGlobalCartBadge() {
       try {
         const authRes = await fetch('/api/v1/auth/me');
@@ -144,507 +24,6 @@
     updateGlobalCartBadge();
     // Also listen for custom event in case items are added on the same page
     window.addEventListener('cart-updated', updateGlobalCartBadge);
-
-    // Agent Add Product FAB
-    async function checkAgentFAB() {
-      try {
-        if(window.location.pathname.includes('vendor-dashboard.html')) return; // Don't show on dashboard itself, it has its own tabs
-        const authRes = await fetch('/api/v1/auth/me');
-        if(!authRes.ok) return;
-        const authData = await authRes.json();
-        if(authData.authenticated && (authData.user.role === 'AGENT' || authData.user.role === 'SUPER_ADMIN')) {
-          const fab = document.createElement('a');
-          fab.href = '/vendor-dashboard.html?tab=listings';
-          fab.className = 'fixed bottom-[85px] right-4 bg-orange-500 text-white w-14 h-14 rounded-full shadow-lg z-[60] flex items-center justify-center hover:bg-orange-600 transition-transform transform hover:scale-105 active:scale-95 border-2 border-white shadow-[0_4px_15px_rgba(249,115,22,0.4)]';
-          fab.innerHTML = '<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>';
-          document.body.appendChild(fab);
-        }
-      } catch(e) {}
-    }
-    checkAgentFAB();
-  </script>
-
-      </div>
-    </aside>
-
-    <!-- Main Dashboard Content -->
-    <main class="flex-1 overflow-y-auto w-full p-4 md:p-8 pb-28 md:pb-8 hide-scrollbar">
-      
-      <div class="max-w-md md:max-w-6xl mx-auto w-full hidden" id="dashboard-content">
-      
-      <!-- LISTINGS TAB -->
-      <div id="view-listings">
-        <div class="bg-white rounded-3xl shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-gray-100 p-6 mb-6 max-w-2xl mx-auto">
-          <div class="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
-            <div>
-              <h2 id="form-title" class="text-xl font-black text-gray-900 mb-1">List a Product</h2>
-              <p class="text-xs text-gray-500 font-medium">Listing on behalf of: <span id="lbl-active-shop" class="font-bold text-green-700">Kariakoo Electronics</span></p>
-            </div>
-          </div>
-          <!-- Wizard Progress Bar -->
-          <div class="mb-8 mt-2">
-            <div class="flex items-center justify-between relative px-2">
-              <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-100 rounded-full z-0"></div>
-              <div id="wizard-progress-bar" class="absolute left-0 top-1/2 -translate-y-1/2 w-[15%] h-1.5 bg-green-600 rounded-full z-0 transition-all duration-300"></div>
-              
-              <div class="relative z-10 flex flex-col items-center">
-                <div id="step-1-circle" class="w-8 h-8 rounded-full bg-green-600 text-white font-bold flex items-center justify-center text-xs shadow border-2 border-white transition-colors duration-300">1</div>
-                <span id="step-1-text" class="text-[9px] font-bold text-green-700 mt-1 uppercase tracking-wider">Basic Info</span>
-              </div>
-              <div class="relative z-10 flex flex-col items-center">
-                <div id="step-2-circle" class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 font-bold flex items-center justify-center text-xs border-2 border-white transition-colors duration-300">2</div>
-                <span id="step-2-text" class="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-wider">Category</span>
-              </div>
-              <div class="relative z-10 flex flex-col items-center">
-                <div id="step-3-circle" class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 font-bold flex items-center justify-center text-xs border-2 border-white transition-colors duration-300">3</div>
-                <span id="step-3-text" class="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-wider">Pricing</span>
-              </div>
-            </div>
-          </div>
-
-          <form id="product-form" novalidate>
-            <!-- STEP 1: BASIC INFO -->
-            <div id="wizard-step-1" class="space-y-4">
-              <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Product Title</label>
-                <input type="text" id="p-title" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="e.g. Tanzanian Arabica Coffee">
-              </div>
-              
-              <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Description</label>
-                <textarea id="p-description" rows="2" required class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-medium focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Brief details about the item..."></textarea>
-              </div>
-
-              <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Product Images (Up to 4)</label>
-                <div id="image-grid-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <!-- Rendered by JS -->
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Origin Country</label>
-                  <select id="p-origin-country" onchange="updatePriceLabel()" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
-                    <option value="Tanzania">Tanzania</option>
-                    <option value="Zambia">Zambia</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Dispatch City</label>
-                  <select id="p-origin-city" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none">
-                    <option value="Dar es Salaam">Dar es Salaam</option>
-                    <option value="Tunduma/Nakonde">Tunduma/Nakonde</option>
-                    <option value="Lusaka">Lusaka</option>
-                  </select>
-                </div>
-              </div>
-
-              <button type="button" onclick="goToWizardStep(2)" class="w-full bg-green-800 text-white py-4 mt-6 rounded-xl font-black text-sm shadow hover:bg-green-900 transition-colors btn-press flex justify-center items-center gap-2">
-                Continue to Categories <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
-              </button>
-            </div>
-
-            <!-- STEP 2: CATEGORY -->
-            <div id="wizard-step-2" class="hidden space-y-4">
-              <div>
-                <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Search Category Suggestion (Optional)</label>
-                <div class="relative">
-                  <input type="text" id="p-category-search" oninput="suggestCategory()" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="Type to search, e.g. Sneakers, Laptops...">
-                  <div id="category-search-suggestions" class="hidden absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto z-50 p-2 space-y-1"></div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-[10px] font-black uppercase tracking-wider text-gray-700 mb-2">Category</label>
-                  <select id="p-category" required onchange="handleCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-2.5 rounded-xl font-bold text-xs focus:bg-white focus:border-green-600 focus:outline-none">
-                  </select>
-                  <input type="text" id="p-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold text-xs focus:border-green-600 focus:outline-none" placeholder="Custom">
-                </div>
-                <div>
-                  <label class="block text-[10px] font-black uppercase tracking-wider text-gray-700 mb-2">Sub-Category</label>
-                  <select id="p-sub-category" required onchange="handleSubCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-2.5 rounded-xl font-bold text-xs focus:bg-white focus:border-green-600 focus:outline-none">
-                  </select>
-                  <input type="text" id="p-sub-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold text-xs focus:border-green-600 focus:outline-none" placeholder="Custom">
-                </div>
-                <div>
-                  <label class="block text-[10px] font-black uppercase tracking-wider text-gray-700 mb-2">Specifics</label>
-                  <select id="p-sub-sub-category" required onchange="handleSubSubCategoryChange()" class="w-full border-2 border-gray-200 bg-gray-50 p-2.5 rounded-xl font-bold text-xs focus:bg-white focus:border-green-600 focus:outline-none">
-                  </select>
-                  <input type="text" id="p-sub-sub-category-custom" class="hidden w-full mt-2 border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold text-xs focus:border-green-600 focus:outline-none" placeholder="Custom">
-                </div>
-              </div>
-
-              <div id="fashion-attributes-panel" class="hidden bg-green-50/50 border border-green-100 p-4 rounded-2xl space-y-3">
-                <p class="text-[10px] font-black uppercase text-green-800 tracking-wider">Fashion Specific Details</p>
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1.5">Sizes (Comma-separated)</label>
-                    <input type="text" id="p-sizes" class="w-full border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="e.g. S, M, L or 38, 39, 40">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1.5">Colors (Comma-separated)</label>
-                    <input type="text" id="p-colors" class="w-full border-2 border-gray-200 bg-white p-2.5 rounded-xl font-bold focus:border-green-600 focus:outline-none" placeholder="e.g. Red, Blue, Black">
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex gap-3 pt-4">
-                <button type="button" onclick="goToWizardStep(1)" class="w-1/3 bg-gray-100 text-gray-700 py-4 rounded-xl font-black text-sm hover:bg-gray-200 transition-colors btn-press">
-                  Back
-                </button>
-                <button type="button" onclick="goToWizardStep(3)" class="w-2/3 bg-green-800 text-white py-4 rounded-xl font-black text-sm shadow hover:bg-green-900 transition-colors btn-press flex justify-center items-center gap-2">
-                  Continue to Pricing <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- STEP 3: PRICING -->
-            <div id="wizard-step-3" class="hidden space-y-4">
-              <div class="bg-gray-50 border border-gray-200 p-4 rounded-2xl mb-4">
-                <p class="text-xs font-bold text-gray-600 mb-1">Pricing Guide</p>
-                <p class="text-[10px] text-gray-500">ZMW prices are calculated automatically if origin is outside Zambia. Make sure to input the true origin price correctly.</p>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label id="lbl-price" class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Price (TZS)</label>
-                  <input type="number" id="p-price" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="50000">
-                </div>
-                <div>
-                  <label class="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">Weight (KG)</label>
-                  <input type="number" id="p-weight" step="0.1" class="w-full border-2 border-gray-200 bg-gray-50 p-3.5 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="1.5">
-                </div>
-              </div>
-
-              <div class="flex gap-3 pt-6">
-                <button type="button" onclick="goToWizardStep(2)" class="w-1/3 bg-gray-100 text-gray-700 py-4 rounded-xl font-black text-sm hover:bg-gray-200 transition-colors btn-press">
-                  Back
-                </button>
-                <button type="submit" id="btn-submit" class="w-2/3 bg-green-800 text-white py-4 rounded-xl font-black text-sm shadow hover:bg-green-900 transition-colors btn-press flex justify-center items-center gap-2">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Publish Listing
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- ORDERS TAB -->
-      <div id="view-orders" class="hidden">
-        <div class="flex justify-between items-center mb-4">
-          <div>
-            <h3 class="text-xl font-black text-gray-900">Orders to Dispatch</h3>
-            <p class="text-xs text-gray-500 font-medium">Filtering: <span class="font-bold text-gray-800">All My Shops</span></p>
-          </div>
-          <button class="bg-gray-100 text-gray-700 p-2 rounded-lg font-bold text-xs btn-press">Filter</button>
-        </div>
-        
-        <div id="orders-list" class="space-y-4">
-          <!-- Dynamic orders injected here -->
-
-        </div>
-      </div>
-    </div>
-
-    <!-- Login Prompt -->
-    <div id="login-prompt" class="max-w-md mx-auto mt-20 text-center px-4">
-      <div class="w-24 h-24 bg-green-100 text-green-800 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
-        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-      </div>
-      <h2 class="text-2xl font-black text-gray-900 mb-2">Agent Access</h2>
-      <p class="text-gray-500 font-medium mb-8 text-sm">Sign in to manage multiple shops and handle origin dispatches for your zone.</p>
-      <button onclick="window.location.href='/signup.html?returnTo=/vendor-dashboard.html'" class="w-full bg-green-800 text-white py-4 rounded-xl font-black text-lg hover:bg-green-900 transition-colors shadow-lg btn-press">Sign In</button>
-      <!-- OVERVIEW TAB -->
-      <div id="view-overview" class="hidden h-[60vh] flex flex-col items-center justify-center text-center">
-        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        </div>
-        <h2 class="text-xl font-black text-gray-800">Agent Overview</h2>
-        <p class="text-gray-500 mt-2 text-sm max-w-[250px]">Your performance dashboard is coming soon.</p>
-      </div>
-
-      <!-- INVENTORY TAB -->
-      <div id="view-inventory" class="hidden pb-24">
-        <div class="px-5 py-6">
-          <h2 class="text-2xl font-black text-gray-900 mb-1">My Inventory</h2>
-          <p class="text-sm text-gray-500 mb-6">Manage products for your shops.</p>
-          
-          <div class="mb-6 relative">
-            <select id="inventory-shop-select" onchange="loadInventoryForShop()" class="w-full pl-11 pr-10 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
-              <option value="" disabled selected>Select a Shop</option>
-            </select>
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <div class="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-              </div>
-            </div>
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
-          
-          <!-- Loading State -->
-          <div id="inventory-loading" class="hidden flex-col items-center justify-center py-10">
-            <div class="animate-spin rounded-full h-10 w-10 border-4 border-green-200 border-t-green-700 mb-3"></div>
-            <p class="text-gray-500 text-sm font-medium">Loading inventory...</p>
-          </div>
-          
-          <!-- Inventory List -->
-          <div id="inventory-list" class="space-y-4">
-            <!-- Products injected here -->
-          </div>
-        </div>
-      </div>
-
-      <!-- WALLET TAB -->
-      <div id="view-wallet" class="hidden h-[60vh] flex flex-col items-center justify-center text-center">
-        <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4 text-green-600">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-        </div>
-        <h2 class="text-xl font-black text-gray-800">My Wallet</h2>
-        <p class="text-gray-500 mt-2 text-sm max-w-[250px]">Your earnings and payouts dashboard is coming soon.</p>
-      </div>
-    </div>
-  </main>
-  
-  </div> <!-- End Desktop Wrapper -->
-
-  <!-- Edit Modal -->
-  <div id="edit-modal" class="fixed inset-0 z-50 bg-black/60 hidden items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm transition-opacity">
-    <div class="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-        <h3 class="font-black text-lg text-gray-900">Edit Listing</h3>
-        <button onclick="closeEditModal()" class="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center hover:bg-gray-300 btn-press">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-      <div class="p-5 overflow-y-auto flex-1">
-        <form id="edit-form" onsubmit="submitEditForm(event)" class="space-y-4">
-          <input type="hidden" id="edit-product-id">
-          
-          <div>
-            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Title</label>
-            <input type="text" id="edit-title" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400">
-          </div>
-
-          <div>
-            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Images</label>
-            <div class="grid grid-cols-4 gap-2 mb-2" id="edit-image-grid-container">
-              <!-- Dynamically populated -->
-            </div>
-            <input type="hidden" id="edit-image-urls">
-          </div>
-          
-          <div id="edit-price-tzs-container" class="hidden">
-            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Price (TZS)</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">TSh</span>
-              <input type="number" id="edit-price-tzs" class="w-full pl-14 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
-            </div>
-            <p class="text-[10px] text-gray-500 mt-1 ml-1 font-medium">ZMW price will be auto-calculated with agent margin and forex markup.</p>
-          </div>
-          
-          <div id="edit-price-zmw-container" class="hidden">
-            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Price (ZMW)</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">K</span>
-              <input type="number" id="edit-price-zmw" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
-            </div>
-          </div>
-          
-          <div>
-            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Description</label>
-            <textarea id="edit-desc" rows="4" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none placeholder-gray-400"></textarea>
-          </div>
-          
-          <button type="submit" id="btn-save-edit" class="w-full mt-4 bg-green-700 text-white py-4 rounded-xl font-black text-sm shadow-md hover:bg-green-800 transition-colors btn-press flex justify-center items-center h-[52px]">
-            Save Changes
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Overlay for modals -->
-  <div id="passcode-modal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
-    <div class="glass-modal w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden p-6 relative">
-      <button onclick="closeModal('passcode-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800 btn-press">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
-      <h3 class="font-black text-2xl text-gray-900 mb-2">Set Quick Passcode</h3>
-      <p class="text-sm text-gray-500 mb-6">Create a 5-digit passcode for faster logins.</p>
-      <input type="password" id="new-passcode-input" class="w-full border-2 border-gray-300 p-4 rounded-xl text-center text-3xl font-black tracking-[1em] focus:border-green-600 focus:outline-none mb-4" maxlength="5" placeholder="•••••">
-      <button onclick="submitNewPasscode()" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 btn-press">Save Passcode</button>
-      <button onclick="logoutUser()" class="w-full mt-3 bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 btn-press">Logout Completely</button>
-    </div>
-  </div>
-
-  <!-- NEW SHOP MODAL -->
-  <div id="new-shop-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
-    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform" id="new-shop-content">
-      <div class="p-6">
-        <h3 class="font-black text-xl text-gray-900 mb-1">Register New Shop</h3>
-        <p class="text-xs text-gray-500 font-medium mb-5">Create a shop profile to list products under.</p>
-        
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs font-black uppercase text-gray-700 mb-1.5">Shop Name</label>
-            <input type="text" id="ns-name" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="e.g. Kariakoo Electronics">
-          </div>
-          <div>
-            <label class="block text-xs font-black uppercase text-gray-700 mb-1.5">Owner Phone (Optional)</label>
-            <input type="tel" id="ns-phone" class="w-full border-2 border-gray-200 bg-gray-50 p-3 rounded-xl font-bold focus:bg-white focus:border-green-600 focus:outline-none" placeholder="+255...">
-          </div>
-        </div>
-        
-        <button onclick="saveNewShop()" class="w-full bg-green-800 text-white py-3.5 mt-6 rounded-xl font-black text-lg shadow-md hover:bg-green-900 transition-colors btn-press">Register Shop</button>
-      </div>
-      <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
-        <button onclick="closeNewShopModal()" class="text-gray-500 text-sm font-bold hover:text-gray-800 btn-press">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- IMAGE UPLOAD MODAL -->
-  <div id="image-upload-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
-    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform" id="image-upload-content">
-      <div class="p-6">
-        <h3 class="font-black text-xl text-gray-900 mb-1">Upload Product Image</h3>
-        <p class="text-xs text-gray-500 font-medium mb-5">Select a file from your device or choose a preset.</p>
-        
-        <!-- Drag & Drop / Tap Zone -->
-        <div id="modal-drop-zone" onclick="triggerFileInput()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl p-6 text-center cursor-pointer hover:bg-green-50/50 hover:border-green-500 transition-all flex flex-col items-center justify-center space-y-2 mb-4 group min-h-[140px]">
-          <svg class="w-8 h-8 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-          <span id="drop-zone-text" class="text-xs font-bold text-gray-700">Choose File or Drop Here</span>
-          <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">PNG, JPG up to 5MB</span>
-          <input type="file" id="modal-file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
-        </div>
-
-        <!-- Presets -->
-        <div class="mb-4">
-          <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-wider">Or Use Preset Image</label>
-          <div class="grid grid-cols-3 gap-2">
-            <button type="button" onclick="usePresetImage('/assets/img/potatoes_bucket.png')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
-              <img src="/assets/img/potatoes_bucket.png" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='1.5'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E';">
-            </button>
-            <button type="button" onclick="usePresetImage('/assets/img/nakonde_rice.png')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
-              <img src="/assets/img/nakonde_rice.png" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='1.5'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E';">
-            </button>
-            <button type="button" onclick="usePresetImage('/assets/img/logo.png')" class="border border-gray-200 hover:border-green-500 rounded-xl overflow-hidden aspect-square p-1 bg-white btn-press flex flex-col items-center justify-center">
-              <img onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='1.5'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E';">
-            </button>
-          </div>
-        </div>
-
-        <!-- Uploading Indicator -->
-        <div id="uploading-spinner" class="hidden flex items-center justify-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl mb-4">
-          <div class="animate-spin h-5 w-5 border-2 border-green-700 rounded-full border-t-transparent"></div>
-          <span class="text-xs font-bold text-green-800">Uploading to server...</span>
-        </div>
-      </div>
-      <div class="bg-gray-50 p-4 text-center border-t border-gray-100 flex justify-between px-6">
-        <button onclick="closeUploadModal()" class="text-gray-500 text-xs font-bold hover:text-gray-800 btn-press">Cancel</button>
-        <button id="btn-upload-submit" onclick="performUpload()" class="bg-green-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm hover:bg-green-900 transition-colors btn-press hidden">Upload Selected</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- LISTING CONFIRMATION MODAL -->
-  <div id="confirm-modal" class="fixed inset-0 z-[100] bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
-    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform" id="confirm-content">
-      <div class="p-6">
-        <h3 class="font-black text-xl text-gray-900 mb-1">Confirm Product Details</h3>
-        <p class="text-xs text-gray-500 font-medium mb-4">Please review these details before publishing.</p>
-        
-        <div class="space-y-3.5 border-t border-b border-gray-100 py-4 mb-4">
-          <!-- Image preview -->
-          <div class="w-full h-32 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center border border-gray-100">
-            <img id="conf-image" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\\\'http://www.w3.org/2000/svg\\\' width=\\\'80\\\' height=\\\'80\\\' viewBox=\\\'0 0 24 24\\\' fill=\\\'none\\\' stroke=\\\'%23d1d5db\\\' stroke-width=\\\'1.5\\\'%3E%3Crect x=\\\'3\\\' y=\\\'3\\\' width=\\\'18\\\' height=\\\'18\\\' rx=\\\'2\\\'/%3E%3Ccircle cx=\\\'8.5\\\' cy=\\\'8.5\\\' r=\\\'1.5\\\'/%3E%3Cpath d=\\\'M21 15l-5-5L5 21\\\'/%3E%3C/svg%3E';">
-          </div>
-          
-          <div class="flex justify-between items-start">
-            <span class="text-xs font-bold text-gray-400 uppercase">Title</span>
-            <span id="conf-title" class="text-sm font-black text-gray-900 text-right max-w-[200px] line-clamp-2"></span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-xs font-bold text-gray-400 uppercase">Category</span>
-            <span id="conf-category" class="text-xs font-black text-gray-800"></span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-xs font-bold text-gray-400 uppercase">Price</span>
-            <span id="conf-price" class="text-sm font-black text-green-700"></span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-xs font-bold text-gray-400 uppercase">Weight</span>
-            <span id="conf-weight" class="text-xs font-black text-gray-800"></span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-xs font-bold text-gray-400 uppercase">Origin</span>
-            <span id="conf-origin" class="text-xs font-black text-gray-800"></span>
-          </div>
-        </div>
-        
-        <button onclick="publishConfirmedListing()" class="w-full bg-green-800 text-white py-3.5 rounded-xl font-black text-lg shadow-md hover:bg-green-900 transition-colors btn-press">
-          Yes, Publish Now
-        </button>
-      </div>
-      <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
-        <button onclick="closeConfirmModal()" class="text-gray-500 text-sm font-bold hover:text-gray-800 btn-press">Cancel & Edit</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom Navigation Bar -->
-  
-  <!-- BOTTOM NAVIGATION BAR (Unified) -->
-  
-  <!-- BOTTOM NAVIGATION BAR (Unified) -->
-  
-  <!-- BOTTOM NAVIGATION BAR (Unified) -->
-  
-  <!-- BOTTOM NAVIGATION BAR (Agent Only, hidden on desktop) -->
-  <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 z-50 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_20px_rgba(0,0,0,0.04)] rounded-t-2xl md:hidden">
-    <div id="agent-bottom-nav" class="hidden max-w-md mx-auto justify-around items-center h-[65px]">
-      
-      <!-- Overview -->
-      <button onclick="switchTab('overview')" id="nav-overview" class="flex flex-col items-center gap-1 text-gray-400 w-14 relative transition-colors btn-press">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        <span class="text-[9px] font-bold">Overview</span>
-      </button>
-      
-      <!-- Listings (Add) -->
-      <button onclick="switchTab('listings')" id="nav-listings" class="flex flex-col items-center gap-1 text-green-700 w-14 relative transition-colors btn-press">
-        <svg class="w-6 h-6" fill="currentColor" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
-        <span class="text-[9px] font-bold">Add</span>
-        <div class="absolute -bottom-1 w-1 h-1 bg-orange-500 rounded-full" id="nav-listings-dot"></div>
-      </button>
-
-      <!-- Inventory -->
-      <button onclick="switchTab('inventory')" id="nav-inventory" class="flex flex-col items-center gap-1 text-gray-400 w-14 relative transition-colors btn-press">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-        <span class="text-[9px] font-bold">Inventory</span>
-      </button>
-      
-      <!-- Orders -->
-      <button onclick="switchTab('orders')" id="nav-orders" class="flex flex-col items-center gap-1 text-gray-400 w-14 relative transition-colors btn-press">
-        <div class="relative">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-          <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full border border-white shadow-sm" id="nav-orders-badge">3</span>
-        </div>
-        <span class="text-[9px] font-bold">Orders</span>
-      </button>
-
-      <!-- Wallet -->
-      <button onclick="switchTab('wallet')" id="nav-wallet" class="flex flex-col items-center gap-1 text-gray-400 w-14 relative transition-colors btn-press">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-        <span class="text-[9px] font-bold">Wallet</span>
-      </button>
-      
-    </div>
-  </nav>
-  <script>
     async function updateGlobalCartBadge() {
       try {
         const authRes = await fetch('/api/v1/auth/me');
@@ -671,41 +50,6 @@
     updateGlobalCartBadge();
     // Also listen for custom event in case items are added on the same page
     window.addEventListener('cart-updated', updateGlobalCartBadge);
-  </script>
-
-  <script>
-    async function updateGlobalCartBadge() {
-      try {
-        const authRes = await fetch('/api/v1/auth/me');
-        if(!authRes.ok) return;
-        const authData = await authRes.json();
-        if(!authData.authenticated) return;
-        
-        let groupId = localStorage.getItem('activeGroupId');
-        if (!groupId) groupId = 'PERSONAL_' + authData.user.user_id;
-        
-        const cartRes = await fetch('/api/v1/cart/' + groupId + '?user_id=' + authData.user.user_id);
-        if(cartRes.ok) {
-          const cartData = await cartRes.json();
-          const badge = document.getElementById('nav-cart-badge');
-          if (badge) {
-            const count = (cartData.items || []).length;
-            badge.innerText = count > 0 ? count : '';
-            badge.style.display = count > 0 ? 'flex' : 'none';
-          }
-        }
-      } catch(e) {}
-    }
-    // Update badge on load
-    updateGlobalCartBadge();
-    // Also listen for custom event in case items are added on the same page
-    window.addEventListener('cart-updated', updateGlobalCartBadge);
-  </script>
-
-
-
-
-  <script>
     let activeUser = null;
 
     function switchTab(tabId) {
@@ -829,7 +173,7 @@
       if (!pc || pc.length < 5) return alert('Passcode must be at least 5 digits');
       
       try {
-        const res = await fetch(`/api/v1/auth/change-passcode`, {
+        const res = await fetch(`${API_BASE}/api/v1/auth/change-passcode`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ passcode: pc })
@@ -1407,8 +751,9 @@
           productForm.reset();
           
           // Reset image preview state
-          productImageUrls = [];
-          renderImageGrid();
+          document.getElementById('p-image-url').value = '';
+          document.getElementById('upload-preview-state').classList.add('hidden');
+          document.getElementById('upload-placeholder-state').classList.remove('hidden');
           
           updatePriceLabel();
         } else {
@@ -1518,25 +863,13 @@
       const select = document.getElementById('active-shop-select');
       select.innerHTML = '';
       if (user && user.shops && user.shops.length > 0) {
-        window.cachedShops = user.shops;
         user.shops.forEach(shop => {
           select.add(new Option(shop.name, shop.id));
         });
       } else {
-        window.cachedShops = [{ id: 'default_shop', name: 'My First Shop' }];
         select.add(new Option('My First Shop', 'default_shop'));
       }
-      if (typeof populateInventoryShopSelect === 'function') {
-        populateInventoryShopSelect();
-      }
       switchActiveShop();
-
-      // Check if URL specifies a tab
-      const urlParams = new URLSearchParams(window.location.search);
-      const targetTab = urlParams.get('tab');
-      if (targetTab) {
-        switchTab(targetTab);
-      }
     }
 
     function goToWizardStep(step) {
@@ -1677,10 +1010,8 @@
     let currentInventory = [];
     
     async function loadInventoryForShop() {
-      const invSelect = document.getElementById('inventory-shop-select');
-      const activeSelect = document.getElementById('active-shop-select');
-      // Use inventory select if visible/populated, fallback to active-shop-select
-      const shopId = (invSelect && invSelect.value) ? invSelect.value : (activeSelect ? activeSelect.value : null);
+      const shopSelect = document.getElementById('active-shop-select');
+      const shopId = shopSelect ? shopSelect.value : null;
       const listContainer = document.getElementById('inventory-list');
       const loader = document.getElementById('inventory-loading');
       
@@ -1695,12 +1026,8 @@
         if (!res.ok) throw new Error('Failed to fetch products');
         const data = await res.json();
         
-        // Filter products for the selected shop, unless "all" is selected
-        if (shopId === 'all') {
-          currentInventory = data.products;
-        } else {
-          currentInventory = data.products.filter(p => p.supplier_id === shopId);
-        }
+        // Filter products for the selected shop
+        currentInventory = data.products.filter(p => p.supplier_id === shopId);
         
         loader.classList.add('hidden');
         loader.classList.remove('flex');
@@ -1762,7 +1089,7 @@
       const invSelect = document.getElementById('inventory-shop-select');
       if (!invSelect || !window.cachedShops) return;
       
-      let html = '<option value="all">All Shops (Global)</option>';
+      let html = '<option value="" disabled selected>Select a Shop</option>';
       window.cachedShops.forEach(shop => {
         html += `<option value="${shop.id}">${shop.name}</option>`;
       });
@@ -1933,7 +1260,3 @@
       }
     }
 
-  </script>
-  <script src="/pwa-install.js"></script>
-</body>
-</html>

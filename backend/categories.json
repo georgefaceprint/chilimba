@@ -1,0 +1,57 @@
+{
+  "Home, Furniture & Appliances": {
+    "Lighting": ["Indoor Lighting", "Outdoor Lighting", "Light Bulbs", "Other"],
+    "Storage & Organization": ["Wardrobes", "Shelves & Racks", "Storage Boxes", "Other"],
+    "Furniture": ["Sofas & Living Room", "Beds & Bedroom", "Tables & Chairs", "Office Furniture", "Cabinets & Storage"],
+    "Home Accessories": ["Rugs & Carpets", "Curtains & Blinds", "Wall Art", "Mirrors", "Other"],
+    "Home Appliances": ["Washing Machines", "Air Conditioners", "Fans", "Irons", "Other"],
+    "Kitchen Appliances": ["Microwaves", "Blenders & Juicers", "Refrigerators", "Ovens & Stoves", "Other"],
+    "Kitchenware & Cookware": ["Pots & Pans", "Tableware", "Cutlery", "Other"],
+    "Other": ["Other"]
+  },
+  "Fashion": {
+    "Clothing": ["Dresses", "Tops & Blouses", "Skirts", "Trousers", "Shirts", "T-Shirts", "Suits", "Traditional Wear", "Other"],
+    "Shoes": ["Sneakers", "Sandals", "Boots", "Formal Shoes", "Other"],
+    "Bags": ["Handbags", "Backpacks", "Travel Bags", "Wallets", "Other"],
+    "Clothing Accessories": ["Watches", "Sunglasses", "Belts", "Hats & Caps", "Other"],
+    "Jewelry": ["Necklaces", "Rings", "Bracelets", "Earrings", "Other"],
+    "Wedding Wear & Accessories": ["Bridal Gowns", "Groom Suits", "Wedding Rings", "Other"],
+    "Other": ["Other"]
+  },
+  "Beauty & Personal Care": {
+    "Makeup": ["Face", "Eyes", "Lips", "Makeup Brushes & Tools", "Other"],
+    "Face Care": ["Cleansers", "Serums", "Moisturizers", "Sunscreen", "Other"],
+    "Body Care": ["Lotions & Creams", "Body Wash", "Scrubs", "Other"],
+    "Hair Beauty": ["Shampoo & Conditioner", "Wigs & Extensions", "Hair Oils", "Styling Tools", "Other"],
+    "Fragrances": ["Women's Perfume", "Men's Cologne", "Body Splashes", "Other"],
+    "Oral Care": ["Toothpaste", "Toothbrushes", "Mouthwash", "Other"],
+    "Tools & Accessories": ["Mirrors", "Sponges", "Other"],
+    "Other": ["Other"]
+  },
+  "Babies & Kids": {
+    "Children's Clothing": ["Boys' Clothing", "Girls' Clothing", "Baby Clothes", "Other"],
+    "Children's Shoes": ["Boys' Shoes", "Girls' Shoes", "Baby Shoes", "Other"],
+    "Baby Gear & Equipment": ["Strollers & Prams", "Car Seats", "Baby Carriers", "Other"],
+    "Children's Furniture": ["Cribs & Beds", "High Chairs", "Playpens", "Other"],
+    "Toys & Games": ["Educational Toys", "Dolls & Action Figures", "Outdoor Play", "Board Games", "Other"],
+    "Care & Feeding": ["Diapers & Wipes", "Feeding Bottles", "Breast Pumps", "Bath & Skincare", "Other"],
+    "Maternity & Pregnancy": ["Maternity Clothing", "Pregnancy Pillows", "Other"],
+    "Other": ["Other"]
+  },
+  "Groceries & Agriculture": {
+    "Grains & Cereals": ["Rice", "Maize & Corn", "Wheat & Flour", "Beans", "Other"],
+    "Vegetables & Fruits": ["Potatoes", "Onions", "Tomatoes", "Cabbages", "Fruits", "Other"],
+    "Coffee & Tea": ["Coffee Beans", "Ground Coffee", "Black Tea", "Green Tea", "Other"],
+    "Livestock & Poultry": ["Cattle", "Poultry", "Goats & Sheep", "Animal Feed", "Other"],
+    "Other": ["Other"]
+  },
+  "Electronics": {
+    "Phones & Tablets": ["Smartphones", "Feature Phones", "Tablets", "Accessories", "Other"],
+    "Computers & Laptops": ["Laptops", "Desktops", "Monitors", "Printers", "Other"],
+    "Audio & Video": ["TVs", "Speakers", "Headphones", "Cameras", "Other"],
+    "Other": ["Other"]
+  },
+  "Other (Custom)": {
+    "Other": ["Other"]
+  }
+}

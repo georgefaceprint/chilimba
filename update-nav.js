@@ -73,6 +73,24 @@ const navTemplate = `
     updateGlobalCartBadge();
     // Also listen for custom event in case items are added on the same page
     window.addEventListener('cart-updated', updateGlobalCartBadge);
+
+    // Agent Add Product FAB
+    async function checkAgentFAB() {
+      try {
+        if(window.location.pathname.includes('vendor-dashboard.html')) return; // Don't show on dashboard itself, it has its own tabs
+        const authRes = await fetch('/api/v1/auth/me');
+        if(!authRes.ok) return;
+        const authData = await authRes.json();
+        if(authData.authenticated && (authData.user.role === 'AGENT' || authData.user.role === 'SUPER_ADMIN')) {
+          const fab = document.createElement('a');
+          fab.href = '/vendor-dashboard.html?tab=listings';
+          fab.className = 'fixed bottom-[85px] right-4 bg-orange-500 text-white w-14 h-14 rounded-full shadow-lg z-[60] flex items-center justify-center hover:bg-orange-600 transition-transform transform hover:scale-105 active:scale-95 border-2 border-white shadow-[0_4px_15px_rgba(249,115,22,0.4)]';
+          fab.innerHTML = '<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>';
+          document.body.appendChild(fab);
+        }
+      } catch(e) {}
+    }
+    checkAgentFAB();
   </script>
 `;
 

@@ -15,7 +15,7 @@ const db = require('./backend/db');
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 // SPA catch-all moved to the bottom
-app.use(cors({ origin: ['https://chilimba-pwa.vercel.app','https://chilimba-kv32tixjo-georgefaceprints-projects.vercel.app'], credentials: true }));
+app.use(cors({ origin: ['https://chilimba-pwa.vercel.app', 'http://localhost:3000', 'http://127.0.0.1:3000'], credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
@@ -126,6 +126,16 @@ app.post('/api/v1/payments/lenco-callback', paymentsController.handleLencoCallba
 app.post('/payments/lenco-callback', paymentsController.handleLencoCallback); // Fallback for the integration test script
 
 // 3. Catalog Routes
+app.get('/api/v1/categories', (req, res) => {
+  try {
+    const cats = require('./backend/categories.json');
+    res.json({ categories: cats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load categories' });
+  }
+});
+
 app.get('/api/v1/products', async (req, res) => {
   try {
     const products = await require('./backend/firestore').query('products');
@@ -198,7 +208,8 @@ app.post('/api/v1/products/upload', async (req, res) => {
       weight_kg, 
       origin_city, 
       origin_country, 
-      image_url, 
+      image_url,
+      image_urls,
       supplier_name, 
       supplier_id,
       category,
@@ -237,7 +248,7 @@ app.post('/api/v1/products/upload', async (req, res) => {
       weight_kg: parseFloat(weight_kg) || 0,
       origin_country: origin_country || 'Tanzania',
       origin_city,
-      image_urls: image_url ? [image_url] : [],
+      image_urls: (image_urls && image_urls.length > 0) ? image_urls : (image_url ? [image_url] : []),
       supplier_name,
       supplier_id,
       attributes: attributes || null,
@@ -337,6 +348,7 @@ app.post('/api/v1/products/edit', async (req, res) => {
       origin_city,
       origin_country,
       image_url,
+      image_urls,
       category,
       sub_category,
       sub_sub_category,
@@ -387,18 +399,181 @@ app.post('/api/v1/products/edit', async (req, res) => {
       updated_at: new Date().toISOString()
     };
     
-    if (image_url) {
+    if (image_urls && image_urls.length > 0) {
+      updates.image_urls = image_urls;
+    } else if (image_url) {
       updates.image_urls = [image_url];
     }
     if (attributes) {
       updates.attributes = attributes;
     }
     
+    // Strip undefined values to prevent Firestore crash
+    Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
+    
     await productRef.update(updates);
     res.json({ success: true, message: 'Product updated successfully' });
   } catch (error) {
     console.error('[Products Edit API] Error:', error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/products/toggle-stock', async (req, res) => {
+  try {
+    const { id, in_stock } = req.body;
+    const { db } = require('./backend/firestore');
+    await db.collection('products').doc(id).update({ in_stock: in_stock === true });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4.5 Order Management System (OMS) Endpoints
+app.get('/api/v1/vendor/orders', async (req, res) => {
+  try {
+    const { vendor_id } = req.query;
+    if (!vendor_id) return res.status(400).json({ error: 'vendor_id required' });
+    const { db } = require('./backend/firestore');
+    
+    // Fetch orders that are paid or beyond
+    const ordersSnap = await db.collection('orders').where('status', 'in', ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED']).get();
+    
+    let vendorOrders = [];
+    ordersSnap.forEach(doc => {
+      const order = { id: doc.id, ...doc.data() };
+      // Filter items belonging to this vendor
+      const vendorItems = (order.items || []).filter(item => item.supplier_id === vendor_id);
+      
+      if (vendorItems.length > 0) {
+        order.items = vendorItems; // Only show their items
+        vendorOrders.push(order);
+      }
+    });
+    
+    // Sort by latest
+    vendorOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    res.json({ success: true, orders: vendorOrders });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/v1/orders/status', async (req, res) => {
+  try {
+    const { order_id, new_status } = req.body;
+    if (!order_id || !new_status) return res.status(400).json({ error: 'Missing required fields' });
+    const { db } = require('./backend/firestore');
+    
+    const orderRef = db.collection('orders').doc(order_id);
+    await orderRef.update({
+      status: new_status,
+      updated_at: new Date().toISOString()
+    });
+    
+    res.json({ success: true, message: `Order updated to ${new_status}` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+// 4.6 Pillar 5: Wishlists & Reviews
+app.post('/api/v1/users/wishlist', async (req, res) => {
+  try {
+    const { user_id, product_id } = req.body;
+    if (!user_id || !product_id) return res.status(400).json({ error: 'Missing user_id or product_id' });
+    const { db } = require('./backend/firestore');
+    
+    const userRef = db.collection('users').doc(user_id);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+    
+    let wishlist = userDoc.data().wishlist || [];
+    let isAdded = false;
+    
+    if (wishlist.includes(product_id)) {
+      wishlist = wishlist.filter(id => id !== product_id);
+    } else {
+      wishlist.push(product_id);
+      isAdded = true;
+    }
+    
+    await userRef.update({ wishlist });
+    res.json({ success: true, isAdded, wishlist });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/v1/users/wishlist', async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    if (!user_id) return res.status(400).json({ error: 'user_id required' });
+    const { db } = require('./backend/firestore');
+    
+    const userDoc = await db.collection('users').doc(user_id).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+    
+    const wishlist = userDoc.data().wishlist || [];
+    res.json({ success: true, wishlist });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/v1/products/reviews', async (req, res) => {
+  try {
+    const { product_id, user_id, user_name, rating, comment } = req.body;
+    if (!product_id || !user_id || !rating) return res.status(400).json({ error: 'Missing required fields' });
+    const { db } = require('./backend/firestore');
+    
+    const reviewData = {
+      product_id,
+      user_id,
+      user_name: user_name || 'Anonymous',
+      rating: Number(rating),
+      comment: comment || '',
+      created_at: new Date().toISOString()
+    };
+    await db.collection('reviews').add(reviewData);
+    
+    const reviewsSnap = await db.collection('reviews').where('product_id', '==', product_id).get();
+    let totalRating = 0;
+    let reviewCount = 0;
+    reviewsSnap.forEach(doc => {
+      totalRating += doc.data().rating;
+      reviewCount++;
+    });
+    
+    const avg_rating = reviewCount > 0 ? (totalRating / reviewCount).toFixed(1) : 0;
+    
+    await db.collection('products').doc(product_id).update({
+      avg_rating: Number(avg_rating),
+      review_count: reviewCount
+    });
+    
+    res.json({ success: true, message: 'Review added', avg_rating: Number(avg_rating), review_count: reviewCount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/v1/products/reviews/:product_id', async (req, res) => {
+  try {
+    const { product_id } = req.params;
+    const { db } = require('./backend/firestore');
+    
+    const reviewsSnap = await db.collection('reviews').where('product_id', '==', product_id).get();
+    const reviews = [];
+    reviewsSnap.forEach(doc => reviews.push({ id: doc.id, ...doc.data() }));
+    
+    reviews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    res.json({ success: true, reviews });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -1000,24 +1175,9 @@ app.post('/api/v1/cart/update-qty', async (req, res) => {
 
 app.post('/api/v1/cart/checkout', async (req, res) => {
   try {
-    const { group_id, user_id, use_wallet, total_amount } = req.body;
-    const { db } = require('./backend/firestore');
-    
-    // Handle Wallet Payment
-    if (use_wallet && total_amount) {
-       const userRef = db.collection('users').doc(user_id);
-       const userDoc = await userRef.get();
-       if (userDoc.exists && (userDoc.data().wallet_balance || 0) >= total_amount) {
-           await userRef.update({
-               wallet_balance: userDoc.data().wallet_balance - total_amount
-           });
-       } else {
-           return res.status(400).json({ error: 'Insufficient wallet balance. Please top up.' });
-       }
-    }
-
+    const { group_id, user_id, use_wallet, total_amount: frontend_amount } = req.body;
     const { db: firestoreDb } = require('./backend/firestore');
-
+    
     // ── STEP 1: Snapshot cart items BEFORE clearing ──────────────────────
     let cartItems = [];
     try {
@@ -1030,15 +1190,81 @@ app.post('/api/v1/cart/checkout', async (req, res) => {
       }
     } catch(e) { console.error('[Cart Snapshot Error]', e.message); }
 
-    // ── STEP 2: Save order to Firestore history ───────────────────────────
+    if (cartItems.length === 0) {
+      return res.status(400).json({ error: 'Cart is empty.' });
+    }
+
+    // ── STEP 2: Securely calculate totals on backend ──────────────────────
+    let calculated_total = 0;
+    if (!group_id.startsWith('PERSONAL_')) {
+      const quantities = {};
+      cartItems.forEach(item => {
+        quantities[item.product_id] = (quantities[item.product_id] || 0) + item.quantity;
+      });
+      const productPromises = Object.keys(quantities).map(async (pid) => {
+        const doc = await firestoreDb.collection('products').doc(pid).get();
+        if (doc.exists) {
+          const p = doc.data();
+          const basePrice = parseFloat(p.price_zmw);
+          const tiers = p.price_tiers && p.price_tiers.length > 0 ? p.price_tiers : [
+            { min_qty: 1, price_zmw: basePrice },
+            { min_qty: 3, price_zmw: Math.round(basePrice * 0.9) },
+            { min_qty: 6, price_zmw: Math.round(basePrice * 0.8) }
+          ];
+          return { id: pid, tiers, basePrice };
+        }
+        return null;
+      });
+      const productsData = await Promise.all(productPromises);
+      const productMap = {};
+      productsData.forEach(p => { if (p) productMap[p.id] = p; });
+
+      cartItems.forEach(item => {
+        const prodInfo = productMap[item.product_id];
+        if (prodInfo) {
+          const totalQty = quantities[item.product_id];
+          const basePrice = prodInfo.basePrice;
+          let activePrice = basePrice;
+          let bestTier = null;
+          prodInfo.tiers.forEach(tier => {
+            if (totalQty >= tier.min_qty) {
+              if (!bestTier || tier.min_qty > bestTier.min_qty) bestTier = tier;
+            }
+          });
+          if (bestTier) activePrice = bestTier.price_zmw;
+          item.price_zmw = activePrice;
+        }
+      });
+    }
+
+    cartItems.forEach(item => {
+      calculated_total += (parseFloat(item.price_zmw) * item.quantity);
+    });
+
+    // We can add shipping or generic markup here in the future
+    
+    // ── STEP 3: Handle Wallet Payment ──────────────────────────────────────
+    if (use_wallet) {
+       const userRef = firestoreDb.collection('users').doc(user_id);
+       const userDoc = await userRef.get();
+       if (userDoc.exists && (userDoc.data().wallet_balance || 0) >= calculated_total) {
+           await userRef.update({
+               wallet_balance: userDoc.data().wallet_balance - calculated_total
+           });
+       } else {
+           return res.status(400).json({ error: 'Insufficient wallet balance. Please top up.' });
+       }
+    }
+
+    // ── STEP 4: Save order to Firestore history ───────────────────────────
     let savedOrderId = null;
     try {
       const orderRef = await firestoreDb.collection('orders').add({
         user_id,
         group_id,
         items: cartItems,
-        total_amount: total_amount || 0,
-        status: use_wallet ? 'PAID' : 'PENDING',
+        total_amount: calculated_total,
+        status: use_wallet ? 'PAID' : 'PENDING_PAYMENT',
         payment_method: use_wallet ? 'wallet' : 'mobile_money',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
