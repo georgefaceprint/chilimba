@@ -45,61 +45,61 @@ const navTemplate = `
       </a>
       
     </div>
+    <script>
+      async function updateGlobalCartBadge() {
+        try {
+          const authRes = await fetch('/api/v1/auth/me');
+          if(!authRes.ok) return;
+          const authData = await authRes.json();
+          if(!authData.authenticated) return;
+          
+          let groupId = localStorage.getItem('activeGroupId');
+          if (!groupId) groupId = 'PERSONAL_' + authData.user.user_id;
+          
+          const cartRes = await fetch('/api/v1/cart/' + groupId + '?user_id=' + authData.user.user_id);
+          if(cartRes.ok) {
+            const cartData = await cartRes.json();
+            const badge = document.getElementById('nav-cart-badge');
+            if (badge) {
+              const count = (cartData.items || []).length;
+              badge.innerText = count > 0 ? count : '';
+              badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+          }
+        } catch(e) {}
+      }
+      // Update badge on load
+      updateGlobalCartBadge();
+      // Also listen for custom event in case items are added on the same page
+      window.addEventListener('cart-updated', updateGlobalCartBadge);
+
+      // Agent Add Product FAB & Cart hiding
+      async function checkAgentFAB() {
+        try {
+          const authRes = await fetch('/api/v1/auth/me');
+          if(!authRes.ok) return;
+          const authData = await authRes.json();
+          if(authData.authenticated && (authData.user.role === 'AGENT' || authData.user.role === 'SUPER_ADMIN')) {
+            
+            // Hide cart for agents
+            const cartLink = document.getElementById('nav-cart-link');
+            if (cartLink) {
+               cartLink.style.display = 'none';
+            }
+
+            if(window.location.pathname.includes('vendor-dashboard.html')) return; // Don't show FAB on dashboard itself, it has its own tabs
+            
+            const fab = document.createElement('a');
+            fab.href = '/vendor-dashboard.html?tab=listings';
+            fab.className = 'fixed bottom-[85px] right-4 bg-orange-500 text-white w-14 h-14 rounded-full shadow-lg z-[60] flex items-center justify-center hover:bg-orange-600 transition-transform transform hover:scale-105 active:scale-95 border-2 border-white shadow-[0_4px_15px_rgba(249,115,22,0.4)]';
+            fab.innerHTML = '<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>';
+            document.body.appendChild(fab);
+          }
+        } catch(e) {}
+      }
+      checkAgentFAB();
+    </script>
   </nav>
-  <script>
-    async function updateGlobalCartBadge() {
-      try {
-        const authRes = await fetch('/api/v1/auth/me');
-        if(!authRes.ok) return;
-        const authData = await authRes.json();
-        if(!authData.authenticated) return;
-        
-        let groupId = localStorage.getItem('activeGroupId');
-        if (!groupId) groupId = 'PERSONAL_' + authData.user.user_id;
-        
-        const cartRes = await fetch('/api/v1/cart/' + groupId + '?user_id=' + authData.user.user_id);
-        if(cartRes.ok) {
-          const cartData = await cartRes.json();
-          const badge = document.getElementById('nav-cart-badge');
-          if (badge) {
-            const count = (cartData.items || []).length;
-            badge.innerText = count > 0 ? count : '';
-            badge.style.display = count > 0 ? 'flex' : 'none';
-          }
-        }
-      } catch(e) {}
-    }
-    // Update badge on load
-    updateGlobalCartBadge();
-    // Also listen for custom event in case items are added on the same page
-    window.addEventListener('cart-updated', updateGlobalCartBadge);
-
-    // Agent Add Product FAB & Cart hiding
-    async function checkAgentFAB() {
-      try {
-        const authRes = await fetch('/api/v1/auth/me');
-        if(!authRes.ok) return;
-        const authData = await authRes.json();
-        if(authData.authenticated && (authData.user.role === 'AGENT' || authData.user.role === 'SUPER_ADMIN')) {
-          
-          // Hide cart for agents
-          const cartLink = document.getElementById('nav-cart-link');
-          if (cartLink) {
-             cartLink.style.display = 'none';
-          }
-
-          if(window.location.pathname.includes('vendor-dashboard.html')) return; // Don't show FAB on dashboard itself, it has its own tabs
-          
-          const fab = document.createElement('a');
-          fab.href = '/vendor-dashboard.html?tab=listings';
-          fab.className = 'fixed bottom-[85px] right-4 bg-orange-500 text-white w-14 h-14 rounded-full shadow-lg z-[60] flex items-center justify-center hover:bg-orange-600 transition-transform transform hover:scale-105 active:scale-95 border-2 border-white shadow-[0_4px_15px_rgba(249,115,22,0.4)]';
-          fab.innerHTML = '<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>';
-          document.body.appendChild(fab);
-        }
-      } catch(e) {}
-    }
-    checkAgentFAB();
-  </script>
 `;
 
 function getNavForPage(page) {
@@ -134,8 +134,8 @@ function processFile(filePath, activePage) {
   const fullPath = path.join(__dirname, 'public', filePath);
   let content = fs.readFileSync(fullPath, 'utf8');
   
-  // Regex to match the unified nav block specifically
-  const navRegex = /<!-- BOTTOM NAVIGATION BAR \(Unified\) -->[\s\S]*?<\/nav>/i;
+  // Regex to match the unified nav block and any trailing script tags that were previously left behind
+  const navRegex = /<nav class="fixed bottom-0[^>]*>[\s\S]*?<\/nav>(?:\s*<script>[\s\S]*?<\/script>)*/i;
   
   if (navRegex.test(content)) {
     content = content.replace(navRegex, getNavForPage(activePage));
@@ -149,6 +149,5 @@ function processFile(filePath, activePage) {
 processFile('index.html', 'home');
 processFile('dashboard.html', 'groups');
 processFile('group-cart.html', 'cart');
-processFile('vendor-dashboard.html', 'vendor');
-// For product-detail, let's keep it 'home' active or no active.
+// Do NOT process vendor-dashboard.html, it has its own specialized bottom nav!
 processFile('product-detail.html', 'none');
