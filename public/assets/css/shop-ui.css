@@ -1,0 +1,658 @@
+/* ==========================================================================
+   CHILIMBA MARKETPLACE - ULTRA-PREMIUM SHOP & PRODUCT UI DESIGN SYSTEM
+   Inspired by Kilimall & Hiii-Style Modern E-Commerce Aesthetics
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --font-main: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Curated HSL & Hex Color Palette */
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  
+  /* Kilimall Vibrant Energy Colors */
+  --color-promo-start: #ff5722;
+  --color-promo-end: #e11d48;
+  --color-accent-orange: #ea580c;
+  --color-accent-red: #ef4444;
+  --color-discount-bg: #fff7ed;
+  --color-discount-border: #fed7aa;
+  
+  /* Chilimba Brand Emerald */
+  --color-brand: #10b981;
+  --color-brand-dark: #059669;
+  --color-brand-deep: #065f46;
+  --color-brand-light: #d1fae5;
+  
+  /* Shadows & Glassmorphism */
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --shadow-hover: 0 16px 40px rgba(234, 88, 12, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.4);
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+/* --- Top Announcement Banner (Kilimall style) --- */
+.promo-bar {
+  background: linear-gradient(90deg, #1e293b 0%, #0f172a 50%, #475569 100%);
+  color: #f8fafc;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  letter-spacing: 0.025em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 60;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.promo-tag {
+  background: linear-gradient(135deg, var(--color-promo-start), var(--color-promo-end));
+  color: white;
+  padding: 0.15rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.4); }
+  50% { box-shadow: 0 0 12px 2px rgba(255, 87, 34, 0.7); }
+}
+
+/* --- Glass Header --- */
+.sticky-glass-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: all 0.3s ease;
+}
+
+/* --- Search Bar (Hiii-style + Kilimall Hybrid) --- */
+.search-input-container {
+  position: relative;
+  width: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-input-container:focus-within {
+  transform: translateY(-1px);
+}
+
+.search-input {
+  width: 100%;
+  background: #f1f5f9;
+  border: 2px solid transparent;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: all 0.25s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.search-input:focus {
+  background: #ffffff;
+  border-color: var(--color-accent-orange);
+  box-shadow: 0 4px 20px rgba(234, 88, 12, 0.12);
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+  transition: color 0.25s ease;
+}
+
+.search-input:focus ~ .search-icon {
+  color: var(--color-accent-orange);
+}
+
+/* --- Hero Banner Carousel (Kilimall Energy) --- */
+.hero-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #7c2d12 100%);
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-banner::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.35) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-badge {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+/* --- Category Pills & Filter Bar (Hiii-style minimal & sleek) --- */
+.hide-scroll::-webkit-scrollbar { display: none; }
+.hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+.category-btn {
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: var(--text-muted);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.category-btn:hover {
+  border-color: #cbd5e1;
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+.category-btn.active, .category-btn.bg-green-700 {
+  background: linear-gradient(135deg, var(--color-brand-dark), var(--color-brand));
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.subcat-btn {
+  padding: 0.45rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: var(--text-muted);
+}
+
+.subcat-btn:hover {
+  background: #f8fafc;
+  color: var(--text-main);
+}
+
+.subcat-btn.active, .subcat-btn.bg-green-100 {
+  background: var(--color-brand-light);
+  border-color: var(--color-brand);
+  color: var(--color-brand-deep);
+  font-weight: 800;
+}
+
+/* --- Product Cards (Kilimall + Hiii-style Fusion) --- */
+.product-card {
+  background: var(--bg-card);
+  border: 1px solid #f1f5f9;
+  border-radius: 1.25rem;
+  padding: 0.75rem;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(234, 88, 12, 0.25);
+}
+
+.product-image-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f8fafc;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.product-image {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  mix-blend-mode: multiply;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.08);
+}
+
+.badge-stock {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  z-index: 10;
+}
+
+.badge-discount {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 0.6rem;
+  background: linear-gradient(135deg, #ef4444, #e11d48);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.35rem;
+  z-index: 10;
+}
+
+.product-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.3;
+  margin-bottom: 0.4rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.2s ease;
+}
+
+.product-card:hover .product-title {
+  color: var(--color-accent-orange);
+}
+
+.product-price-box {
+  margin-top: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #f1f5f9;
+}
+
+.price-main {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-accent-orange);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.price-old {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+.btn-add-cart {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--color-accent-orange), #f97316);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-add-cart:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #c2410c, var(--color-accent-orange));
+  box-shadow: 0 6px 14px rgba(234, 88, 12, 0.45);
+}
+
+.btn-add-cart:active {
+  transform: scale(0.95);
+}
+
+/* --- List View Layout Toggle --- */
+.product-grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .product-grid-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+.product-grid-container.list-view {
+  grid-template-columns: 1fr;
+}
+
+.product-grid-container.list-view .product-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem;
+}
+
+.product-grid-container.list-view .product-image-wrap {
+  width: 110px;
+  height: 110px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+/* --- Product Detail Page (Kilimall Luxury) --- */
+.detail-image-box {
+  width: 100%;
+  height: 340px;
+  background: radial-gradient(circle at center, #ffffff 0%, #f8fafc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+  border: 1px solid #f1f5f9;
+}
+
+.thumbnail-btn {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.thumbnail-btn:hover, .thumbnail-btn.active, .thumbnail-btn.border-green-600 {
+  border-color: var(--color-accent-orange);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+}
+
+.kilimall-price-banner {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1.5px solid #fed7aa;
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.08);
+}
+
+.kilimall-price-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4));
+  transform: skewX(-20deg);
+  animation: shine 4s infinite;
+}
+
+@keyframes shine {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  50%, 100% { transform: translateX(200%) skewX(-20deg); }
+}
+
+/* --- Tiered Group Buy Box --- */
+.group-tier-box {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 1.25rem;
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.tier-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.tier-item.active-tier {
+  background: #f0fdf4;
+  border: 1.5px solid #22c55e;
+  font-weight: 800;
+}
+
+.tier-progress-bar-wrap {
+  width: 100%;
+  height: 0.6rem;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.tier-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f97316, #ea580c);
+  border-radius: 9999px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Variant Selector Pills --- */
+.variant-btn {
+  padding: 0.6rem 1.15rem;
+  border-radius: 0.85rem;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: var(--text-muted);
+  font-size: 0.825rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.variant-btn:hover {
+  border-color: #cbd5e1;
+  color: var(--text-main);
+}
+
+.variant-btn.selected {
+  background: var(--text-main);
+  border-color: var(--text-main);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+  transform: scale(1.02);
+}
+
+.color-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.color-btn.selected {
+  outline: 3px solid var(--color-accent-orange);
+  outline-offset: 3px;
+  transform: scale(1.1);
+}
+
+/* --- Bottom Sticky CTA Bar --- */
+.sticky-cta-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 28rem;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+  border-radius: 1.5rem 1.5rem 0 0;
+}
+
+.btn-primary-gradient {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: white;
+  font-weight: 800;
+  border-radius: 1rem;
+  padding: 0.85rem 1.25rem;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45);
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+}
+
+.btn-orange-gradient {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  color: white;
+  font-weight: 800;
+  border-radius: 1rem;
+  padding: 0.85rem 1.25rem;
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.35);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-orange-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(234, 88, 12, 0.45);
+  background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+}
+
+/* --- Tabs & Accordions --- */
+.tab-btn {
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border-bottom: 2.5px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--text-main);
+}
+
+.tab-btn.active {
+  color: var(--color-accent-orange);
+  border-bottom-color: var(--color-accent-orange);
+}
+
+/* --- Micro-Animations --- */
+.btn-press:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* Skeleton Pulse */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
